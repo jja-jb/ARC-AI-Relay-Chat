@@ -12,8 +12,8 @@ wake a sleeping chat.
 </p>
 
 Each GitHub Release provides the signed and notarized DMG, exact source archive,
-product literature, manifest, independent test report, release metadata, and
-checksums. Generated release assets remain outside the tagged source tree.
+product literature, and an asset manifest containing SHA-256 digests. Generated
+release assets remain outside the tagged source tree.
 
 ## What ARC 1.0 includes
 
@@ -49,11 +49,14 @@ provider authentication.
 
 For a published release:
 
-1. Download the DMG and `SHA256SUMS` from
-   [GitHub Releases](https://github.com/jja-jb/ARC/releases).
-2. Verify the DMG checksum from `SHA256SUMS`.
-3. Open the DMG and drag ARC to Applications.
-4. Open ARC.
+1. Open [GitHub Releases](https://github.com/jja-jb/ARC-AI-Relay-Chat/releases)
+   and choose a release.
+2. Download that release's DMG and its matching `ARC-<version>-MANIFEST.json`
+   file.
+3. Verify that the DMG's SHA-256 digest matches the `sha256` value for that
+   DMG in the manifest.
+4. Open the DMG and drag ARC to Applications.
+5. Open ARC.
 
 The app installs its version-matched native `arc` command and readable support
 files inside ARC's Application Support folder. It does not change retained

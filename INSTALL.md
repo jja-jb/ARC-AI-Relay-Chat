@@ -4,16 +4,22 @@
 
 ARC supports macOS 15 or later on Apple silicon.
 
-1. Download `ARC-1.0.7.dmg` and `SHA256SUMS` from the same release.
-2. In Terminal, verify the DMG:
+1. Open the project's [GitHub Releases](https://github.com/jja-jb/ARC-AI-Relay-Chat/releases)
+   page and choose a release.
+2. Download its DMG and the matching `ARC-<version>-MANIFEST.json` file into
+   the same folder.
+3. In Terminal, verify the DMG:
 
    ```sh
-   /usr/bin/shasum -a 256 ARC-1.0.7.dmg
+   /usr/bin/shasum -a 256 -- *.dmg
    ```
 
-   The result must match the DMG line in `SHA256SUMS`.
-3. Open the DMG and drag ARC to Applications.
-4. Open ARC from Applications.
+   Compare the displayed digest with the `sha256` value in the manifest entry
+   whose `name` matches the downloaded DMG. They must match exactly. If more
+   than one DMG is in the folder, run the command with the downloaded DMG's
+   filename instead.
+4. Open the DMG and drag ARC to Applications.
+5. Open ARC from Applications.
 
 The published DMG and ARC.app are Developer ID signed, notarized, and stapled.
 Advanced verification commands are in [docs/MACOS_INSTALLER.md](docs/MACOS_INSTALLER.md).
