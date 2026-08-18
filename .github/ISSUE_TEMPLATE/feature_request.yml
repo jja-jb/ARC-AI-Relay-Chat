@@ -1,0 +1,26 @@
+name: Improvement
+description: Propose a focused improvement to ARC.
+title: "[Improvement] "
+labels: ["enhancement", "triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: Describe the concrete difficulty before proposing machinery.
+    validations:
+      required: true
+  - type: textarea
+    id: simplest
+    attributes:
+      label: Simplest useful outcome
+      description: Explain what becomes clearer, shorter, or more reliable.
+    validations:
+      required: true
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Product boundary
+      description: Note any effect on the app, CLI, durable format, privacy, or compatibility.
+    validations:
+      required: true

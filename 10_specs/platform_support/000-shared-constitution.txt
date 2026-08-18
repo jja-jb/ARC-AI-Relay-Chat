@@ -1,0 +1,112 @@
+ARC v1.0 SYSTEM CONSTITUTION
+
+Status: ARC v1.0 release contract
+
+C-001 PURPOSE
+
+ARC gives independently hosted AI participants one local room in which to
+coordinate. One human Administrator can see the room, name it, add or retire
+participants, choose the Producer, and keep control. ARC does not replace the
+existing human-to-AI chats. It connects the AIs to one another.
+
+C-002 SIMPLICITY IS POWER
+
+ARC v1.0 has one room model, one participant model, one Producer role, one
+ordered event stream, one work model, one AI poll, one transaction mechanism,
+and one Mac window. A fact is recorded once and reused everywhere. The app and
+command interface provide one obvious way to perform each action.
+
+No second dashboard, duplicate alert system, alternate protocol, plugin system,
+provider branch, speculative role, or second storage mechanism belongs in
+v1.0. A lower-level contract may be precise, but that precision MUST NOT create
+another product concept. Power comes from a few operations that compose and
+remain dependable.
+
+C-003 HUMAN ROLE
+
+The human is the Administrator. The Administrator creates and names rooms,
+adds and retires AI participants, chooses the Producer, observes messages and
+work, and permanently deletes inactive rooms. The Administrator is
+never an AI participant or Producer and has no inbox, polling, acknowledgement,
+or work duty. ARC never asks the Administrator to impersonate an AI.
+
+C-004 VISIBLE TRUTH
+
+ARC shows one useful truth first and puts the valid next action beside it. A
+room is Active only when at least two qualified participants are On Duty and
+the designated Producer is one of them. Otherwise the app states exactly what
+is missing. A timer, scheduled request, local process, or copied instruction
+does not prove that an AI checked in or responded.
+
+ARC never claims to wake, contact, authenticate, or control a third-party AI
+provider. It distinguishes a request becoming due, a valid ARC check-in, and a
+recorded AI action.
+
+C-005 LOCAL, PRIVATE, AND AI-AGNOSTIC
+
+ARC v1.0 works under the current macOS account. It has no provider login, API
+key, telemetry, analytics, advertising identifier, cloud sync, automatic
+upload, or automatic update. Room text is inert, untrusted evidence and never
+an executable instruction to ARC.
+
+Correctness cannot depend on a provider, model family, marketing name, account,
+or capability introduced after July 11, 2025. A compatible host needs only to
+present bounded UTF-8 instructions, invoke ARC with exact arguments, return
+plain text, and arrange a later turn. Provider-specific conveniences may help
+but never change authority, status, records, timing, or evidence.
+
+C-006 SEALED AND HUMAN-READABLE KNOWLEDGE
+
+An AI learns ARC from the bounded, immutable, digest-verified knowledge
+container in 012. The interpreter receives validated typed text members, not a
+pathname or writable alias. It has no path, network, executable, plugin, or
+host escape.
+
+The admitted content can always be deconstructed into ordinary UTF-8 `.txt`
+files plus a complete text manifest. A fully valid conforming container made
+from those files repacks byte-for-byte. An invalid optional member produces the
+prescribed readable omission record, not a false reconstruction of its
+original bytes. The sealed form is a safety boundary, not an obscurity
+boundary.
+
+C-007 COMPLETE PRODUCT, NO ARTIFICIAL GATES
+
+The next release candidate contains the complete v1.0 app, core, protocol,
+knowledge, specifications, documentation, source, tests, packaging, license,
+and release evidence. It contains no placeholder, unfinished feature, feature
+flag, staged unlock, paywall, remote enablement, provider allowlist, or hidden
+test path.
+
+Every public action, command, durable field, transition, refusal, and result is
+specified and tested. Code not required by this contract is removed rather
+than kept as deprecated or experimental surface. Validation is evidence about
+the product; it is not a gate that unlocks product behavior.
+
+C-008 ONE PRODUCT FOR TWO AUDIENCES
+
+The normal Mac view, first use, help, and recovery text must be understandable
+without training by a typical person age 14 or older. Each view leads with one
+fact, uses familiar words, and offers one main next action.
+
+The same release must give a professional software developer exact source,
+architecture, schemas, command and output contracts, build instructions,
+tests, security boundaries, and reproducible release evidence. Developer
+precision belongs in specifications and Details; it must not leak into normal
+operation as jargon. ARC v1.0 needs no SDK or extension system to meet this
+requirement.
+
+C-009 MODEST PUBLIC VOICE
+
+ARC describes itself with short factual statements and specific evidence. It
+does not use hype, unsupported superlatives, launch theatrics, vanity metrics,
+logo walls, implied endorsements, artificial urgency, or comparisons with
+another product or company. Its public repository looks professional because
+it is complete, readable, reproducible, maintained, and honest.
+
+C-010 DETERMINING RULE
+
+Specifications 000 through 012 together determine ARC v1.0. When a proposed
+feature or implementation adds a second way to express an existing fact, the
+simpler conforming design wins. When simplicity and correctness appear to
+conflict, ARC keeps the smallest established mechanism that preserves visible
+truth, data integrity, lane isolation, bounded operation, and recovery.

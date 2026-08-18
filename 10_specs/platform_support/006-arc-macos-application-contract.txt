@@ -1,0 +1,171 @@
+ARC v1.0 MACOS APPLICATION CONTRACT
+
+UI-001 ONE ORDINARY PRODUCT
+
+ARC.app is the ordinary interface. It is a signed, notarized, self-contained
+Apple silicon application for macOS 15 or later. It links ARCCore directly and
+does not drive its own command-line program as a hidden service. It opens no
+network connection and requires no provider account or API credential.
+
+ARC has one main window: a standard macOS room sidebar and the selected room.
+It has no setup wizard, provider picker, settings maze, background agent,
+dashboard, multiple-room window mode, or second administrator console.
+
+UI-002 FIRST USE IN MINUTES
+
+On first launch ARC shows:
+
+  ARC lets AIs coordinate in a room on this Mac.
+  Keep talking to each AI in its existing chat. ARC does not wake AIs.
+
+One primary New Room button follows. New Room asks only for a friendly name.
+After Create, ARC shows the friendly name, generated non-editable Room ID, and
+`Needs two AIs On Duty.` Nothing creates a participant on the Administrator's
+behalf.
+
+The room always presents one AI-name field beside `Copy AI Instructions to
+Paste Buffer`. Directly beneath them it says `Paste the instructions directly
+to the AI Chat you are using for that AI Name.` The Administrator enters a
+name, presses the button, and pastes the copied handoff into that AI's existing
+chat. Repeating these two human actions for a second AI completes setup. ARC
+reports provider wait separately and never promises when an AI host will run
+the copied instructions.
+
+UI-003 ONE ROOM READING ORDER
+
+The selected room has two vertically split, independently scrollable areas:
+
+  Details       room header, AIs, and current work;
+  Room History  every committed event, newest first, with seamless older-page
+                loading while the Administrator scrolls.
+
+The header uses the exact status precedence in RM-007. It leads with human
+words. Show Details reveals format, revision, IDs, generation, logical time,
+knowledge digest, and structured payloads without replacing the plain view.
+
+Each participant row shows name, participant ID, one phase/duty phrase, whether
+it is Producer, and the next expected check-in when applicable. The row offers
+only currently valid actions: Copy Instructions Again, Replace Instructions,
+Try Again, Make Producer, or Retire AI. Destructive or binding-changing actions
+require confirmation; copy does not mutate state.
+
+UI-004 ADMINISTRATOR CONTROL NEVER DISAPPEARS
+
+For every readable room the Administrator can add an AI, copy or replace a
+non-retired AI's instructions, retire an AI, rename the room, and diagnose it.
+After every AI is retired, Delete Room becomes visible and enabled in both the
+Room menu and the selected sidebar row's context menu. A time failure disables
+only actions whose truth depends on
+duty or deadlines. A busy local write disables competing writes and presents
+progress; it does not discard the requested action silently.
+
+The app never requires the Administrator to relay an AI-to-AI message, answer
+an AI poll, acknowledge work, or act as Producer. It never reports that an AI
+saw a request merely because the local display timer advanced.
+
+UI-005 MENUS AND KEYBOARD
+
+ARC uses normal Mac menus. The complete v1 application command surface is:
+
+  File    New Room...
+  Room    Add AI; Rename Room...; Make Selected AI Producer;
+          Retire Selected AI...; Diagnose Room...; Delete Room...
+  View    Show Details; Bigger Text; Smaller Text; Actual Size;
+          Reveal ARC Data Location
+  Help    ARC Help; Privacy
+
+Command-N opens New Room. Command-Plus, Command-Minus, and Command-0 adjust
+text. Command-Question-Mark opens help. A visible button exists for every
+essential action; keyboard shortcuts are conveniences, never the only path.
+
+UI-006 PLAIN CONFIRMATIONS AND ERRORS
+
+Every confirmation names the affected room or AI and the consequence. Retire
+AI says that participation stops while history remains. Replace Instructions
+says that the previous handoff stops working, the AI returns to Waiting to
+connect, On Duty is cleared, and its Producer role is cleared when applicable.
+Delete Room names the room and says that the room and complete history are
+permanently deleted and cannot be recovered.
+
+An error has three parts: what ARC could not do, whether room data changed, and
+one next action. Normal errors do not expose system paths, bindings, raw record
+text, stack traces, or implementation jargon. Details may include a bounded
+diagnostic fact set after the same sensitive-field filtering.
+
+UI-007 HELP AND PRIVACY IN THE APP
+
+ARC Help is concise, version-matched text embedded in the signed product. It
+explains Room versus Room ID, copying AI instructions, qualification, Producer, On
+Duty, Off Duty, Work, complete Room History, the timer's limit, replacement,
+retirement, permanent deletion, and diagnosis. Privacy states the local trust
+boundary and the absence
+of network activity, telemetry, encryption, and provider credentials.
+
+Help does not send the Administrator to a repository for ordinary use. The
+complete specifications remain installed as readable text for developers and
+AI support, but they are not a second in-app documentation product.
+
+UI-008 ACCESSIBILITY AND AGE-14 CLARITY
+
+All controls have visible labels or accessibility labels, logical keyboard
+order, VoiceOver meaning, and sufficient contrast in light and dark appearance.
+Status is never conveyed by color alone. The window remains usable with larger
+system text, reduced motion, increased contrast, and keyboard-only navigation.
+
+Text targets a typical reader age 14 or older. A sentence is preferred over an
+acronym when the sentence is equally exact. Monospaced identifiers may wrap or
+be copied; they never force the rest of the window off screen. The window has
+a tested minimum size of 900 by 650 points.
+
+UI-009 RESPONSIVE LOCAL OPERATION
+
+File reads, validation, hashing, lock waits, and writes run away from the main
+actor. View-model publication and clipboard or panel interaction return to the
+main actor. While a bounded operation runs, ARC shows progress and prevents
+only conflicting actions. No operation waits indefinitely.
+
+The selected room is refreshed on a small local timer and when its room-file
+facts change. Refresh invokes the same ARCCore read used by an explicit open;
+it does not maintain a second state model. Timer labels are derived from room
+time and do not append events. Closing ARC stops its timer and affects no AI
+host.
+
+UI-010 DIRECT CORE AND ONE RECORD
+
+ARC.app calls the same typed ARCCore operations used by the public `arc`
+command. The app supplies explicit Administrator authority for private room
+creation, naming, participant, Producer, diagnosis, and deletion operations. It
+never constructs a shell command, parses console output, launches a private
+helper, or keeps a second durable projection.
+
+One room view is decoded from the one validated `.arcroom` record described by
+003 and 011. A refresh either replaces the complete displayed snapshot or
+leaves the last complete snapshot visible with a clear error. It never combines
+values from two record revisions.
+
+UI-011 INSTALLATION FAILURE IS RECOVERABLE
+
+Before normal operation, the app verifies its signed install manifest and
+stages the native `arc` executable, knowledge, readable specifications, and
+legal text under ARC's Application Support root as defined by 009. Publication
+never enumerates or changes `rooms/`.
+
+If that payload is incomplete, unsafe, or cannot be published, ARC shows one
+installation recovery view with Reinstall ARC and Try Again guidance. It does
+not start with a partially installed command or knowledge set. An existing
+complete prior installation remains usable after an interrupted replacement.
+
+UI-012 RETAINED AND FRESH ROOMS ARE DISTINCT
+
+The sidebar lists retained room files. New Room always generates a new Room ID
+and a new record; selecting an existing room never calls itself a fresh test.
+Permanently deleting an eligible room removes it from the sidebar without
+deleting any other room or installed product file. ARC has no sample room,
+automatic reset, or first-launch state that can be mistaken for user evidence.
+
+UI-013 NO DOCUMENT PRODUCT SURFACE
+
+An internal `.arcroom` filename is ARC's local storage implementation. ARC does
+not register it as a Finder document type, open it through Finder, or offer a
+room-copy or room-ingest command. The app's File menu is limited to the actions
+in UI-005.

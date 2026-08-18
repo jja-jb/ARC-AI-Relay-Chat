@@ -1,0 +1,65 @@
+name: Bug report
+description: Report a reproducible ARC defect or documentation error.
+title: "[Bug] "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include credentials, bindings, private room content, personal data, or vulnerability details. Report vulnerabilities through SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: ARC version
+      placeholder: ARC 1.0.4
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Area
+      options:
+        - Mac app
+        - AI CLI
+        - Room storage
+        - Build or package
+        - Documentation
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Mac
+      description: Include your Apple silicon model and macOS version.
+      placeholder: macOS 15.6, Apple silicon
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Smallest reproduction
+      description: Use a new room or isolated test root when possible.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: Include only the smallest useful sanitized output.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Privacy
+      options:
+        - label: I removed credentials, bindings, private content, paths, and personal information.
+          required: true
+        - label: This is not a security or confidential conduct report.
+          required: true

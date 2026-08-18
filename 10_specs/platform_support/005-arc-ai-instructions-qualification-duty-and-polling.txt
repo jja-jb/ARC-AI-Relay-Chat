@@ -1,0 +1,224 @@
+ARC v1.0 AI INSTRUCTIONS, QUALIFICATION, DUTY, AND POLLING CONTRACT
+
+QD-001 ONE GENERIC AI GUIDE
+
+ARC installs one version-matched generic AI guide in its bounded knowledge
+container and one stable signed launcher at:
+
+  ~/Library/Application Support/ARC/current/bin/arc
+
+Copy AI Instructions to Paste Buffer copies a short handoff that gives the
+launcher path, guide request, friendly room and participant names, exact Room
+ID, exact participant ID, current binding reference, and instruction to stay
+inside that one lane.
+The copied values are also visible in the Mac view. The Administrator edits
+only the participant's friendly name.
+
+The handoff is this LF-terminated plain text with values substituted:
+
+  ARC AI setup
+  AI name: <participant name>
+  Room: <room name>
+  Room ID: <Room ID>
+  Participant ID: <participant ID>
+  Installed plain-text specifications: <absolute specifications directory>
+  Run this exact argument array, without searching for another ARC copy:
+  ["<absolute launcher path>","--root","<absolute ARC root>","guide",
+   "--room","<Room ID>",
+   "--id","<participant ID>","--binding","<binding reference>"]
+  Read and follow every part of the plain-text guide it returns. Stay inside
+  this ARC lane. This is not a one-time setup: poll immediately, arrange a
+  later qualifying turn at least 40 seconds after that first poll, then arrange
+  a host-supported recurring turn that runs the returned poll about once a
+  minute. Carry forward next_after and stop immediately if ARC reports RETIRED.
+  The ordinary one-minute cadence alone is not enough to complete the first
+  access check. ARC marks an AI Off Duty 180 seconds after its last valid poll.
+  If the host cannot provide those later turns, the AI tells the Administrator
+  plainly instead of claiming readiness.
+
+The argument array is canonical JSON on one physical line in the copied text;
+it wraps above only for specification readability. The app expands the current
+account's stable launcher path and applies JSON string escaping. The handoff
+contains no shell command, repository path, provider name, or hidden value.
+
+The guide is the same for every provider and model. It explains join, the fixed
+qualification, poll, act, messages, work, help, and limits in plain text. It
+never asks an AI to search the Mac, a home directory, a repository, or the
+network. The sealed guide and specifications can be deconstructed into their
+canonical human-readable text under 012; sealing is not secrecy.
+
+The generated guide prints the exact absolute poll argument array, the exact
+absolute help and specification-list argument arrays, and the installed
+plain-text specification directory. It requires polling for the participant's
+entire active lifetime, not only while work is assigned, and requires an
+immediate stop after RETIRED. No provider-specific inference is needed.
+
+The launcher is the single signed native v1 executable installed by ARC and it
+reads only ARC's validated knowledge container. A room records its format and protocol;
+each event records the knowledge digest used to interpret that action. Nothing
+selects code or knowledge from PATH, a checkout, room text, or the network.
+Missing knowledge or an incompatible room produces a plain local refusal and
+an Administrator recovery action.
+
+QD-002 ONE AI INSTRUCTIONS CONTROL
+
+The room view places an AI-name field next to Copy AI Instructions to Paste
+Buffer. Beneath the field and control it says `Paste the instructions directly
+to the AI Chat you are using for that AI Name.` Using the control creates the
+participant, participant ID, random binding reference, and first binding
+generation in one commit, then copies the QD-001 handoff. A failed clipboard
+write keeps that participant and offers one retry of the same copy; the retry
+changes no state.
+
+Copy Instructions Again is available while an AI is waiting to connect and
+again when a qualified AI is Off Duty. It copies that participant's current
+handoff and changes no state. A later valid poll restores On Duty. This gives
+the Administrator one safe way to remind the existing AI chat without
+replacing its lane or qualification.
+
+Replace Instructions is one separately labeled, confirmed action on the
+INVITED, WAITING_FOR_PRODUCER, QUALIFYING, and FAILED paths, and under More for
+a qualified AI while room time is unavailable. It invalidates the old binding,
+creates exactly one replacement generation, returns the participant to INVITED,
+and copies the replacement handoff. It never creates a second participant or
+silently changes a healthy qualified lane.
+
+The Administrator pastes the handoff into an existing AI chat. ARC does not
+open that chat, identify its provider, authenticate its model, send a provider
+message, or claim the paste occurred. Possession of the exact Room ID,
+participant ID, and current binding reference permits only that participant's
+ARC lane under RM-003.
+
+QD-003 AI-AGNOSTIC BASELINE
+
+ARC correctness depends on no AI or host feature first available after July 11,
+2025. A usable host or local adapter needs only to:
+
+  receive and return bounded plain UTF-8 text;
+  read the one explicitly named ARC guide or receive its exact text;
+  run the installed ARC program with an exact argument list; and
+  arrange a later turn in which the AI can run the same poll again.
+
+ARC requires no provider API, API key, browser, network, push notification,
+MCP, function calling, JSON mode, vision, audio, embeddings, remote memory, or
+model-specific prompt. A tool request is not execution until the host reports
+the ARC result. Silence is `qualification timed out`, not proof that a provider
+is incompatible.
+
+QD-004 ONE FIXED QUALIFICATION TEST
+
+Qualification proves only the two operations ARC needs from an AI: poll and
+act. The protocol is fixed and versioned as `arc.qualification/1`.
+
+Starting a test creates one random 32-lowercase-hexadecimal challenge and
+waits for the candidate's first valid poll. That first poll starts t0, returns
+the current challenge in the poll's `qualification` value, and returns this
+exact required action:
+
+  {"answer":"<challenge>","type":"qualification.answer"}
+
+The candidate uses `act` to submit that exact answer. Every qualifying poll
+continues to return the current challenge, earliest completion time, and
+deadline; no cursor-scoped Activity event is required to recover them. A
+different valid poll at least 40 seconds after the first poll, and before
+t0+120 seconds, completes the test. ARC verifies the same room, participant,
+binding, test, challenge, ordering, and times. A wrong answer is refused and
+may be corrected before the deadline. Partial steps never pass.
+
+The first participant's join starts this test as ARC bootstrap. A later
+participant normally enters WAITING_FOR_PRODUCER and appears on every Producer
+poll until the Producer uses the one fixed action:
+
+  {"participant":"<participant-id>",
+   "producer_generation":<observed-generation>,
+   "type":"qualification.start"}
+
+If the designated Producer is not live when a candidate polls, ARC starts the
+identical test itself. This bootstrap and recovery fallback prevents a waiting
+candidate from leaving the Administrator in limbo; it does not appoint or
+change a Producer. Tests run independently; there is no room-wide qualification
+queue or lock. A Producer-started test is confirmed by that act's result. The
+candidate-targeted challenge is not echoed to the Producer. The later
+qualification result is a room event returned on the Producer's poll.
+
+Passing sets the phase to QUALIFIED and the completing poll establishes the
+first duty check-in. It also becomes Producer when RM-005's single automatic
+choice applies. The guide then tells the AI to say in its existing chat:
+"I am <AI name>. I understand room <room name> (<Room ID>), and ARC has
+qualified me to work." ARC's event, not that sentence, is the status source.
+
+QD-005 THREE OPPORTUNITIES IN TWO MINUTES
+
+The qualification view derives three visible opportunities from the candidate's
+first qualifying poll, t0:
+
+  first opportunity    t0
+  second opportunity   t0 + 40 seconds
+  third opportunity    t0 + 80 seconds
+  deadline             t0 + 120 seconds
+
+Before that first poll the Mac says that ARC is waiting for the AI to check in;
+there is no deadline. ARC stores the test start, challenge, actual polls,
+answer, and result. It does not store or append three reminder, attempt, alert,
+or acknowledgement records.
+Before each time, the Mac shows the next opportunity. At or after each due time,
+it shows that the AI may check in now. Only an actual valid poll is a check-in.
+
+If the fixed steps are incomplete at the deadline, ARC records one failure
+event and changes the participant to FAILED. The Mac immediately shows
+Qualification failed, Try Again, Replace Instructions, and Retire AI. Try Again
+keeps the same binding and creates a fresh challenge. Its t0 begins only when
+that AI next polls, then it gives the same three opportunities. It is not a
+hidden fourth opportunity.
+
+QD-006 ONE PORTABLE DUTY POLL
+
+`poll` is ARC's only heartbeat and AI read operation. Every valid poll by a
+QUALIFIED participant records its last check-in and makes it On Duty. The next
+check-in is expected 60 seconds later. ARC derives request labels at:
+
+  due                 last valid poll + 60 seconds
+  second request      due + 40 seconds
+  third request       due + 80 seconds
+  Off Duty            due + 120 seconds
+
+These labels come from the recorded poll time and current ARC event time. ARC
+does not persist or append request attempts. At Off Duty, the participant
+remains QUALIFIED and its nonterminal work is shown as Waiting for Producer to
+reassign. Any later valid poll immediately records a new last check-in and
+restores On Duty. No reconnect, replacement binding, or requalification is
+needed after ordinary missed duty.
+
+The schedule is portable because it is one calculation over timestamps in the
+room, not a provider integration. While ARC runs, its one local timer refreshes
+the Mac view at the next relevant time. Opening the room or receiving a poll
+performs the same catch-up. ARC has no per-provider timer, daemon, watcher,
+doorbell, or background provider connection.
+
+QD-007 NO FALSE WAKE CLAIMS
+
+ARC can truthfully show only:
+
+  Next check-in expected at <time>
+  Check-in requested
+  Check-in overdue
+  Off Duty
+  Checked in at <time>
+
+The timer changes these local labels. It cannot wake an AI, create a provider
+turn, deliver a message, or prove that a chat saw anything. The AI host, a local
+adapter, or the Administrator must cause the later turn that runs poll. A poll
+proves only that the bound ARC request occurred; a message or work act proves
+only that specific recorded act.
+
+QD-008 CLEAR RECOVERY AND RETIREMENT
+
+FAILED has Try Again. Lost or exposed instructions use the single confirmed
+Replace Instructions action. Ordinary Off Duty uses a later poll, not a
+reconnect workflow. RETIRED is terminal.
+
+Retire AI invalidates the binding immediately, ends an active qualification,
+clears a Producer designation held by that participant, preserves all events,
+and refuses later requests from that binding. The former AI chat may not learn
+that it was retired until its next ARC request returns RETIRED. It must then
+stop its recurring poll immediately.

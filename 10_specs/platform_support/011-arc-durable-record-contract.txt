@@ -1,0 +1,397 @@
+ARC v1.0 EXACT ROOM-RECORD CONTRACT
+
+REC-001 AUTHORITATIVE BYTES
+
+The authoritative state of one room is the regular file:
+
+  ~/Library/Application Support/ARC/rooms/<Room ID>.arcroom
+
+Its format value is exactly `arc.room/1`. The file is one through 8,388,608
+bytes of canonical UTF-8 JSON followed by exactly one LF. Persisted names are
+lowercase snake case. Objects are pretty printed with two-space structural
+indentation and keys sorted by UTF-8 lexical order. Slashes are not escaped.
+Numbers are signed 64-bit integers. Floating-point values do not exist.
+
+The decoder first enforces the 8 MiB bound, a maximum structural depth of 32,
+and a lexical structural-item count no greater than the byte count; rejects
+missing and unknown record fields; decodes
+the typed records below, validates every stated invariant, and re-encodes the
+document. The re-encoded bytes must equal the supplied bytes. This equality
+also refuses duplicate keys, alternate whitespace, alternate escaping,
+noncanonical numbers, reordered keys, trailing content, and missing final LF.
+
+The only adjacent coordination file is `<Room ID>.arcroom.lock`, a zero-byte
+0600 regular file with one link. It carries no state and remains in place so
+concurrent waiters always contend on one inode.
+
+REC-002 TOP-LEVEL RECORD
+
+The top-level object has exactly these required fields:
+
+  activity       array of Event
+  format         `arc.room/1`
+  participants   array of Participant
+  room           Room
+  work           array of Work
+
+Limits are 64 Participant records, 50 non-COMPLETE Work records, 256 total
+Work records, complete lifetime Event retention, and 8 MiB for the complete file.
+ARC removes the oldest COMPLETE work record before creating work when the total
+is already 256. It never removes Activity. A next revision that does not fit
+returns LIMIT_EXCEEDED and leaves the prior complete room unchanged.
+
+REC-003 ROOM
+
+Room has exactly:
+
+  id                       RoomID
+  name                     Name
+  created_at               Timestamp
+  updated_at               Timestamp
+  revision                 positive integer
+  next_sequence            positive integer
+  producer_id              AIID, optional
+  producer_generation      nonnegative integer
+  producer_ever_selected   Boolean
+  last_clock_logical_us    LogicalTime
+  last_admin_operation     AdminOperation, optional
+
+`id` must equal the filename stem. `created_at` is no earlier than the Unix
+epoch, is no later than `updated_at`, and `updated_at` is the exact Timestamp
+for `last_clock_logical_us`. Revision begins at 1 and increases exactly
+once for a committed mutation. `next_sequence` begins at 1 and is assigned to
+the next Event.
+
+If `producer_id` is present, it names a retained QUALIFIED Participant,
+`producer_ever_selected` is true, and `producer_generation` is positive. The
+generation begins at zero, becomes one when the first AI qualifies and becomes
+Producer, and increases whenever the designated Producer changes or is
+cleared. Once true, `producer_ever_selected` never becomes false.
+
+AdminOperation has exactly:
+
+  id               OperationID
+  request_digest   SHA256
+
+It retains the latest definitive Administrator mutation request. Repeating the
+same OperationID and request returns the prior result without mutation. The
+same OperationID with a different request returns OPERATION_CONFLICT.
+
+REC-004 PARTICIPANT
+
+Participant has exactly:
+
+  id                     AIID
+  name                   Name
+  phase                  ParticipantPhase
+  binding                Binding, optional
+  binding_generation     positive integer
+  qualification          Qualification, optional
+  last_poll_logical_us   LogicalTime, optional
+  next_operation         OperationID
+  last_operation         LastOperation, optional
+
+ParticipantPhase is exactly one of:
+
+  INVITED
+  WAITING_FOR_PRODUCER
+  QUALIFYING
+  QUALIFIED
+  FAILED
+  RETIRED
+
+Participant IDs and case-insensitive names are unique within the room. Present
+bindings are unique. A non-retired Participant has one binding; a RETIRED
+Participant has none. `binding_generation` begins at one and increases when the
+Administrator chooses Replace Instructions. Replacement creates a new binding
+and operation token, returns the phase to INVITED, clears qualification,
+check-in, replay, and any Producer designation, and does not create a second
+Participant.
+
+A QUALIFIED Participant has no Qualification, has a binding, and has a
+`last_poll_logical_us`. A QUALIFYING Participant has a binding and exactly one
+Qualification. INVITED, WAITING_FOR_PRODUCER, and FAILED have a binding and no
+Qualification. RETIRED has neither binding nor Qualification. Retirement is
+terminal.
+
+Bindings are credentials. They exist in the private room and Administrator
+instruction result. AI guide, poll, act, roster, Activity, diagnostics, and
+ordinary logs must not disclose them.
+
+REC-005 QUALIFICATION
+
+Qualification has exactly:
+
+  challenge                32 lowercase hexadecimal characters
+  started_logical_us       LogicalTime
+  first_poll_logical_us    LogicalTime, optional
+  answer_logical_us        LogicalTime, optional
+
+It exists only while the Participant is QUALIFYING. `started_logical_us` records
+when ARC or the Producer created the challenge; it does not start a deadline.
+Before `first_poll_logical_us` exists the test is waiting for that candidate and
+has no deadline. The first qualifying poll starts the fixed deadline at
+`first_poll_logical_us + 120,000,000`. The three request boundaries are that
+first poll, plus 40,000,000, and plus 80,000,000 microseconds. Qualification
+requires the exact challenge answer and a later qualifying poll at least
+40,000,000 microseconds after the first qualifying poll but before the deadline.
+Expiry changes the phase to FAILED and removes Qualification.
+
+REC-006 AI OPERATION REPLAY
+
+LastOperation has exactly:
+
+  token             OperationID
+  request_digest    SHA256 of the canonical typed action object
+  event_sequences   array of Event sequence integers
+  room_revision     positive integer
+  participant_id    AIID, optional result reference
+  work_id           WorkID, optional result reference
+  next_operation    OperationID
+
+`token` differs from `next_operation`. `room_revision` is no greater than the
+current room revision. `event_sequences` is nonempty, positive, consecutive,
+and below `room.next_sequence`. Optional result IDs must have their exact safe
+syntax but may no longer have a retained row: a retired Participant can be
+pruned when the 64-record bound is full, and the oldest COMPLETE Work can be
+pruned when the 256-record bound is full. History is not rewritten when that
+happens.
+
+`next_operation` equals the Participant's current `next_operation`. A retry of
+`token` with the same canonical request digest returns this result and does not
+mutate. A different request returns OPERATION_CONFLICT. Any other noncurrent
+token returns OPERATION_STALE. After a definitive act, ARC stores LastOperation
+and generates the new `next_operation`.
+
+REC-007 WORK
+
+Work has exactly:
+
+  id                              WorkID
+  owner                           AIID
+  state                           WorkState
+  scope                           Text, at most 4,096 UTF-8 bytes
+  evidence_mode                   EvidenceMode
+  evidence                        Evidence
+  assigning_producer_generation   positive integer
+  revision                        positive integer
+  created_at                      Timestamp
+  updated_at                      Timestamp
+  updated_logical_us              LogicalTime
+
+WorkState is OPEN, ACTIVE, BLOCKED, or COMPLETE. EvidenceMode is TEXT or
+VISUAL. IDs are unique. The owner has valid AIID syntax but may be absent after
+a retired Participant record is pruned; that non-COMPLETE Work remains visible
+to the Producer for reassignment. Creation sets OPEN, `{}` evidence, and revision 1.
+Every owner update or Producer reassignment increases revision exactly once.
+Reassignment sets a new On Duty owner, OPEN, `{}` evidence, and the current
+Producer generation. COMPLETE is terminal.
+
+`assigning_producer_generation` is no greater than the room's current
+`producer_generation`. It records the generation that assigned or most
+recently reassigned the Work; it does not require that Producer's Participant
+record to remain present.
+
+The only owner transitions are:
+
+  OPEN     -> ACTIVE | BLOCKED | COMPLETE
+  ACTIVE   -> BLOCKED | COMPLETE
+  BLOCKED  -> ACTIVE | COMPLETE
+
+REC-008 EVIDENCE
+
+Evidence is one exact object selected by Work state and mode:
+
+  OPEN
+    {}
+
+  ACTIVE, either mode
+    {"note":Text}
+
+  BLOCKED, either mode
+    {"blocker":Text}
+
+  COMPLETE, TEXT
+    {"references":[Text,...],"result":Text}
+
+  COMPLETE, VISUAL
+    {"artifact":Text,"defects":[Text,...],"inspected_at":Timestamp,
+     "inspection":Text,"result":"PASS"|"PASS_WITH_DEFECTS",
+     "surfaces":[Text,...]}
+
+`note` and `blocker` are at most 4,096 UTF-8 bytes. `result` is at most
+16,384. Other evidence text and each list entry are at most 4,096. References
+has 0 through 16 entries, surfaces 1 through 64, and defects 0 through 32.
+PASS requires no defects; PASS_WITH_DEFECTS requires at least one. The complete
+compact sorted-key encoding of Evidence is at most 60,000 bytes.
+`inspected_at` uses the exact Timestamp form in REC-011.
+
+REC-009 EVENT
+
+Event has exactly:
+
+  sequence           positive integer
+  at                 Timestamp
+  logical_us         LogicalTime
+  kind               canonical text, at most 80 UTF-8 bytes
+  actor              canonical text, at most 80 UTF-8 bytes
+  recipient          canonical text, at most 80 UTF-8 bytes, optional
+  subject            canonical text, at most 80 UTF-8 bytes, optional
+  payload            bounded JSON value
+  operation_id       OperationID
+  knowledge_sha256   SHA256
+
+Activity is nonempty. Events are consecutive and strictly increasing by
+sequence, and every sequence is less than `room.next_sequence`. Removing an
+event is forbidden.
+The compact sorted-key encoding of one payload is at most 65,536 bytes.
+`at` equals the Timestamp for `logical_us`. Retained events have nondecreasing
+logical time, begin no earlier than room creation, and do not exceed the room's
+last logical time. The first sequence is one and the final sequence is exactly
+`room.next_sequence - 1`. `knowledge_sha256` records the verified
+knowledge-container digest used by the operation. Activity is complete room
+history for the room's lifetime, not a signature or hash chain.
+
+`recipient == null` means every Participant may receive the Event. Otherwise
+only that AI receives it through poll. Activity for the Administrator is the
+same Event set in newest-first pages of 50.
+
+REC-010 EVENT VOCABULARY
+
+ARC v1.0 creates only these Event kinds and payloads:
+
+  ROOM_CREATED
+    actor administrator; payload {name}
+  ROOM_RENAMED
+    actor administrator; payload {name,time_verified}
+  AI_INVITED
+    actor administrator; recipient/subject AIID;
+    payload {name,time_verified}
+  INSTRUCTIONS_REPLACED
+    actor administrator; recipient/subject AIID;
+    payload {binding_generation,producer_cleared,time_verified}
+  QUALIFICATION_RETRIED
+    actor administrator; recipient/subject AIID;
+    payload {answer_type,awaiting_first_poll,challenge}
+  AI_RETIRED
+    actor administrator; subject AIID;
+    payload {producer_cleared,time_verified}
+  PRODUCER_CHANGED
+    actor administrator; subject AIID; payload {generation,participant}
+  AI_JOINED
+    actor/subject AIID; payload {}
+  QUALIFICATION_STARTED
+    actor `arc` or Producer AIID; recipient/subject AIID;
+    payload {answer_type,awaiting_first_poll,challenge} while waiting, or
+    {answer_type,awaiting_first_poll,challenge,deadline_logical_us} after a
+    first-poll start
+  QUALIFICATION_ANSWERED
+    actor/recipient/subject AIID; payload {}
+  QUALIFICATION_FAILED
+    actor `arc`; recipient/subject AIID; payload {reason}
+  AI_QUALIFIED
+    actor/subject AIID; payload {became_producer}
+  AI_RETURNED_ON_DUTY
+    actor/subject AIID; payload {}
+  MESSAGE
+    actor sender AIID; recipient target AIID; payload {text}
+  WORK_ASSIGNED
+    actor Producer AIID; recipient owner AIID; subject WorkID;
+    payload {evidence_mode,scope}
+  WORK_UPDATED
+    actor owner AIID; subject WorkID; payload {evidence,revision,state}
+  WORK_REASSIGNED
+    actor Producer AIID; recipient new owner AIID; subject WorkID;
+    payload {owner,reason,revision}
+
+The only actor forms are `administrator`, `arc`, or AIID. A present recipient
+is AIID. A present subject is AIID, WorkID, or RoomID.
+
+`answer_type` is `qualification.answer`. Administrative operations that remain
+available when wall time cannot be verified use the retained logical time and
+set `time_verified` false. Other listed payloads have no unknown fields.
+
+REC-011 IDENTIFIERS, TEXT, TIME, AND DIGESTS
+
+RoomID is `room-` plus 12 lowercase hexadecimal characters. AIID is `ai-` plus
+12. WorkID is `work-` plus 12. Binding and OperationID are canonical lowercase
+UUID strings with hyphens. SHA256 is exactly 64 lowercase hexadecimal
+characters.
+
+Name is trimmed, NFC text containing no control character, at most 80 extended
+grapheme clusters and 512 UTF-8 bytes. Other persisted Text is NFC. Fields that
+permit line breaks accept LF and tab but no other control character; identifiers,
+names, and keys permit none. JSON object keys are nonempty canonical text at
+most 256 UTF-8 bytes.
+
+Participant check-in time does not exceed the room's last logical time. A
+Qualification start does not exceed it; a first qualifying poll is at or after
+the start; its deadline is exactly that poll plus 120,000,000; an answer
+requires a first poll, is at or after that poll, and is before that deadline.
+Work creation is no earlier than room creation, update is no earlier than
+creation, `updated_at` is the exact Timestamp for `updated_logical_us`, and
+updated logical time does not exceed the room's last logical time.
+
+LogicalTime is a nonnegative epoch-microsecond integer no greater than
+253402300799999999. Timestamp is its UTC rendering:
+
+  YYYY-MM-DDTHH:MM:SS.ffffffZ
+
+It uses a real Gregorian date, 00 through 23 hours, and 00 through 59 minutes
+and seconds. ARC persists no locale-dependent time.
+
+REC-012 BOUNDED JSON
+
+Action input is one nonempty JSON object at most 131,072 bytes. The strict
+parser accepts objects, arrays, strings, Booleans, null, and signed 64-bit
+integers; refuses floating point, duplicate keys, trailing content, invalid
+UTF-8 or escapes, and integer overflow; and permits at most depth 32, 4,096
+members in one object or array, and 8,192 total values.
+
+Persisted payload and Evidence values permit the same JSON value kinds, at
+most depth 32, 4,096 members per object or array, 65,536 total values, and
+65,536 UTF-8 bytes per string. Persisted strings are NFC and contain no control
+character other than LF and tab where text is allowed.
+
+REC-013 MUTATION AND TIME
+
+Room creation requires a usable wall sample. A normal mutating poll, act,
+qualification retry, Producer selection, or tick computes:
+
+  logical_us = max(room.last_clock_logical_us, sampled_wall_us)
+
+and returns CLOCK_UNAVAILABLE without change if no finite, nonnegative,
+representable wall sample exists. Routine QUALIFIED poll updates
+`last_poll_logical_us` and revision but adds no Event unless the AI was Off Duty,
+in which case it also adds AI_RETURNED_ON_DUTY.
+
+Rename, invite, instruction replacement, and retirement remain available to
+the Administrator when sampling fails. They use `last_clock_logical_us`, set
+their Event's `time_verified` false, and do not fabricate an AI check-in. A read
+view reports TIME_UNAVAILABLE. Stored logical time never decreases.
+
+REC-014 FILE TRANSACTION
+
+Every operation validates the absolute data root and refuses linked path
+components. The room and lock are opened relative to a no-follow rooms-directory
+descriptor. ARC acquires exclusive `flock`, waiting at most five seconds in
+20-millisecond intervals. A room read requires one-link regular metadata,
+bounded size, stable descriptor metadata, and unchanged path identity through
+the complete read.
+
+A mutation builds and validates one complete next document in bounded memory.
+It writes a create-exclusive unpredictable 0600 regular sibling, synchronizes
+the file, atomically renames it over the room, and synchronizes the directory.
+Creation uses exclusive rename and retries a new random RoomID on collision.
+Any refusal before publication leaves prior room bytes unchanged. The stable
+lock file is not removed after an operation. Permanent deletion is the only
+operation that removes both the selected room and its lock after proving every
+Participant is RETIRED.
+
+REC-015 VERSION AND RECOVERY RULE
+
+Unknown, missing, malformed, over-limit, or noncanonical fields are not
+preserved or repaired. An unknown `format` is ROOM_INCOMPATIBLE. Other invalid
+room bytes are ROOM_CORRUPT. ARC never guesses a conversion and never invents a
+second source of truth. A later format requires an explicit new specification
+and reader; it must not silently broaden `arc.room/1`.

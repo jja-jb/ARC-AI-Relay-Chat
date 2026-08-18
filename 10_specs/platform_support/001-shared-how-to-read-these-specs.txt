@@ -1,0 +1,84 @@
+ARC v1.0 HOW TO READ THE DETERMINING SPECIFICATIONS
+
+READ-001 DETERMINING SET
+
+The determining ARC v1.0 set is exactly the thirteen UTF-8 text members numbered
+000 through 012. They are read together:
+
+  000  product constitution and decision rule
+  001  this reading and precedence contract
+  002  room, Administrator, participant, and Producer
+  003  durable state, transactions, time, and recovery
+  004  messages, work, and the shared event stream
+  005  invitation, qualification, duty, and AI polling
+  006  ordinary macOS application
+  007  command and machine interface
+  008  security, privacy, and deletion
+  009  installation, distribution, license, and public release
+  010  traceability and design-verification testing
+  011  exact durable JSON record and event schemas
+  012  sealed AI knowledge container and text round trip
+
+No README, source comment, screenshot, test, generated document, prior prototype,
+room message, or provider prompt can override this set. Those artifacts conform
+to the specifications, not the reverse.
+
+READ-002 REQUIREMENT WORDS
+
+MUST and MUST NOT are release requirements. SHOULD identifies the expected
+implementation unless a documented exception preserves every determining
+requirement. MAY permits a choice. Present-tense statements that define a type,
+state, command, result, or visible behavior are normative even without a modal
+word.
+
+Examples explain a rule but do not add a second rule. Exact blocks, field lists,
+enumerations, byte layouts, paths, and strings are normative unless explicitly
+labeled illustrative.
+
+READ-003 PRECEDENCE
+
+Apply requirements in this order when wording appears to conflict:
+
+  1. safety, explicit authority, and C-003 through C-006;
+  2. exact schema, byte, command, and state definitions in 007, 011, and 012;
+  3. behavioral contracts in 002 through 005 and 008;
+  4. the Mac presentation contract in 006;
+  5. installation, release, and verification contracts in 009 and 010.
+
+This order resolves wording; it never authorizes silent data loss or an extra
+product mechanism. A genuine unresolved contradiction is a specification defect
+and blocks publication until the text is corrected.
+
+READ-004 ONE FACT, ONE OWNER
+
+Each important fact has one determining home. Other specifications refer to it
+instead of restating its mechanics:
+
+  roles and status       002
+  storage and time       003 and exact schema 011
+  event and work meaning 004
+  AI timing and polling  005
+  visible Mac wording    006
+  command spelling       007
+  local trust/deletion   008
+  release form           009
+  evidence of conformity 010
+  knowledge bytes        012
+
+If two mechanisms claim the same job, the implementation is not conforming.
+
+READ-005 HUMAN AND ENGINEERING WORDS
+
+The ordinary app uses Room, Room ID, AI participant, Producer, On Duty, Off
+Duty, Work, and Activity. Durable record, generation, digest, operation token, event
+sequence, logical time, and schema belong in Details, developer documentation,
+or AI instructions. Plain wording changes presentation only; it never changes
+the underlying record or authority.
+
+READ-006 COMPLETION
+
+A release is complete only when every public control, command, state, schema,
+error, background action, knowledge member, and recovery path maps to one source
+implementation and at least one verification case. A prototype behavior that is
+not in this set is removed. A requirement without code and evidence is not an
+unfinished v1.0 feature; it means the candidate is not ARC v1.0.

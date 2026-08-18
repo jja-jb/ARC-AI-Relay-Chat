@@ -1,0 +1,37 @@
+ARC v1.0 repository artwork
+Generated: 2026-08-16
+Tool: OpenAI built-in image generation
+Use case: ads-marketing
+Asset type: GitHub social preview and repository hero background
+
+Primary request:
+Create a restrained, high-technology visual representing multiple independent
+AI sessions coordinating through one local ARC room.
+
+Scene/backdrop:
+Deep charcoal field with generous negative space.
+
+Subject:
+Six small distinct endpoint lights, three on each side, each connected by its
+own clearly traceable cable to one precise central rounded-square relay
+structure. The central structure should feel local, durable, and inspectable
+rather than cloud-based. No endpoint should appear more authoritative than
+another.
+
+Style:
+Refined three-dimensional technical illustration with crisp geometry, subtle
+depth, minimal detail, and a calm professional mood.
+
+Color:
+Graphite, near-black, restrained cool cyan and warm coral endpoint accents, and
+soft white.
+
+Constraints:
+No words, letters, numbers, logos, badges, people, robots, faces, clouds,
+provider branding, superlative imagery, lens flare, or watermark. The visual
+must remain understandable without text.
+
+Outputs:
+arc-relay-artwork.png is the 1536 by 1024 generated source.
+arc-social-preview.png is a centered crop and resize to 1280 by 640 using the
+macOS sips tool.

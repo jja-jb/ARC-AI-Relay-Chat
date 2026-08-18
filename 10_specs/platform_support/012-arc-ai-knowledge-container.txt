@@ -1,0 +1,343 @@
+ARC v1.0 AI KNOWLEDGE CONTAINER CONTRACT
+
+AKC-001 PURPOSE AND BOUNDARY
+
+The ARC AI knowledge container is one immutable byte string. Its caller supplies
+only:
+
+  a pointer to the first byte;
+  the exact byte length; and
+  the expected 32-byte SHA-256 digest of the complete byte string.
+
+The reader validates the digest and structure in bounded memory, then builds one
+fixed internal table whose only purpose is to identify admitted members and the
+location of their bytes. The interpreter receives typed text access through
+that table. It never receives a pathname, file descriptor, writable alias,
+generic member name, executable object, nested container, or network handle.
+
+The source bytes remain owned by the caller and immutable for the reader's
+entire lifetime. The reader never allocates in proportion to payload text,
+decompresses data, follows a link, opens a file, searches the host, loads code,
+or interprets room text as authority.
+
+AKC-002 LIMITS AND INTEGER RULES
+
+All container integers are unsigned big-endian. A decoder checks every add,
+multiply, comparison, conversion to `size_t`, and range end before use. It never
+forms `offset + length` until it has proved the addition fits both `uint64_t`
+and `size_t`.
+
+The exact v1 bounds are:
+
+  container bytes          1 through 8,388,608
+  directory members        18 or 19 for Profile 1; never more than 32
+  directory-entry bytes    160
+  logical-name bytes       1 through 96
+  one text member          1 through 524,288
+  reader workspace         16,384 bytes
+  one read copy            caller-selected; never larger than the member
+
+The reader uses no recursion. Every loop is bounded by member count, requested
+copy length, or source length.
+
+AKC-003 BYTE-EXACT HEADER
+
+The first 64 bytes are:
+
+  offset  size  value
+  0       8     ASCII `ARCKB001`
+  8       4     format version; exactly 1
+  12      4     profile; exactly 1
+  16      4     member count
+  20      4     directory-entry size; exactly 160
+  24      8     directory offset; exactly 64
+  32      8     directory length; member count multiplied by 160
+  40      8     payload offset; 64 plus directory length
+  48      8     file length; exactly the caller length
+  56      8     zero
+
+The directory begins immediately after the header. The payload begins
+immediately after the directory. No extension header, alternate profile,
+signature block, compression table, or reserved nonzero flag is valid in v1.
+
+AKC-004 BYTE-EXACT DIRECTORY ENTRY
+
+Each 160-byte entry is:
+
+  offset  size  value
+  0       2     logical-name length
+  2       1     required flag; 0 or 1
+  3       1     member type; exactly 1 for inert UTF-8 text
+  4       4     zero
+  8       8     payload offset
+  16      8     payload length
+  24      32    SHA-256 of the exact payload bytes
+  56      96    logical-name bytes followed by zero padding
+  152     8     zero
+
+The name length bytes in the name field are nonzero and every remaining byte
+of that field is zero. Entries are strictly increasing by unsigned logical-name
+bytes. A name therefore occurs exactly once. Payload offsets are strictly
+increasing in the same order.
+
+AKC-005 CANONICAL NAMES AND PROFILE
+
+A logical name is ASCII lowercase letters, digits, hyphen, underscore, period,
+and `/`. It is relative, has no leading or trailing `/`, no empty segment, no
+`.` or `..` segment, no segment beginning with `.`, no backslash, no colon, and
+no repeated `/`. Every admitted member ends in `.txt`.
+
+Profile 1 requires exactly these members, all with required flag 1:
+
+  ai/arc-ai.txt
+  help/arc-help.txt
+  legal/hummingbird-license.txt
+  legal/notice.txt
+  manual/arc-man-page.txt
+  specifications/000-shared-constitution.txt
+  specifications/001-shared-how-to-read-these-specs.txt
+  specifications/002-arc-room-administrator-ai-and-producer.txt
+  specifications/003-arc-durable-state-and-integrity.txt
+  specifications/004-arc-messaging-and-work-protocol.txt
+  specifications/005-arc-ai-instructions-qualification-duty-and-polling.txt
+  specifications/006-arc-macos-application-contract.txt
+  specifications/007-arc-cli-machine-interface.txt
+  specifications/008-arc-security-and-privacy.txt
+  specifications/009-arc-installation-distribution-and-release.txt
+  specifications/010-arc-specification-traceability-and-dvt-readiness.txt
+  specifications/011-arc-durable-record-contract.txt
+  specifications/012-arc-ai-knowledge-container.txt
+
+Profile 1 permits only one optional member, with required flag 0:
+
+  release/release-notes.txt
+
+No unknown, duplicate, hidden, nested-container, binary, executable, plugin, or
+provider-specific member is admitted. Member count is therefore exactly 18 or
+19.
+
+AKC-006 PAYLOAD PARTITION AND TEXT
+
+The first payload begins at the header payload offset. Each later payload begins
+exactly after the preceding payload. The final payload ends exactly at file
+length. Zero-length payloads, gaps, overlaps, aliases, shared ranges, trailing
+bytes, and ranges outside the source are invalid.
+
+Every payload is plain UTF-8 text with:
+
+  no byte-order mark;
+  no NUL or carriage return;
+  no C0 control other than horizontal tab and line feed;
+  LF line endings;
+  one final LF.
+
+Markdown and roff source may appear as human-readable text, but the container
+has no Markdown, HTML, script, executable, or man-page wire type. The reader
+returns bytes; presentation code may render only the fixed typed member it was
+given and must treat embedded markup as inert text unless its own trusted view
+explicitly formats that member.
+
+AKC-007 VALIDATION AND OPTIONAL OMISSION
+
+Validation order is fixed:
+
+  1. validate non-null inputs, caller length, and workspace alignment;
+  2. SHA-256 the complete source and compare with the supplied digest;
+  3. validate the header and all checked geometry;
+  4. validate every directory entry, name, uniqueness, order, and range;
+  5. validate the exact Profile 1 member set and required flags;
+  6. validate the complete gap-free payload partition;
+  7. validate each payload digest and text form;
+  8. publish the typed catalog only after every required member is valid.
+
+Invalid header, directory, name, profile, range, partition, or required payload
+rejects the whole container. An optional payload whose digest or text form is
+invalid is deterministically unavailable with status `OMITTED`; its bytes are
+never returned. An invalid optional entry cannot excuse a structural defect.
+
+The reader performs the same checks in every build. It never guesses an offset,
+repairs text, skips an unknown member, accepts the first duplicate, or falls
+back to host files or the network.
+
+AKC-008 FIXED TYPED C INTERFACE
+
+The public C boundary declares the fixed constants and opaque handle:
+
+  #define ARC_KNOWLEDGE_MAX_MEMBERS 32u
+  #define ARC_KNOWLEDGE_WORKSPACE_BYTES 16384u
+
+  typedef union ArcKnowledgeStorage {
+      max_align_t alignment;
+      unsigned char bytes[ARC_KNOWLEDGE_WORKSPACE_BYTES];
+  } ArcKnowledgeStorage;
+
+  typedef struct ArcKnowledge ArcKnowledge;
+
+  typedef enum ArcKnowledgeStatus {
+      ARC_KNOWLEDGE_OK = 0,
+      ARC_KNOWLEDGE_INVALID_ARGUMENT,
+      ARC_KNOWLEDGE_DIGEST_MISMATCH,
+      ARC_KNOWLEDGE_INVALID_CONTAINER,
+      ARC_KNOWLEDGE_MISSING_ESSENTIAL,
+      ARC_KNOWLEDGE_OMITTED,
+      ARC_KNOWLEDGE_OUT_OF_RANGE,
+      ARC_KNOWLEDGE_BUFFER_TOO_SMALL
+  } ArcKnowledgeStatus;
+
+  typedef enum ArcKnowledgeMember {
+      ARC_KNOWLEDGE_SPEC_000 = 0,
+      ARC_KNOWLEDGE_SPEC_001,
+      ARC_KNOWLEDGE_SPEC_002,
+      ARC_KNOWLEDGE_SPEC_003,
+      ARC_KNOWLEDGE_SPEC_004,
+      ARC_KNOWLEDGE_SPEC_005,
+      ARC_KNOWLEDGE_SPEC_006,
+      ARC_KNOWLEDGE_SPEC_007,
+      ARC_KNOWLEDGE_SPEC_008,
+      ARC_KNOWLEDGE_SPEC_009,
+      ARC_KNOWLEDGE_SPEC_010,
+      ARC_KNOWLEDGE_SPEC_011,
+      ARC_KNOWLEDGE_SPEC_012,
+      ARC_KNOWLEDGE_AI_GUIDE,
+      ARC_KNOWLEDGE_HELP,
+      ARC_KNOWLEDGE_MAN_PAGE,
+      ARC_KNOWLEDGE_LICENSE,
+      ARC_KNOWLEDGE_NOTICE,
+      ARC_KNOWLEDGE_RELEASE_NOTES
+  } ArcKnowledgeMember;
+
+The only interpreter-facing operations are:
+
+  ArcKnowledgeStatus arc_knowledge_open(
+      const unsigned char *bytes,
+      size_t length,
+      const unsigned char expected_sha256[32],
+      ArcKnowledgeStorage *storage,
+      ArcKnowledge **out_knowledge);
+
+  ArcKnowledgeStatus arc_knowledge_info(
+      const ArcKnowledge *knowledge,
+      ArcKnowledgeMember member,
+      size_t *out_length,
+      unsigned char out_sha256[32]);
+
+  ArcKnowledgeStatus arc_knowledge_read_text(
+      const ArcKnowledge *knowledge,
+      ArcKnowledgeMember member,
+      size_t offset,
+      unsigned char *destination,
+      size_t destination_capacity,
+      size_t *out_written,
+      int *out_done);
+
+  void arc_knowledge_close(ArcKnowledgeStorage *storage);
+
+`open` sets `*out_knowledge` only on success. `info` and `read_text` accept only
+the enum values above. `read_text` copies bytes into caller storage and never
+returns a source pointer. Offset may equal member length only to return zero
+bytes with `out_done=1`; a larger offset is OUT_OF_RANGE. A nonempty remaining
+member with zero destination capacity is BUFFER_TOO_SMALL.
+
+The optional release-notes enum returns OMITTED when absent or omitted. Every
+required enum is available after successful open. The API has no count, find,
+name, generic member, pathname, URL, execute, include, or plugin call.
+
+AKC-009 LIFETIME AND INTERPRETER RULE
+
+The caller keeps source bytes immutable and alive from successful `open` until
+`close`. C cannot detect a caller violation; violating that contract is outside
+the API. The caller also supplies one correctly allocated `ArcKnowledgeStorage`
+object; its compile-time type supplies the fixed size. The reader stores only
+the immutable pointer/length, supplied whole digest, and its fixed validated
+table in that workspace.
+
+The program interpreting ARC knowledge receives an `ArcKnowledge *` and fixed
+member enums. It may read only the bytes copied by `read_text`. It receives no
+source pointer, workspace pointer, member name, source path, file handle, or
+write callback. Room messages cannot select a knowledge member or alter the
+typed member assigned by the trusted ARC workflow.
+
+`close` clears the workspace. It does not free or modify source bytes. Calls
+with a closed handle, aliased output that overlaps source/workspace, or invalid
+enum are INVALID_ARGUMENT and perform no copy.
+
+AKC-010 DETERMINISTIC CONSTRUCTION
+
+The trusted packer takes the fixed Profile 1 source mapping, canonicalizes text
+line endings to LF, requires the final LF and all AKC-006 text rules, hashes each
+payload, sorts by logical-name bytes, and calculates checked offsets. It then
+writes one zero-initialized header, the zero-initialized fixed directory, and
+the payloads in directory order. No timestamp, source pathname, filesystem
+metadata, random value, compression, locale, host architecture, or build path
+enters the bytes.
+
+Given identical canonical member bytes and optional-member presence, every
+conforming packer produces identical container bytes and whole SHA-256.
+
+AKC-011 HUMAN-READABLE DECONSTRUCTION
+
+The source-tree `arc-dev` tool provides deterministic deconstruction for human
+and engineering review. It first opens the container through this exact
+validator. ARC.app and the interpreter have no such product action or path
+access.
+
+The deconstructor creates a new private destination and writes every admitted member
+at its logical `.txt` path plus `ARC-KNOWLEDGE-MANIFEST.txt`. It refuses an
+existing destination, link, alias, non-directory parent, or path outside the
+chosen destination. Files use mode 0600 and directories 0700. It writes to a
+private sibling and publishes by one atomic rename.
+
+The manifest is UTF-8 with LF and one final LF:
+
+  ARC knowledge text tree/1
+  container_sha256: <64 lowercase hexadecimal characters>
+  profile: 1
+  member_count: <decimal admitted count>
+  member: <logical name>\t<required|optional>\t<decimal bytes>\t<sha256>
+
+Member lines are in canonical directory order. An invalid optional member is
+not written; the manifest adds this sorted line after admitted members:
+
+  omitted: <logical name>\tinvalid optional text
+
+A shipped release container MUST have no omission. For a fully valid canonical
+container, the trusted repacker validates the manifest and files, reconstructs
+the bytes by AKC-010, and requires the result's digest to equal
+`container_sha256`. This is the byte-identical text round trip. For diagnostic
+deconstruction of a container with an omitted optional member, the text tree is complete
+for admitted knowledge but is intentionally not a byte-preserving repair of the
+invalid source.
+
+The repacker accepts only the manifest and exact manifest-listed regular files
+beneath the chosen text-tree root. It refuses an extra entry, link, alias,
+special file, case collision, or path outside that root and never follows a
+link. It reads no unlisted host file.
+
+AKC-012 STABLE REFUSALS
+
+The C API reports only its ArcKnowledgeStatus value and clears partial outputs.
+Trusted app/CLI presentation maps it to one stable factual explanation. It does
+not expose source bytes, unchecked offsets, host paths, stack traces, or parser
+internals. Essential failure prevents all interpretation. Optional omission is
+visible in Details and the text manifest and never silently replaced.
+
+AKC-013 REQUIRED VERIFICATION
+
+Release verification includes:
+
+  byte-exact header and entry golden vectors;
+  every checked-arithmetic boundary and maximum;
+  whole and member digest failures;
+  duplicate, unsorted, hidden, traversal, alias, gap, overlap, and trailing data;
+  missing, extra, wrongly flagged, and unknown profile members;
+  invalid UTF-8, BOM, NUL, CR, controls, and missing final LF;
+  essential rejection and optional deterministic omission;
+  zero-allocation open and chunked reads under address/undefined sanitizers;
+  proof that no interpreter call accepts a path or generic name;
+  deterministic builds on each supported architecture;
+  developer deconstruction safety; and
+  byte-identical deconstruct/repack for the shipped container.
+
+Fuzzing uses the fixed 8 MiB input and 16 KiB workspace bounds. A failure,
+timeout, sanitizer report, nondeterministic result, host read, network attempt,
+or path escape blocks publication of that candidate.

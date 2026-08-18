@@ -1,0 +1,136 @@
+ARC v1.0 SECURITY AND PRIVACY CONTRACT
+
+SP-001 HONEST TRUST BOUNDARY
+
+ARC protects a careful user from accidental room and participant mix-ups.
+Every AI operation names a Room ID, participant ID, and current random binding
+reference. ARC validates the complete tuple before returning room content or
+changing the room. Replacing instructions advances the binding generation;
+retirement ends it.
+
+The binding is a lane reference, not a password or a claim that ARC identified
+a model. ARC trusts the signed local program, the current macOS account, and
+the operating system's file protections. It does not defend against malicious
+software or a person already controlling that account. ARC states this limit
+without security theater.
+
+SP-002 LOCAL AND OFFLINE
+
+ARC stores product files and room records only below:
+
+  ~/Library/Application Support/ARC/
+
+ARC has no telemetry, analytics, advertising identifier, account service,
+cloud sync, provider login, credential store, embedded browser, update checker,
+network client, automatic upload, or automatic download. Its privacy manifest
+declares no collected data and no tracking. Release verification denies network
+entitlements and observes ordinary operation with the network unavailable.
+
+Room records are not encrypted by ARC. The app tells the Administrator not to
+put credentials or unnecessary private information in messages, work, or
+evidence. macOS account and device protections remain the confidentiality
+boundary.
+
+SP-003 TEXT NEVER BECOMES AUTHORITY
+
+Names, messages, work scopes, evidence, error text, and apparent commands are
+inert data. ARC displays and records them; it never executes, opens, evaluates,
+fetches, or interprets them as ARC authority. A message cannot select another
+room, participant, project, path, program, provider, or network resource.
+
+An AI can act only through the typed operations in 004 and 007, within its
+current lane and role. ARC cannot enlarge the permission already granted to
+the AI by its human-operated host.
+
+SP-004 PATH AND FILE SAFETY
+
+Room IDs and participant IDs are generated canonical identifiers, never user
+path fragments. ARC constructs a room path only as:
+
+  <ARC root>/rooms/<Room ID>.arcroom
+
+The root, `rooms`, and every installed-product parent must be real directories,
+not symbolic links. A room, its adjacent lock, and temporary siblings are regular
+files. ARC opens them without following a final link, checks ownership and
+type, and refuses unexpected directory entries rather than searching around
+them.
+
+The source-only developer verifier canonicalizes macOS's fixed `/tmp` alias to
+`/private/tmp` before applying these checks. This does not permit an installed
+ARC root, room path, or caller-selected alias to bypass the real-directory rule.
+
+ARC never takes a room pathname from an AI, room text, environment variable,
+current working directory, or PATH. The public developer `--root` option
+accepts only an explicit absolute isolated root and applies the same checks.
+
+SP-005 BOUNDED INPUT
+
+The complete room file is at most 8 MiB. The knowledge container is at most
+8 MiB and each admitted knowledge member is at most 512 KiB. One command
+request is at most 128 KiB, one event payload at most 64 KiB, and all counts
+and text fields use the bounds in 011. A length, offset, integer conversion,
+allocation, or addition is checked before use.
+
+ARC rejects duplicate JSON object keys, non-integer numbers, invalid UTF-8,
+forbidden control characters, excessive depth, unknown schema fields, and
+trailing non-whitespace bytes. Invalid essential knowledge rejects the
+container; invalid optional release notes are omitted deterministically.
+
+SP-006 ONE ROOM CANNOT REDIRECT ANOTHER
+
+ARCCore derives every read and write from the explicit Room ID passed to that
+operation and validates the room's own stored ID. There is no ambient selected
+room in the core, cross-room observer, bridge, shared AI inbox, or global work
+queue. The Mac selection is presentation state only.
+
+A participant receives only its room's roster, its addressed events, and work
+it may see under 004. Producer authority is checked in the same locked record
+revision as the change. Stale bindings, Producer generations, work revisions,
+and operation IDs cannot be repurposed in another room.
+
+SP-007 SAFE PUBLICATION AND RECOVERY
+
+Room changes are serialized by the bounded lock in 003. ARC reads and validates
+the complete prior file, builds a complete next file in bounded memory, writes
+a new same-directory regular file, synchronizes it, and atomically renames it
+over the prior file. A failed write never edits the prior file in place.
+
+ARC never guesses that a sibling file belongs to ARC and does not perform a
+startup sweep. Unknown and interrupted-write siblings remain untouched.
+Corrupt, incomplete, incompatible, or over-limit rooms open in Recovery and
+remain byte-preserved. ARC does not claim that it can safely determine their
+participant state or permanently delete them through the ordinary valid-room
+control.
+
+SP-008 PERMANENT DELETION IS EXPLICIT AND NARROW
+
+Delete Room is enabled only for a valid selected room in which every AI is
+RETIRED. One standard Mac confirmation names the room and states that deletion
+and its complete history are permanent and cannot be undone. ARC revalidates
+the room under its lock, unlinks exactly that room and its empty adjacent lock,
+and synchronizes the directory. It does not enumerate or remove another room,
+installed file, or unknown sibling, and it does not use the macOS Trash.
+
+Retire AI is not data deletion. It invalidates participation and does not
+remove Activity. Complete Activity remains until the room is permanently
+deleted.
+
+SP-009 DIAGNOSTICS MINIMIZE CONTENT
+
+Diagnose Room reads one bounded snapshot and reports format, size, identifiers,
+revision, Activity sequence validity, limits, knowledge identity, and actionable
+failure. The ordinary diagnostic view omits message text, work scope, evidence,
+bindings, operation IDs, and full local paths. Nothing is sent automatically.
+
+SP-010 INSTALLATION AND RELEASE SAFETY
+
+ARC.app verifies a canonical manifest of its native command, knowledge,
+specifications, and legal text before atomically publishing installed files.
+It never changes room files during installation. A release candidate is built
+from one immutable source revision, contains the supported arm64 architecture,
+and is signed, notarized, stapled, and independently tested under 009 and 010
+before final metadata and checksums are written.
+
+ARC has no dynamic extension, plug-in, provider adapter, downloaded code,
+embedded script engine, or writable executable payload. Its production
+entitlements are the minimum needed for an ordinary local Mac application.

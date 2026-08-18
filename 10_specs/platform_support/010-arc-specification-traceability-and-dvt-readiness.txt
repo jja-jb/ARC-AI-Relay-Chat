@@ -1,0 +1,193 @@
+ARC v1.0 TRACEABILITY AND DESIGN-VERIFICATION CONTRACT
+
+TV-001 COMPLETE MEANS PRESENT AND TESTED
+
+A v1.0 candidate contains every behavior required by specifications 000 through
+012. There is no postponed v1 behavior, hidden unlock, simulated production
+path, or conditional feature. Verification shows that the complete candidate
+conforms; it does not turn features on.
+
+Every normative requirement maps to one implementation location and at least
+one automated or external verification case. The traceability record uses the
+requirement prefix and number, source symbol or file, test name, architecture,
+and evidence result. A missing mapping is a release defect.
+
+TV-002 SOURCE-SCOPE AUDIT
+
+Before building a candidate, a deterministic source check proves:
+
+  one root Swift package and no remote package dependency;
+  only ARCApp, ARCCommand, ARCCore, ARCKnowledge, ARCDevTool, and tests form the
+    native build graph;
+  no service, daemon, provider adapter, extension system, hidden room format,
+    second core, second storage mechanism, or product room-copy path exists;
+  all thirteen specifications, legal files, documentation, editable artwork,
+    tests, release instructions, and public governance files are present;
+  no source link, secret-shaped value, local room, cache, generated candidate,
+    ignored working-tree file, or unexpected executable is admitted; and
+  the Hummingbird LICENSE has its recorded SHA-256.
+
+The check reads the annotated-tag tree for release evidence. It does not treat a
+clean version-control status as proof that ignored ambient files are absent.
+
+TV-003 AUTOMATED NATIVE VERIFICATION
+
+`make check` runs from a clean source tree without a network. It must pass:
+
+  Swift strict-concurrency compilation of ARCApp, ARCCommand, ARCCore, and
+    ARCDevTool, plus the ARCCore and ARCApp XCTest targets; the ARCApp target
+    includes its installer tests;
+  Clang warnings-as-errors compilation and adversarial tests for the C knowledge
+    reader;
+  deterministic knowledge build, C and Swift validation, deconstruction to a
+    readable text tree, and byte-identical reconstruction;
+  ARCCore regressions for qualification and Producer selection, idempotent
+    actions, binding redaction, strict action parsing, canonical-room refusal,
+    bounded participants, current work, complete Activity, safe permanent
+    deletion, recovery
+    controls, and Diagnose results;
+  ARCApp regressions for direct ARCCore calls, room refresh, selection and
+    paging, handoff construction, scheduling labels, presentation states, and
+    installer verification, repair, rollback, and unsafe-path refusal;
+  a native command smoke for exact version output, one canonical JSON Diagnose
+    result, provider-neutral `poll` and `act` envelopes, invalid-command exit
+    status, and stdout/stderr separation;
+  ARCDevTool execution for source, documentation, brand, privacy, install-tree,
+    and development-app checks; and
+  documentation names, version, paths, limits, commands, license, privacy,
+    release asset list, and absence of obsolete product claims.
+
+TV-004 DURABLE-RECORD PROOF
+
+The automated record checks decode canonical room bytes and separately present
+unknown fields, malformed durable relationships, over-depth action values,
+unsafe paths, linked roots, corrupt room files, operation retry conflicts, exact
+current work and participant limits, and Activity rollover. They prove that a
+refused action cannot leak a partial mutation when a due lifecycle transition
+commits.
+They also prove that every committed Activity item remains page-readable for
+the room's lifetime and that a size refusal preserves the prior bytes.
+
+Installer tests interrupt each staged installation step and reopen to one
+coherent installed tree. ARCCore mutations validate one prior room revision,
+write one same-directory temporary regular file, synchronize it, replace the
+room atomically, and synchronize the directory. The source and DVT evidence may
+claim a golden-byte corpus, process-kill harness, or concurrent-writer stress
+result only when the traceability record names an actual case and captured
+result; `make check` does not imply those unrun suites.
+
+TV-005 AI PROTOCOL PROOF
+
+Provider-independent ARCCore tests include one, two, three, and sixty-four
+participants; the room becomes Active at two qualified On Duty AIs with a live
+Producer and continues to support additional AIs through the limit. The
+sixty-fifth current AI is refused without mutation. The native command smoke
+checks its smallest public framing boundary; external DVT exercises the exact
+public command flow with compatible AI chats.
+
+Qualification receives three opportunities over two minutes beginning at each
+candidate's first qualifying poll, passes only after the fixed poll-and-act
+proof, and fails once at that candidate's deadline. Core tests cover Producer
+started first-poll delays of 0, 20, 39, 41, 79, and 81 seconds; each retains a
+full 40-second finishing window and returns the challenge in current poll state
+after the start event is no longer in the cursor page. The first passing AI
+becomes Producer; the Administrator can switch Producer repeatedly. A later AI
+normally waits for the Producer's start action, but ARC starts the same test
+when that Producer is not live. Bootstrap and recovery never leave the
+Administrator without a stated next action.
+
+Duty tests distinguish local schedule labels from actual polls. Missing polls
+make an AI Off Duty; a late valid poll restores On Duty. Closing the app,
+sleeping the Mac, changing a display timer, or writing a message never counts
+as a check-in. No test claims that ARC wakes a third-party chat.
+
+TV-006 MESSAGE AND WORK PROOF
+
+Hostile command-like text, paths, URLs, markup, and apparent authority remain
+inert in names, messages, scopes, and evidence. Lane tuples from another room
+or participant always refuse. A stale Producer generation or work revision
+always refuses in the same locked revision as the attempted action.
+
+For TEXT work, completion evidence is bounded plain structured data. For VISUAL
+work, completion must include the participant's statement that the rendered or
+canvas result was visually inspected; a source-text check alone is insufficient.
+This rule covers document and Google Docs canvas work without giving ARC access
+to the external application.
+
+TV-007 HUMAN-EXPERIENCE DVT
+
+An external tester unfamiliar with the implementation uses the exact signed
+candidate on a clean supported Apple silicon Mac. The tester records human
+action time separately from third-party AI-host wait. With two compatible AI
+chats already available, the human steps from launch through the second pasted
+handoff must take no more than five minutes.
+
+The tester performs, in order:
+
+  1. verify DMG checksum, signature, notarization, staple, and architectures;
+  2. drag ARC to Applications and launch with the network unavailable;
+  3. create a named room and explain the visible friendly name and Room ID;
+  4. add the first AI, copy its handoff, and observe the fixed qualification;
+  5. confirm the first qualified AI becomes Producer;
+  6. add and qualify a second AI, then see Active;
+  7. add a third AI and verify that Active did not mean `exactly two`;
+  8. send a targeted message, assign work, update it, and complete it with
+     evidence; repeat once with VISUAL evidence;
+  9. let one AI miss polls, observe truthful request labels and Off Duty, then
+     restore it with one late poll;
+ 10. change Producer twice, replace one AI's instructions, prove the old binding
+     refuses, and retire that AI;
+ 11. quit and reopen ARC, verify retained truth, and create a genuinely new room;
+ 12. diagnose a valid room, then separately present corrupt, over-limit,
+     incompatible, linked, and busy test rooms and verify safe recovery text;
+ 13. prove Delete Room is unavailable while any AI participates, retire every
+     AI, permanently delete only the selected room, and confirm its history
+     and lock are gone while every other room remains; and
+ 14. use all menus, keyboard traversal, VoiceOver labels, larger text, dark
+     appearance, reduced motion, and a 900 by 650 point window.
+
+At every step the tester asks a typical reader age 14 or older to identify the
+current state and next action without implementation vocabulary. A confusing
+or missing answer is a DVT failure even if the underlying operation succeeded.
+
+TV-008 INSTALLATION AND OFFLINE DVT
+
+The tester verifies first install, same-version fast path, signed upgrade,
+forced repair, interruption at every publication boundary, damaged owned file,
+unknown collision, linked parent, changed receipt, insufficient disk space, and
+read-only destination. Each outcome is the complete old or complete new
+installed payload; rooms remain byte-identical.
+
+The installed command works from an unrelated current directory under a hostile
+PATH and irrelevant environment values. App and command resolve only their
+fixed signed/installed knowledge locations. Ordinary UI and command use make
+no network connection, start no helper process, and read no checkout source.
+
+TV-009 RELEASE-CANDIDATE DVT
+
+The external tester receives the frozen DMG, source archive, product-literature
+PDF, candidate manifest, tag, commit, and prepared hashes. Release metadata is
+written only after DVT passes. The tester checks every
+file in both artifacts, rebuilds from the source archive on Apple silicon,
+compares declared identities and knowledge bytes, runs `make check`, and
+performs TV-007 and TV-008 against the exact DMG hash.
+
+The final text report names tester, organization or independence statement,
+UTC start and finish, machine, operating system, architecture, Xcode and
+Swift versions, source tag and commit, every prepared hash, every test row with
+PASS or FAIL and evidence, deviations, and final PASS or FAIL. Blank, BLOCK,
+SKIP, provisional, self-authored, mismatched, or partially hashed reports do
+not pass.
+
+TV-010 SEAL AND PUBLICATION CHECK
+
+Sealing re-reads the immutable prepared files and strict external report. It
+checks the annotated tag, clean source, app and DMG signatures,
+notarization and staples, arm64-only executables, bundle identifier/version, privacy
+manifest, install manifest, knowledge digest, Hummingbird LICENSE digest,
+candidate manifest, final metadata, and complete checksum list.
+
+Any changed candidate byte, wrong architecture, failed row, stale identity,
+or unexplained deviation fails sealing and requires a new candidate. The tools
+write local artifacts only. A maintainer, not the build, decides whether to
+publish the already tested bytes.

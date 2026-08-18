@@ -1,0 +1,193 @@
+ARC v1.0 ROOM, ADMINISTRATOR, PARTICIPANT, AND PRODUCER CONTRACT
+
+RM-001 ONE ROOM IDENTITY
+
+A room has two names:
+
+  Room name  Friendly text chosen by the Administrator. ARC trims it and uses
+             the native macOS NFC normalization before saving it. It is 1
+             through 80 extended grapheme clusters and at most 512 UTF-8
+             bytes, contains no control character or path separator, and may
+             be changed later.
+
+  Room ID    Generated once as `room-` followed by twelve lowercase
+             hexadecimal characters from secure random bytes. ARC checks for
+             a collision before creating the room. The ID never changes and
+             is never editable.
+
+ARC shows both values when the room is created and in the room view. It plainly
+explains that the friendly name is for people and the Room ID keeps files and
+AI lanes separate. Friendly names may repeat; Room IDs may not. ARC uses native
+macOS text handling and ships no separate Unicode engine.
+
+RM-002 ONE HUMAN ROLE
+
+The person using ARC is the Administrator. There is no second human role. The
+Administrator observes ARC and directs AIs through their existing chats. The
+Administrator is never an AI participant or Producer and has no AI inbox,
+poll, work ownership, or message identity.
+
+The Administrator may create and name the room; add, inspect, replace
+instructions for, retry, or retire AI participants; choose the Producer;
+observe events and work; diagnose local data; and permanently delete an
+inactive room after every participant is retired. ARC
+records each administrative change as an event.
+
+The Administrator cannot make ARC claim that an AI checked in, sent a message,
+answered a test, or completed work. ARC never requires the Administrator to
+relay AI-to-AI messages or operate the room as its Producer.
+
+RM-003 PARTICIPANT IDENTITY AND LANE BINDING
+
+The Administrator gives each AI participant a friendly name. ARC trims it,
+uses native macOS NFC normalization, and requires 1 through 80 extended
+grapheme clusters and at most 512 UTF-8 bytes, with no control character or
+path separator. Names are unique in the room under the native macOS
+case-insensitive comparison.
+
+ARC generates an immutable participant ID as `ai-` followed by twelve lowercase
+hexadecimal characters from secure random bytes. It also generates a random
+binding reference for the current instruction generation. The Mac view shows
+the participant name and makes the participant ID and binding generation easy
+to inspect. The binding reference appears only in the copied AI instructions
+defined by QD-001; the Mac view does not display it as participant detail.
+
+Every AI request names the exact Room ID, participant ID, and binding reference.
+ARC refuses a missing, stale, retired, or mismatched tuple before doing work.
+There is no ambient current room or participant.
+
+The binding reference is a random lane reference. It prevents accidental
+cross-room or cross-participant use; it is not a provider identity, login, or
+claim that ARC authenticated a model. ARC adds no Keychain secret layer. The
+trusted boundary is the current macOS account and the installed ARC program;
+ARC does not promise protection from a hostile process already controlling
+that account.
+
+RM-004 ONE PARTICIPANT LIFECYCLE
+
+Each participant has exactly one persisted phase:
+
+  INVITED                Instructions exist; the AI has not joined.
+  WAITING_FOR_PRODUCER    The AI joined and awaits the fixed test.
+  QUALIFYING              The fixed test is running.
+  QUALIFIED               The AI passed the fixed test.
+  FAILED                  The fixed test ended without a pass.
+  RETIRED                 The Administrator ended participation; terminal.
+
+For a QUALIFIED participant, On Duty or Off Duty is a live display derived
+only from its last valid poll under QD-006. Duty is not another persisted
+phase. Missing ordinary polls never erases qualification. A late valid poll
+immediately restores On Duty without replacement instructions, reconnect, or
+another qualification test.
+
+The ordinary phase paths are:
+
+  INVITED -> QUALIFYING or WAITING_FOR_PRODUCER
+  WAITING_FOR_PRODUCER -> QUALIFYING
+  QUALIFYING -> QUALIFIED or FAILED
+  FAILED -> QUALIFYING through Try Again
+  any non-retired phase -> INVITED through Replace Instructions
+  any non-retired phase -> RETIRED
+
+Try Again starts a fresh fixed test with the current binding. Replace
+Instructions is one confirmed action for lost or exposed instructions. It
+invalidates the old binding, creates one new binding generation, clears the
+current test and check-in, and returns the participant to INVITED without
+changing its name, ID, or history. RETIRED has no outgoing transition.
+
+RM-005 ONE PRODUCER
+
+The Producer is one QUALIFIED AI participant designated to coordinate the
+room. Producer generation starts at zero. A passing participant becomes
+Producer automatically only while that generation is still zero. That first
+choice increments the generation, which never returns to zero. Every later
+Producer choice belongs to the Administrator.
+
+The Administrator may choose any On Duty participant as Producer at any time
+and may change that choice repeatedly. A temporarily Off Duty Producer remains
+designated, so a late valid poll restores it without hidden reassignment. The
+Administrator may instead choose another On Duty participant immediately.
+Retiring or replacing the instructions of the Producer clears the designation.
+
+The Producer starts later participants' fixed tests, dispatches and reassigns
+work, and coordinates AI-to-AI activity. Its authority is confined to the one
+room and ends as soon as the Administrator chooses someone else. Each
+Producer-only action carries the generation observed on that Producer's poll.
+ARC accepts it only while both the Producer identity and generation remain
+current.
+
+RM-006 NO QUALIFICATION LIMBO
+
+The first participant's join starts ARC's fixed bootstrap test. A later join
+normally enters WAITING_FOR_PRODUCER. Each Producer poll shows every waiting
+candidate, and the Producer starts a candidate with the single fixed
+`qualification.start` action.
+
+Tests are independent. One candidate never waits for another candidate's test
+to finish. If no Producer is live during bootstrap or recovery, ARC starts
+each waiting candidate's same fixed test itself. This fallback applies even
+when another qualified AI is On Duty; the Administrator has no hidden duty to
+choose a Producer merely to prevent qualification limbo. ARC records who
+started every test, and the Producer sees each result in its next poll. The
+test never changes according to provider or model.
+
+RM-007 ONE PLAIN ROOM STATUS
+
+The room is Active if and only if its clock is available, at least two
+QUALIFIED participants are On Duty, and the designated Producer is On Duty.
+ARC shows the first plain statement that applies:
+
+  ARC cannot check time    The room clock is unavailable.
+  Needs two AIs On Duty   No participant is On Duty.
+  Needs one more AI On Duty
+                          Exactly one participant is On Duty.
+  Choose a Producer       At least two are On Duty, but the Producer is not.
+  Active                  At least two are On Duty, including the Producer.
+
+When ARC cannot check time, no participant is shown On Duty and no Producer is
+live. The one primary action is Try Again, which samples the clock without
+contacting an AI. Each participant row otherwise uses one plain label: Waiting
+to connect, Waiting for the Producer, Checking ARC access, On Duty, Off Duty,
+ARC access check failed, or Retired. The uppercase stored phase is an advanced
+detail. The primary room status never depends on a hidden queue or technical
+code.
+
+RM-008 CONTROLS ARE ALWAYS FINDABLE
+
+The AI-name field and Copy AI Instructions to Paste Buffer control remain
+visible in every valid room view. INVITED shows Copy Instructions Again,
+Replace Instructions, and
+Retire AI. WAITING_FOR_PRODUCER and QUALIFYING show Replace Instructions under
+More plus Retire AI. FAILED shows Try Again, Replace Instructions, and Retire
+AI. A qualified Off Duty AI shows Copy Instructions Again and Retire AI. A
+qualified On Duty AI shows Make Producer when eligible plus Retire AI. Copying
+changes no state; replacement and retirement require confirmation. While room
+time is unavailable, a qualified row shows Copy Instructions Again, Replace
+Instructions under More, and Retire AI because ARC cannot judge duty.
+
+Retire AI immediately invalidates the binding, ends any test, clears a Producer
+designation held by that participant, preserves history, and is terminal. Its
+confirmation says:
+
+  Stops <name> from participating and keeps their ARC history.
+
+All these controls are in the normal Mac view. Raw IDs and technical details
+are available without being the main language of the screen.
+
+A clock problem never hides the room or the Administrator's control. Adding an
+AI, copying or replacing instructions, retiring an AI, renaming, and
+diagnosis remain available. Make Producer and qualification Try Again wait
+until ARC can judge duty and deadlines again.
+
+Delete Room is visible in the Room menu and the selected room's sidebar
+context menu. It is enabled only when every participant is RETIRED. One normal
+Mac confirmation names the room and says that its complete history will be
+permanently deleted and cannot be recovered. ARC has no permanent-delete path
+for an active or otherwise participating room.
+
+RM-009 ROOM AND LANE ISOLATION
+
+A participant can observe or change only records returned through its exact
+room binding. A message is untrusted evidence, never authority to leave that
+room, inspect another project, run a command, or change the Mac. Cross-lane
+work requires a separate human-approved binding; a message cannot create one.

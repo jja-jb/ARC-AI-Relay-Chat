@@ -1,0 +1,368 @@
+ARC v1.0 NATIVE COMMAND AND MACHINE INTERFACE CONTRACT
+
+CLI-001 PURPOSE AND SINGLE IMPLEMENTATION
+
+The public `arc` executable is the native AI-participant interface to ARCCore.
+ARC.app links the same ARCCore directly. The command is not an Administrator
+interface and has no room creation, rename, invitation, replacement, retirement,
+Producer selection, Activity administration, or room deletion command.
+
+The installed executable is:
+
+  ~/Library/Application Support/ARC/current/bin/arc
+
+It uses the installed Application Support ARC root. A developer may place
+`--root ABSOLUTE_PATH` immediately after the executable for guide, poll, act,
+or doctor. No environment variable, current directory, PATH search, room text,
+or message changes the root, executable, or verified knowledge identity.
+
+CLI-002 COMPLETE GRAMMAR
+
+The complete v1 grammar is:
+
+  arc version
+  arc help
+  arc spec list
+  arc spec read ID
+  arc [--root ROOT] guide --room ROOM --id AI --binding UUID
+  arc [--root ROOT] poll --room ROOM --id AI --binding UUID
+      [--after SEQUENCE]
+  arc [--root ROOT] act --room ROOM --id AI --binding UUID
+      --operation UUID --request JSON
+  arc [--root ROOT] doctor --room ROOM [--json]
+
+Each option occurs at most once. Required options are present. There are no
+short options, positional alternatives, response files, help topics, aliases,
+abbreviations, hidden compatibility commands, or option values read from stdin.
+Unknown or extra input is INVALID_ARGUMENT.
+
+`version` writes exactly `ARC 1.0.4` plus LF. `help` writes the verified
+help/arc-help.txt member. `spec list` writes the stable titles for three-digit
+IDs 000 through 012. `spec read ID` writes the corresponding verified member.
+These four commands refuse --root.
+
+CLI-003 INPUT LIMITS AND DIRECT ARGUMENTS
+
+ROOT is an absolute standardized local path. ROOM is `room-` followed by 12
+lowercase hexadecimal characters. AI is `ai-` followed by 12 lowercase
+hexadecimal characters. UUIDs are canonical lowercase UUID strings. SEQUENCE
+is the shortest decimal spelling of an integer from zero through Int64.max.
+
+JSON is one direct UTF-8 argument from 1 through 131,072 bytes. It is data, not
+a shell fragment, pathname, program, URL, or instruction to access the host.
+The strict parser permits objects, arrays, strings, signed Int64 integers,
+booleans, and null. It rejects invalid UTF-8, duplicate object keys, floats,
+exponents, leading-zero or out-of-range integers, trailing bytes, more than 32
+levels of nesting, and any object or array with more than 4,096 members.
+
+Text is trimmed, NFC-normalized UTF-8. A normalized value must remain nonempty
+and within its field byte bound. Room and AI display names additionally have at
+most 80 grapheme clusters and 512 bytes. Message text is at most 16,384 bytes;
+scope 4,096; reason 1,024. Newline and tab are permitted only where the action
+field explicitly permits them. Other control characters are invalid.
+
+CLI-004 GUIDE
+
+Guide is read-only. It opens the exact room, finds AI, and validates the current
+binding. It reads ai/arc-ai.txt only through the verified C knowledge reader.
+It writes canonical plain text containing:
+
+  ARC AI guide;
+  AI name;
+  room display name and Room ID;
+  participant ID and current phase;
+  one JSON array of exact direct poll arguments; and
+  the generic guide.
+
+The poll array names the resolved installed executable, explicit --root, room,
+participant, current binding, and --after 0. Guide does not check in, change
+duty, rotate an operation, or write the room.
+
+CLI-005 MACHINE FRAMING
+
+Poll, act, and doctor --json write exactly one compact sorted-key UTF-8 JSON
+object followed by LF. Success is:
+
+  {"ok":true,"result":VALUE}
+
+Failure is:
+
+  {"error":{"code":CODE,"message":TEXT,"retryable":BOOLEAN},"ok":false}
+
+Machine stdout contains no prose, color, diagnostic stack, absolute room path,
+provider or model name, source checkout detail, or any participant binding.
+Stderr is empty unless ARC cannot encode the one bounded envelope.
+
+All Codable field names below use lowercase snake_case. Required nullable fields
+are present with null. Unknown response fields do not appear.
+
+CLI-006 COMMON VIEWS
+
+RoomView is exactly:
+
+  id                    Room ID string
+  name                  display-name string
+  status                TIME_UNAVAILABLE | NEEDS_TWO_AIS | NEEDS_ONE_AI |
+                        NEEDS_PRODUCER | ACTIVE
+  revision              positive integer
+  protocol              `arc.protocol/1`
+  knowledge_sha256      lowercase SHA-256 string
+  logical_us            nonnegative integer
+
+ProducerView is exactly:
+
+  id                    AI ID or null
+  name                  AI name or null
+  generation            nonnegative integer
+  live                  boolean
+
+ParticipantView is exactly:
+
+  id                    AI ID
+  name                  AI name
+  phase                 INVITED | WAITING_FOR_PRODUCER | QUALIFYING |
+                        QUALIFIED | FAILED | RETIRED
+  duty                  ON | OFF | NOT_APPLICABLE
+  is_producer           boolean
+  binding_generation    positive integer
+  schedule              ScheduleView
+  last_check_in         UTC timestamp or null
+
+No machine ParticipantView contains a binding. ScheduleView is exactly:
+
+  kind                    QUALIFICATION | DUTY | NONE
+  status                  UNAVAILABLE | WAITING | OK | REQUEST_1 | REQUEST_2 |
+                          REQUEST_3 | EXPIRED | NONE
+  next_request_logical_us nonnegative integer or null
+  deadline_logical_us     nonnegative integer or null
+
+For QUALIFICATION, the first qualifying poll is the first request. Until its
+40-second completion boundary the status is OK; QUALIFICATION therefore never
+uses REQUEST_1. REQUEST_2 and REQUEST_3 begin at 40 and 80 seconds, and EXPIRED
+begins at 120 seconds. With unavailable time, only QUALIFYING or
+WAITING_FOR_PRODUCER has QUALIFICATION/UNAVAILABLE and only QUALIFIED has
+DUTY/UNAVAILABLE. A participant with no active timer has NONE/NONE.
+
+QualificationView is exactly:
+
+  challenge                       32 lowercase hexadecimal characters
+  earliest_completion_logical_us  nonnegative integer or null
+  deadline_logical_us             nonnegative integer or null
+
+It is present only as poll `qualification` for the caller while QUALIFYING.
+Before the caller's first qualifying poll, both times are null. That first poll
+sets the two times to first poll plus 40,000,000 and 120,000,000 respectively.
+
+WorkView is exactly:
+
+  id                              Work ID
+  owner                           AI ID
+  state                           OPEN | ACTIVE | BLOCKED | COMPLETE
+  scope                           normalized text
+  evidence_mode                   TEXT | VISUAL
+  evidence                        exact state evidence object
+  assigning_producer_generation   positive integer
+  revision                        positive integer
+  created_at                      UTC timestamp
+  updated_at                      UTC timestamp
+
+EventView is exactly:
+
+  sequence              positive integer
+  at                    UTC timestamp
+  logical_us            nonnegative integer
+  kind                  event-kind string
+  actor                 `administrator`, `arc`, or AI ID
+  recipient             AI ID or null
+  subject               AI ID, Work ID, Room ID, or null
+  payload               bounded JSON value
+  operation_id          canonical lowercase UUID
+  knowledge_sha256      lowercase SHA-256 string
+
+CLI-007 POLL
+
+Poll is the only AI read and check-in. The command validates ROOM, AI, binding,
+and after; opens and validates the bounded room; obtains a usable mutation time;
+applies due qualification failures; applies the caller lifecycle/check-in rule;
+commits only when those steps changed state; and returns one consistent result.
+
+The result is exactly:
+
+  room                          RoomView
+  self                          caller ParticipantView
+  producer                      ProducerView
+  roster                        array of all ParticipantViews sorted by AI ID
+  schedule                      same ScheduleView as self.schedule
+  qualification                 QualificationView or null, only for self
+  events                        zero through 50 visible EventViews
+  next_after                    nonnegative sequence
+  more                          boolean
+  work                          relevant current WorkViews; a live Producer also
+                                receives up to 16 most-recent COMPLETE WorkViews
+  operation                     current single-use operation UUID
+  earlier_activity_unavailable  boolean
+
+QualificationView is exactly `challenge`, `earliest_completion_logical_us`, and
+`deadline_logical_us`; it is null unless self is QUALIFYING. A candidate's first
+qualifying poll supplies all three values. An event is visible when its sequence
+is greater than --after and its recipient is null or the caller. Current Work is
+relevant when the caller owns it or the caller is the live Producer. Work is
+ordered by updated logical time then Work ID.
+
+The high-water sequence is room.next_sequence minus one. An --after greater
+than that value is INVALID_ARGUMENT. ARC reads at most 51 visible events,
+returns the first 50, sets more when the 51st exists, and sets next_after to the
+last returned sequence when more is true or the high-water sequence otherwise.
+If the first retained Activity sequence is greater than --after plus one,
+earlier_activity_unavailable is true. Poll is not acknowledgement; repeating an
+older --after may repeat retained visible events.
+
+CLI-008 ACTION OBJECTS
+
+Each action object has exactly the named keys.
+
+Message:
+
+  {"type":"message","to":AI,"text":TEXT}
+
+The caller must be On Duty and the target qualified. It appends one directed
+MESSAGE event. The target alone sees it through poll; the Administrator sees it
+in the app Activity view.
+
+Start qualification:
+
+  {"type":"qualification.start","participant":AI,
+   "producer_generation":INTEGER}
+
+The caller must be the current On Duty Producer at the named generation and the
+target WAITING_FOR_PRODUCER. It changes the target to QUALIFYING with a new
+challenge and appends the qualification request event. The test waits without a
+deadline until that candidate's first poll; that poll starts its two-minute
+window and returns the same challenge in QualificationView.
+
+Answer qualification:
+
+  {"type":"qualification.answer","answer":TEXT}
+
+The caller must be QUALIFYING after its first poll and before that poll's
+two-minute deadline; its answer must equal QualificationView.challenge. It
+records the answer and appends one directed QUALIFICATION_ANSWERED event. A
+later poll at or after QualificationView.earliest_completion_logical_us
+completes the fixed test.
+
+Assign work:
+
+  {"type":"work.assign","owner":AI,"scope":TEXT,
+   "evidence_mode":"TEXT"|"VISUAL","producer_generation":INTEGER}
+
+The caller must be the current live Producer at that generation and the owner
+must be On Duty. It creates OPEN work at revision 1 with `{}` evidence and
+appends WORK_ASSIGNED. At most 50 non-COMPLETE work records and 256 retained
+work records exist; oldest COMPLETE records may leave the retained set before a
+new assignment.
+
+Update work:
+
+  {"type":"work.update","work":WORK,"revision":INTEGER,
+   "state":"ACTIVE"|"BLOCKED"|"COMPLETE","evidence":OBJECT}
+
+The caller must be On Duty, own the work, and name its current revision. Allowed
+transitions are defined in 004. Evidence is exactly:
+
+  ACTIVE:       {"note":TEXT}
+  BLOCKED:      {"blocker":TEXT}
+  COMPLETE/TEXT:
+                {"references":[TEXT...],"result":TEXT}
+  COMPLETE/VISUAL:
+                {"artifact":TEXT,"defects":[TEXT...],
+                 "inspected_at":TIMESTAMP,"inspection":TEXT,
+                 "result":"PASS"|"PASS_WITH_DEFECTS",
+                 "surfaces":[TEXT...]}
+
+References contain zero through 16 items. Visual surfaces contain one through
+64 and defects zero through 32. PASS requires no defects;
+PASS_WITH_DEFECTS requires at least one. Encoded evidence is at most 60,000
+bytes. TIMESTAMP is the exact UTC form defined by REC-011. The accepted update
+increments work revision and appends WORK_UPDATED.
+
+Reassign work:
+
+  {"type":"work.reassign","work":WORK,"revision":INTEGER,"owner":AI,
+   "reason":TEXT,"producer_generation":INTEGER}
+
+The caller must be the current live Producer at that generation. Work must be
+non-COMPLETE at its current revision and the new owner On Duty. The operation
+sets the owner, state OPEN, evidence `{}`, generation, and next revision and
+appends WORK_REASSIGNED.
+
+CLI-009 OPERATION REPLAY
+
+Act validates the caller binding and request before mutation. The operation UUID
+must equal the participant's next_operation unless it equals last_operation.
+If it equals last_operation and the canonical request SHA-256 also matches, ARC
+returns the stored event sequences, room revision, affected current participant
+or work when still present, and stored next_operation without another effect.
+Different content is OPERATION_CONFLICT. Any other UUID is OPERATION_STALE.
+
+For a new accepted act, ARC obtains safe mutation time, applies due qualification
+failures, applies the action to an isolated value, advances room revision once,
+rotates next_operation, and records the replay result. An action refusal commits
+only an independently due qualification failure; it does not rotate the caller
+operation. The result is exactly:
+
+  event_sequences  ordered array of committed event sequences
+  room_revision    positive integer
+  participant      affected ParticipantView or null
+  work             affected WorkView or null
+  next_operation   new operation UUID
+
+CLI-010 DOCTOR
+
+Doctor is read-only. It validates one room through the same bounded file codec.
+Plain success is `Room file is OK.` plus LF. Plain failure gives one safe message
+and next action. --json returns the normal success envelope around:
+
+  valid       boolean
+  failure     null or {check,message,next_action}
+  context     bounded array of {label,value}
+
+Check is PATH, FORMAT, ROOM_JSON, KNOWLEDGE, CLOCK, LOCK, or IO. Context contains
+only safe facts such as Room ID, format, revision, and size, never room message
+text, evidence, binding, host path, or another secret.
+
+CLI-011 ERRORS, RETRY, AND EXIT STATUS
+
+Stable error codes are:
+
+  INVALID_ARGUMENT       malformed command, option, ID, sequence, or JSON
+  NOT_FOUND              requested room, AI, work item, or spec is absent
+  ROOM_INCOMPATIBLE      room format is not arc.room/1
+  ROOM_CORRUPT           canonical JSON or a durable invariant failed
+  KNOWLEDGE_UNAVAILABLE  verified installed knowledge is unavailable
+  BINDING_INVALID        room, participant, or binding does not match
+  RETIRED                participant is terminally retired
+  OPERATION_STALE        operation UUID is neither current nor replayable
+  OPERATION_CONFLICT     replay UUID carries different request content
+  WRONG_STATE            lifecycle or work state forbids the request
+  NOT_PRODUCER           action requires the current live Producer
+  CLOCK_UNAVAILABLE      no usable wall-clock sample exists
+  LIMIT_EXCEEDED         a declared bound would be exceeded
+  BUSY                   the stable room lock remained busy for five seconds
+  IO_FAILURE             bounded local I/O failed without the requested commit
+
+Only CLOCK_UNAVAILABLE, BUSY, and IO_FAILURE set retryable true. Exit 0 means
+success; 2 a safe refusal; 3 incompatible/corrupt room or unavailable knowledge;
+4 busy or I/O failure. ARC never converts a refusal into apparent success.
+
+CLI-012 SECURITY AND PORTABILITY
+
+Every AI call binds one exact room, AI ID, current random binding, and for act
+one current operation UUID. The binding prevents accidental cross-lane use; it
+is not human or network authentication. An AI sees no other binding. Messages
+and evidence remain untrusted data and never become executable instructions.
+
+The interface assumes only capabilities available by July 11, 2025: bounded
+text, direct program arguments, JSON, and a host-arranged later turn. ARC does
+not depend on a provider name, provider API, network, push delivery, or a chat's
+ability to remain awake. The fixed guide tells each AI that it must arrange its
+own roughly once-per-minute polling.

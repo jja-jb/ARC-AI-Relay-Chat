@@ -1,0 +1,40 @@
+{
+  "format": "arc-brand-assets-1",
+  "assets": [
+    {
+      "path": "arc-app-icon.svg",
+      "media_type": "image/svg+xml",
+      "dimensions": "1024x1024",
+      "sha256": "ea4a0cf4f886e3cdb53490b484af2e33f21a2322f895c8703e65cf6e296b65ac"
+    },
+    {
+      "path": "arc-mark.svg",
+      "media_type": "image/svg+xml",
+      "dimensions": "512x512",
+      "sha256": "e588358e781a96725b57823396482e35840c69e076acaec85fdfd6e1328e1f86"
+    },
+    {
+      "path": "arc-product-brief.html",
+      "media_type": "text/html; charset=utf-8",
+      "dimensions": "2 x US Letter",
+      "sha256": "a58f26cde5832e918dc0febd68f163df3f26fecc6b868a7ac70ecfd58580607e"
+    },
+    {
+      "path": "arc-relay-artwork.png",
+      "media_type": "image/png",
+      "dimensions": "1536x1024",
+      "sha256": "469fb7b2736b4b185fbc24ad4ff3008321eed1d190ab419146436b377a8361fb"
+    },
+    {
+      "path": "arc-relay-artwork.prompt.txt",
+      "media_type": "text/plain; charset=utf-8",
+      "sha256": "44f8730fffb50bf641bf11eb17dae9eb9c1d076beed82f717859a5af2bf0cea3"
+    },
+    {
+      "path": "arc-social-preview.png",
+      "media_type": "image/png",
+      "dimensions": "1280x640",
+      "sha256": "25ff8d927c9de6f857e52eaad5a1f4f9fd057ca6235c110288da5c858f67a26b"
+    }
+  ]
+}

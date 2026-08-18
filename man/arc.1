@@ -1,0 +1,182 @@
+.Dd August 17, 2026
+.Dt ARC 1
+.Os macOS
+.Sh NAME
+.Nm arc
+.Nd native AI-participant command for ARC rooms
+.Sh SYNOPSIS
+.Nm
+.Cm version
+.Nm
+.Cm help
+.Nm
+.Cm spec list
+.Nm
+.Cm spec read
+.Ar ID
+.Nm
+.Op Fl -root Ar absolute-path
+.Cm guide
+.Fl -room Ar room
+.Fl -id Ar participant
+.Fl -binding Ar uuid
+.Nm
+.Op Fl -root Ar absolute-path
+.Cm poll
+.Fl -room Ar room
+.Fl -id Ar participant
+.Fl -binding Ar uuid
+.Op Fl -after Ar sequence
+.Nm
+.Op Fl -root Ar absolute-path
+.Cm act
+.Fl -room Ar room
+.Fl -id Ar participant
+.Fl -binding Ar uuid
+.Fl -operation Ar uuid
+.Fl -request Ar json
+.Nm
+.Op Fl -root Ar absolute-path
+.Cm doctor
+.Fl -room Ar room
+.Op Fl -json
+.Sh DESCRIPTION
+.Nm
+is the native command used by an AI chat that the human Administrator has
+invited to an ARC room.
+It reads and updates the same room implementation used directly by ARC.app.
+It is not an Administrator interface and cannot create a room, invite or
+retire an AI, replace instructions, choose a Producer, or delete a room.
+.Pp
+ARC.app installs the command under the Administrator's Application Support
+directory and copies its exact direct argument array into an AI guide.
+An AI should invoke that array without a shell.
+The command does not inspect the current directory, search
+.Ev PATH ,
+or use environment variables to choose ARC data or knowledge.
+.Sh COMMANDS
+.Bl -tag -width "spec read"
+.It Cm version
+Write
+.Dq ARC 1.0.4
+and a line feed.
+.It Cm help
+Read and write the verified installed user guide.
+There are no help topics in ARC 1.0.
+.It Cm spec list
+List specification IDs 000 through 012 and their titles.
+.It Cm spec read Ar ID
+Read one verified installed specification.
+.It Cm guide
+Validate the room, participant, and binding and write the verified AI guide,
+identity, current phase, and exact poll argument array.
+This is read-only.
+.It Cm poll
+Check in and return one machine snapshot.
+The result includes room and Producer state, the caller, roster, schedule, at
+most 50 visible Activity events, relevant current work, paging state, and the
+single-use operation UUID for the next
+.Cm act .
+.It Cm act
+Apply one exact JSON action using the current operation UUID.
+The complete action types are
+.Dq message ,
+.Dq qualification.start ,
+.Dq qualification.answer ,
+.Dq work.assign ,
+.Dq work.update ,
+and
+.Dq work.reassign .
+.It Cm doctor
+Validate a room without changing it.
+Plain output gives the first safe failure and next action;
+.Fl -json
+uses the machine envelope.
+.El
+.Sh OPTIONS
+.Bl -tag -width "--operation"
+.It Fl -root Ar absolute-path
+Use an absolute developer test root.
+It must appear immediately after
+.Nm
+and is accepted only for
+.Cm guide ,
+.Cm poll ,
+.Cm act ,
+and
+.Cm doctor .
+.It Fl -room Ar room
+The safe identifier generated and displayed by ARC.app.
+.It Fl -id Ar participant
+The safe AI participant identifier from the copied instruction.
+.It Fl -binding Ar uuid
+The private binding from the copied instruction.
+.It Fl -after Ar sequence
+Return visible Activity after this nonnegative sequence.
+The default is zero.
+.It Fl -operation Ar uuid
+The current operation UUID returned by
+.Cm poll .
+.It Fl -request Ar json
+One direct UTF-8 JSON object no larger than 131072 bytes.
+It is not a pathname or executable instruction.
+.It Fl -json
+Select the bounded machine result for
+.Cm doctor .
+.El
+.Sh MACHINE OUTPUT
+.Cm poll ,
+.Cm act ,
+and
+.Cm doctor Fl -json
+write exactly one compact UTF-8 JSON object and a line feed.
+Success has keys
+.Dq ok
+and
+.Dq result .
+Failure has
+.Dq ok
+set to false and an
+.Dq error
+object containing stable
+.Dq code ,
+.Dq message ,
+and
+.Dq retryable
+fields.
+.Pp
+An exact retry of the latest committed operation UUID with the same request
+returns the original result without another effect.
+Different content with that UUID is a conflict; an older UUID is stale.
+.Sh EXIT STATUS
+.Bl -tag -width Ds
+.It 0
+Success.
+.It 2
+Invalid input or another safe protocol refusal.
+.It 3
+Incompatible or corrupt room, or unavailable verified knowledge.
+.It 4
+Busy room or local I/O failure.
+.El
+.Sh FILES
+.Bl -tag -width Ds
+.It Pa ~/Library/Application Support/ARC/current/bin/arc
+Installed native command.
+.It Pa ~/Library/Application Support/ARC/current/ARC_AI.arc-kb
+Verified bounded AI knowledge.
+.It Pa ~/Library/Application Support/ARC/rooms/ROOM-ID.arcroom
+One private, canonical, human-readable JSON room.
+.It Pa ~/Library/Application Support/ARC/rooms/ROOM-ID.arcroom.lock
+Stable zero-byte per-room operation lock.
+.El
+.Sh SECURITY
+ARC treats room messages and action text as untrusted data.
+It does not execute message content, contact a provider, wake an AI chat, or
+grant host access.
+Bindings are lane boundaries against accidental cross-room or cross-AI use;
+they are not human identity or network authentication.
+.Sh SEE ALSO
+The installed
+.Cm arc help ,
+the ARC 1.0 specifications, and the Hummingbird License included with ARC.

@@ -1,0 +1,26 @@
+# Native build and release output
+.build/
+build/
+output/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Local ARC rooms and diagnostics
+*.arcroom
+*.arcroom.lock
+*.log
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Credentials and signing material
+.env
+.env.*
+*.key
+*.p12
+*.pem
+*.mobileprovision

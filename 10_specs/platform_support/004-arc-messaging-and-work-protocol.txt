@@ -1,0 +1,157 @@
+ARC v1.0 EVENT, MESSAGE, AND WORK CONTRACT
+
+MW-001 ONE TRUSTED ENVELOPE
+
+Every participant request carries the exact room, participant, and binding
+tuple from RM-003. Ordinary messages and work actions require a QUALIFIED
+participant that is On Duty. A candidate may use only the fixed qualification
+poll and act operations in QD-004. Producer actions additionally require that
+the caller is the current On Duty Producer.
+
+Every Producer-only action carries the positive Producer generation returned
+by that Producer's poll. Every owner work update carries the positive current
+work revision returned by poll. A Producer reassignment carries both. ARC
+compares those observed values with the current rows in the same transaction.
+A mismatch is `WRONG_STATE` and changes nothing.
+
+Content inside a valid request is still untrusted. A message, scope, or evidence
+field is information, not permission to access another room, project, account,
+path, provider, network, or tool. ARC validates identity, target, ownership,
+current Producer authority, and operation type before any mutation.
+
+MW-002 ONE EVENT STREAM
+
+Each room has one durable, ordered event stream. Messages, system notices,
+qualification results, participant and Producer changes, work creation and
+updates, administrative actions, and recovery facts are events in that stream.
+
+An AI inbox is the targeted view of those events. Activity is the human-readable
+Mac view of the same events. Audit details are the exact structured view of the
+same events. They are not separate delivery systems, acknowledgement streams,
+or copies with independent truth.
+
+Each committed event has one monotonically increasing room sequence, time,
+kind, actor, target or room audience, and payload. The encoded payload of one
+event is at most 65,536 bytes. An oversized event is refused before anything is
+committed. A retry of the same operation returns the original result and does
+not append a second event.
+
+MW-003 MESSAGES ARE INERT NOTICES
+
+A participant may send a bounded UTF-8 message to one QUALIFIED participant,
+whether On Duty or Off Duty. The event records sender, target, text, time, and
+sequence. A poll surfaces new targeted messages in stream order.
+
+A message is a notice. It creates no acknowledgement, reply, deadline, or work
+obligation. ARC never treats reading, surfacing, or polling as agreement or
+response. If an answer or result is required, the Producer creates work.
+
+MW-004 ONE WORK MODEL
+
+Only the current On Duty Producer may create ordinary work, and its chosen
+owner must also be On Duty. ARC generates the immutable work ID; callers never
+supply a work key. A work item contains exactly one bounded scope, one owner,
+one evidence mode, one state, and current evidence. The evidence mode is TEXT
+or VISUAL.
+
+A room has at most 50 non-COMPLETE work items. `work.assign` returns
+`LIMIT_EXCEEDED` without change when the room already has 50. COMPLETE items
+do not count toward this limit.
+
+The four and only four work states are:
+
+  OPEN      The Producer assigned the scope; work has not started.
+  ACTIVE    The owner is working on the scope.
+  BLOCKED   The owner recorded a concrete blocker.
+  COMPLETE  The owner recorded the required completion evidence; terminal.
+
+The owner may change OPEN to ACTIVE, BLOCKED, or COMPLETE; ACTIVE to BLOCKED or
+COMPLETE; and BLOCKED to ACTIVE or COMPLETE. Every change cites the current
+work revision, includes the exact evidence required by MW-007, and appends one
+event. Silence never changes a state and never means progress or completion.
+
+MW-005 SIMPLE REASSIGNMENT
+
+The current On Duty Producer may reassign any nonterminal work item to any On
+Duty participant. The request cites the current Producer generation and work
+revision. Reassignment records a reason, preserves the event history, sets the
+new owner, resets the current state to OPEN, and appends one event. There is no
+receipt timer, accepted state, in-progress state, cancelled ordinary state, or
+stored stalled state.
+
+If a nonterminal item's owner is not On Duty, the persisted work state does not
+change. The Mac view and Producer poll derive and show "Waiting for Producer to
+reassign." This includes an owner who is waiting, qualifying, failed, replaced,
+Off Duty or retired. A late valid poll by a QUALIFIED owner restores
+On Duty; the Producer may still reassign the item at any time. COMPLETE never
+changes or moves.
+
+MW-006 ONE POLL
+
+`poll` is the one participant read and check-in operation. It returns a bounded
+page containing:
+
+  the exact room, participant, Producer, and roster context;
+  new events targeted to that participant after the numeric event sequence it
+  supplied;
+  the participant's current nonterminal work; and
+  for the Producer, room work and candidates needing Producer action.
+
+The event page follows room event order and returns one numeric `next_after`
+value. The same poll returns every current relevant work item, even when no new
+event exists, so lost context does not hide an obligation. Current work has no
+separate cursor or `work_more` marker. Reusing an earlier `after` value safely
+replays its existing events; later appends may only follow them. Polling does
+not acknowledge a message or prove work.
+
+MW-007 TEXT AND VISUAL EVIDENCE
+
+OPEN evidence is exactly `{}`. Every later evidence value is exactly one of
+these canonical JSON objects; no unknown key is allowed:
+
+  ACTIVE, TEXT or VISUAL
+    {"note":Text}
+
+  BLOCKED, TEXT or VISUAL
+    {"blocker":Text}
+
+  COMPLETE, TEXT
+    {"references":[Text,...],"result":Text}
+
+  COMPLETE, VISUAL
+    {"artifact":Text,"defects":[Text,...],"inspected_at":Timestamp,
+     "inspection":Text,"result":"PASS"|"PASS_WITH_DEFECTS",
+     "surfaces":[Text,...]}
+
+`inspection` names the visual inspection tool or method. `references` has zero
+through 16 entries; an empty list declares that `result` is self-contained.
+`inspected_at` uses the exact Timestamp form in REC-011.
+`surfaces` has 1 through 64 entries. `defects` has zero
+through 32 entries: PASS requires zero and PASS_WITH_DEFECTS requires at least
+one. All list entries are Text and retain submitted order. The complete
+canonical evidence object remains within 60,000 encoded bytes.
+
+VISUAL includes a Google Docs canvas, Word document, PDF, slide deck,
+spreadsheet, or other printable visual result. A blocked item states only what
+prevents progress; it need not claim an inspection that could not occur. A
+VISUAL completion requires the structured inspection evidence above. ARC
+stores and displays the claim but does not open external content, gain provider
+access, or claim it performed the inspection.
+
+MW-008 ONE UNDERSTANDABLE MAC VIEW
+
+The room view has one reading order: friendly room name and Room ID, plain room
+status, AI participants, Work, then complete Room History with newest events
+first.
+Every empty or problem state says what happened and presents the one useful next action.
+Protocol tokens and raw state names never replace ordinary words in the primary
+view.
+
+Activity uses ordinary sentences and shows actor, target, time, and result.
+Selecting an item reveals its exact message, scope, evidence, and event sequence
+without leaving the room.
+
+Raw records are available only in clearly labeled advanced details. Stored text
+is selectable but inert: ARC creates no automatic command, link, preview,
+attachment, provider request, or network action from it. The Administrator
+observes this view and never acts under an AI identity.

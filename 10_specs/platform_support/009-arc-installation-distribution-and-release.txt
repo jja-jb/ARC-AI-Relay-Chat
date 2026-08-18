@@ -1,0 +1,197 @@
+ARC v1.0 INSTALLATION, DISTRIBUTION, AND RELEASE CONTRACT
+
+IR-001 ONE NATIVE PRODUCT
+
+ARC v1.0 is built from one root Swift package. Its shipping products are:
+
+  ARC     the SwiftUI Mac application, linked directly with ARCCore;
+  arc     the native command for AI participants.
+
+ARCCore is the single Swift implementation of room behavior. ARCKnowledge is
+the small ARC-owned C reader for the bounded knowledge container. `arc-dev` is
+a source-tree build and verification tool; it is not installed for ordinary
+use. ARC ships no service, daemon, extension system, private helper, downloaded
+code, or alternate implementation.
+
+IR-002 ORDINARY MAC DELIVERY
+
+The public Mac artifact is one Developer ID-signed, Apple-notarized, stapled
+Apple silicon ARC.app in a signed, notarized, stapled DMG. It supports macOS
+15.0 or later on arm64. A person verifies the published checksum, drags
+ARC to Applications, and opens it. Ordinary use requires no administrative
+privilege, package manager, developer checkout, provider account, or network.
+
+The bundle identifier is `org.jonnybass.arc`. ARC registers no room document
+type or URL scheme. Its production code signature has no network, scripting,
+automation, broad file-access, or debug entitlement.
+
+IR-003 ONE ATOMIC INSTALLED PAYLOAD
+
+On launch ARC verifies this bundle member:
+
+  Contents/Resources/install/ARC-INSTALL-MANIFEST.json
+
+It describes every regular file under:
+
+  Contents/Resources/install/bin/arc
+  Contents/Resources/install/current/
+
+The current tree contains at least:
+
+  bin/arc
+  ARC_AI.arc-kb
+  ARC_AI.sha256
+  specifications/000-shared-constitution.txt through
+    specifications/012-arc-ai-knowledge-container.txt
+  legal/LICENSE
+  legal/NOTICE.md
+
+All shipping executables are arm64 Mach-O files. The app
+stages the command inside the verified tree and publishes that one tree
+atomically to:
+
+  ~/Library/Application Support/ARC/current/
+
+It stores the exact manifest bytes as
+`current/ARC-INSTALL-MANIFEST.json` after publication. That receipt is not a
+manifest entry. Installation never enumerates or changes `rooms/`.
+
+IR-004 CANONICAL INSTALL MANIFEST
+
+The install manifest is one sorted-key, compact UTF-8 JSON object followed by
+one LF and no other whitespace. Duplicate keys are invalid. Its exact fields
+are:
+
+  schema             integer 1
+  product            string `ARC`
+  version            semantic v1 release string
+  knowledge_sha256   lowercase SHA-256 of ARC_AI.arc-kb
+  entries            array sorted by bytewise UTF-8 path
+
+Each entry has exactly:
+
+  kind       string `file`
+  mode       integer 493 for executable or 420 for data
+  path       installed relative path under `current/`
+  sha256     lowercase SHA-256
+  size       nonnegative integer byte length
+  source     bundle-relative path below `Contents/`
+  target     null
+
+Paths are unique under bytewise and native case-folded comparison. They are
+canonical relative names with no empty, dot, hidden, or link segment. A
+`current/` data path maps exactly to the same suffix below
+`Resources/install/current/`; `current/bin/arc` maps only to
+`Resources/install/bin/arc`. Total bytes and entry count are bounded. Every
+source must be a regular file with the stated bytes and mode.
+
+IR-005 SAFE REPLACEMENT
+
+First installation creates only absent ARC-owned directories and files. A
+later installation may replace the current tree only when the prior canonical
+receipt proves it is ARC-owned. It stages the complete next tree, including
+the command and receipt, verifies and synchronizes it, and uses one atomic
+same-volume publication before synchronizing the ARC root. Failure leaves
+either the complete old installation or the complete new one.
+
+An unknown file, symbolic link, unsafe parent, mismatched receipt, or path
+collision is refused even when a repair is requested. Repair may bypass only
+the same-version fast path; it does not broaden ownership. The command,
+knowledge, specifications, legal text, and receipt are always one published
+version and identity before the app proceeds.
+
+IR-006 COMPLETE SOURCE TREE
+
+The public source archive is made from the exact reviewed annotated release tag.
+It contains everything needed to understand, build, test, and review ARC:
+
+  Package.swift; app and command Swift source; ARCCore source and tests;
+  ARC-owned C knowledge source and tests; ARCDevTool source; editable SVG
+  artwork and brand assets; all specifications; AI guide; user, developer,
+  privacy, security, installation, and release documentation; man page;
+  Makefile and CI; Hummingbird LICENSE, summary, NOTICE, governance, support,
+  conduct, contribution, security, trademark, changelog, and release checklist.
+
+The archive contains no generated build directory, local room, secret,
+credential, editor state, cache, log, release signing material, or ignored
+working-tree file. Release preparation enumerates the exact tag, not the ambient
+filesystem. Every checked-in source file is a regular file; links are forbidden.
+Generated DMGs, source archives, PDFs, candidate manifests, DVT reports,
+release metadata, and checksum files are release assets outside the tagged
+source tree. GitHub may present them beside the repository as Release assets;
+they are not committed source.
+
+IR-007 BUILD INPUTS AND REPRODUCIBLE CHECKS
+
+A clean source build needs macOS 15 or later and Xcode Command Line Tools with
+Swift, Clang, and standard Apple utilities. The source declares no remote
+package dependency. The build performs no network access.
+
+`make check` builds and tests Swift and C, builds and validates the knowledge
+container, proves its readable text-tree round trip, checks documentation and
+privacy, validates the app resources, and checks source cleanliness. Release
+construction verifies every shipping executable as arm64-only.
+
+IR-008 HUMMINGBIRD LICENSE
+
+ARC is distributed under the exact checked-in Hummingbird License. LICENSE is
+the controlling legal text. LICENSE-SUMMARY.md is explanatory only. NOTICE.md
+identifies ARC and its copyright holder without changing the license.
+
+ARC v1.0 links only ARC-owned code and system macOS frameworks and libraries.
+No third-party payload or separate third-party notice file belongs in the
+candidate. If that fact changes, publication pauses until the legal and source
+record is made complete.
+
+IR-009 PUBLIC RELEASE ASSETS
+
+The sealed public release contains exactly these assets for VERSION `1.0.4`:
+
+  ARC-1.0.4.dmg
+  ARC-1.0.4-source.tar.gz
+  ARC_AI_Relay_Chat_Literature.pdf
+  ARC-1.0.4-MANIFEST.json
+  ARC-1.0.4-DVT-REPORT.txt
+  RELEASE-METADATA.json
+  SHA256SUMS
+
+Preparation creates only the immutable DMG, complete source archive,
+product-literature PDF, and candidate manifest. The candidate manifest lists
+those three payloads with byte size, SHA-256, media type, source tag, source
+commit, and role. External DVT creates the report. Sealing creates release
+metadata and SHA256SUMS only after that report passes.
+
+Release metadata records product/version, immutable tag and commit, minimum
+macOS, architectures, bundle identity, knowledge digest, Hummingbird LICENSE
+digest, code-signing identity, notarization identifiers, and the final
+external DVT identity and result. SHA256SUMS is bytewise-name-sorted and covers
+the other six public assets; it cannot contain its own digest.
+
+IR-010 TWO-PHASE RELEASE EVIDENCE
+
+Preparation first creates and freezes the signed candidate DMG, source archive,
+product-literature PDF, and candidate manifest. A person independent of
+implementation runs 010's DVT against that manifest on a clean supported Apple
+silicon Mac and completes the report. Sealing verifies every hash and required
+PASS row,
+the tester identity and date, the tag and commit, signatures, notarization,
+staples, and source cleanliness before writing final metadata and checksums.
+
+The manifest hash in the DVT report binds both immutable payload hashes. The
+release process never marks its own ad-hoc development build as the public
+candidate and never changes a tested payload afterward. Any changed byte makes
+a new candidate and requires a new DVT report.
+
+IR-011 PUBLICATION AND REPOSITORY QUALITY
+
+The public repository leads with a short factual README: what ARC does, what it
+does not do, supported systems, install, five-minute start, security boundary,
+build/test, license, and support. It has no hype, endorsements, vanity numbers,
+comparison claims, hidden binary dependency, generated marketing document, or
+unfinished-feature promise.
+
+The release is published only from a clean, protected revision after CI and
+external DVT pass. The release page names the version, compatibility, checksum
+verification, installation, material changes, known externally verified
+limitations, and links to source and evidence. Publication itself is a human
+maintainer action; build tooling does not push, create a release, or upload.

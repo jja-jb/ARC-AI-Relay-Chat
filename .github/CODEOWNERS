@@ -1,0 +1,17 @@
+# Default review
+* @jja-jb
+
+# High-risk surfaces
+/LICENSE @jja-jb
+/LICENSE-SUMMARY.md @jja-jb
+/NOTICE.md @jja-jb
+/SECURITY.md @jja-jb
+/.github/ @jja-jb
+/10_specs/ @jja-jb
+/Package.swift @jja-jb
+/Makefile @jja-jb
+/Sources/ARCDevTool/ @jja-jb
+/knowledge/ @jja-jb
+/app/ @jja-jb
+/brand/ @jja-jb
+/docs/ @jja-jb

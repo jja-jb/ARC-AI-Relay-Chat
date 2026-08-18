@@ -1,0 +1,164 @@
+ARC v1.0 DURABLE STATE AND INTEGRITY CONTRACT
+
+DS-001 ONE ROOM, ONE RECORD
+
+The ordinary ARC data root is:
+
+  ~/Library/Application Support/ARC/
+
+Each retained room has one authoritative human-readable record:
+
+  rooms/<Room ID>.arcroom
+
+It is a canonical UTF-8 JSON regular file described exactly by 011. It contains
+room identity, participants, Producer, work, complete Activity, and retry facts.
+ARC maintains no second projection, hidden index, cursor file, or recovery
+journal.
+
+One adjacent regular file remains for local serialization:
+
+  rooms/<Room ID>.arcroom.lock
+
+It is mode 0600, contains zero bytes, and carries no room state or evidence.
+Its inode remains stable so waiters cannot split across an unlink and recreate.
+An exclusive `flock` is held only for the bounded duration of one room
+operation.
+
+DS-002 CANONICAL ROOM BYTES
+
+The complete room file is 1 through 8,388,608 bytes. It is pretty-printed JSON
+using UTF-8, two-space structural indentation, sorted object keys, unescaped
+slashes, LF line endings, and exactly one final LF. Persisted field names are
+lowercase snake case. Strings use native NFC normalization. Numbers are signed
+64-bit integers; floating-point values do not exist.
+
+An accepted file must decode to the exact 011 types and encode byte-for-byte to
+the supplied file. This equality rejects duplicate or unknown keys, alternate
+whitespace, alternate escapes, noncanonical number spelling, reordered keys,
+trailing bytes, or an otherwise ambiguous representation.
+
+DS-003 ONE LOCKED REVISION
+
+Every create, read, poll, act, Administrator change, tick, diagnosis, and delete
+operation derives the exact room path from a validated Room ID and acquires the
+room lock. The lock wait is at most five seconds, checked every 20 milliseconds.
+Expiry returns BUSY and changes nothing.
+
+A read opens the room with no final-link following, proves it is one bounded
+regular file, reads it completely, and validates canonical bytes and the stored
+Room ID. It returns one complete revision. It never combines fields from
+different reads.
+
+A mutation reads and validates one complete prior revision, checks all lane,
+authority, generation, work revision, operation, time, and limit preconditions,
+then constructs one complete next revision in memory. Any refusal leaves the
+prior file byte-identical.
+
+DS-004 ATOMIC PUBLICATION
+
+The next canonical bytes are written to a new unpredictable same-directory
+regular file opened with create-exclusive and no final-link following. ARC
+writes all bytes, synchronizes the file, atomically renames it over the room,
+and synchronizes the `rooms` directory. The room is never edited in place.
+
+An interruption produces the complete old or complete new room after reopen.
+A failed stage is removed only by its exact ARC-created descriptor/path. An
+unknown sibling is never guessed to be stale or deleted. Room creation follows
+the same write path but refuses an existing room or lock collision.
+
+DS-005 REVISION AND SEQUENCE
+
+Room revision starts at 1 and increases by exactly one for every committed
+mutation. A read-only operation does not increase it. `next_sequence` starts at
+1. Every committed Activity item receives that value, then `next_sequence`
+increases. Sequence values never repeat or reset.
+
+One mutation may append more than one Activity item when the single typed action
+has multiple visible consequences. Their sequences are consecutive and the
+operation result lists them in order. The room's `updated_at` is the commit
+time. A retry that returns an existing result is read-only and adds no Activity.
+
+DS-006 PORTABLE NONDECREASING TIME
+
+Durable room time is UTC epoch microseconds. A valid sample is a finite,
+nonnegative system wall time that fits signed 64-bit microseconds. For a
+mutation:
+
+  logical_us = max(room.last_clock_logical_us, sampled_wall_us)
+
+The committed value replaces `last_clock_logical_us`; therefore a backward or
+equal wall sample cannot move room time backward. Human timestamps are the
+canonical UTC rendering `YYYY-MM-DDTHH:MM:SS.ffffffZ` of that value.
+
+If the system or injected clock cannot supply a valid sample, a mutating tick,
+poll, or act returns CLOCK_UNAVAILABLE and does not pretend that an AI checked
+in or acted. A read view reports TIME_UNAVAILABLE. The app may use system uptime
+only to schedule its next local refresh; uptime is never stored or treated as
+room truth.
+
+Rename, invite, instruction replacement, and retirement remain available to
+the Administrator when wall time is unavailable. Those four operations use the
+retained logical time, mark their Activity payload `time_verified:false`, and
+do not invent an AI check-in. Qualification retry and Producer selection still
+require usable wall time.
+
+DS-007 ACTIVITY LASTS AS LONG AS THE ROOM
+
+Activity retains every committed event for the room's lifetime. ARC never
+silently removes, truncates, summarizes, or replaces an older event. Paging is
+only presentation; it does not change storage. Activity is complete room
+history, not a cryptographic journal, signature, or hash chain.
+
+The 8 MiB room bound remains a fail-closed safety limit. A mutation whose exact
+canonical next revision would exceed it returns LIMIT_EXCEEDED and leaves the
+prior room byte-identical. The existing room remains readable and its complete
+history remains available. Permanently deleting the room deletes that history.
+
+DS-008 COLLECTION AND MEMORY BOUNDS
+
+One room permits at most:
+
+  participants        64
+  non-COMPLETE work   50
+  work items          256
+  retained Activity   every event that fits the bounded room
+  poll page events    50
+  room bytes          8 MiB
+  action request      128 KiB
+  event payload       64 KiB
+
+Additional text and evidence bounds are in 011. Reads and writes are bounded by
+the complete room maximum. ARC never maps an unbounded file, recursively loads
+host data, or allocates from an unchecked length.
+
+DS-009 OPERATION RETRY
+
+Each participant has one current random operation UUID. `act` requires it and
+stores the request SHA-256 plus definitive result summary on success. A retry
+of the same token and exact canonical request returns the stored result without
+another mutation. The same token with different request bytes returns
+OPERATION_CONFLICT. A prior or unknown token returns OPERATION_STALE.
+
+After a definitive act, ARC supplies one new operation UUID. An Administrator
+mutation similarly stores one last operation ID and request digest at room
+level so a lost local result cannot duplicate the change.
+
+DS-010 REFUSAL AND RECOVERY
+
+Missing rooms return NOT_FOUND. A different `format` returns ROOM_INCOMPATIBLE.
+Malformed bytes, identity mismatch, invalid invariant, or noncanonical JSON
+returns ROOM_CORRUPT. Unsafe files or parents return IO_FAILURE. None is
+rewritten automatically.
+
+The app lists an unreadable canonical room filename in Recovery with the first
+safe failure and a next action. Diagnose reads bounded facts and content-free
+invariants. ARC does not rewrite, discard, or field-repair unreadable bytes.
+
+DS-011 PERMANENT ROOM DELETION
+
+Delete Room acquires the same room lock, validates the room identity, and
+requires every participant to be RETIRED. ARC then unlinks exactly the selected
+`.arcroom` file, synchronizes the rooms directory, removes its empty adjacent
+lock, and synchronizes again. It never uses the macOS Trash, deletes another
+room, or offers restoration. The confirmation states that deletion and the
+room's complete history are permanent.

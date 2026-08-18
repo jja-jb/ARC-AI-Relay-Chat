@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img"
+  aria-labelledby="title description">
+  <title id="title">ARC mark</title>
+  <desc id="description">Multiple endpoints connected through one local room.</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M100 152h36q32 0 48 40v16" stroke="#31C7D5"
+      stroke-width="20"/>
+    <path d="M100 360h36q32 0 48-40v-16" stroke="#FF7A59"
+      stroke-width="20"/>
+    <path d="M328 208v-16q16-40 48-40h36" stroke="#FF7A59"
+      stroke-width="20"/>
+    <path d="M328 304v16q16 40 48 40h36" stroke="#31C7D5"
+      stroke-width="20"/>
+    <rect x="184" y="160" width="144" height="192" rx="40"
+      fill="#323A44" stroke="#14181D" stroke-width="16"/>
+    <rect x="216" y="200" width="80" height="112" rx="24"
+      stroke="#F5F7F8" stroke-width="16"/>
+    <circle cx="72" cy="152" r="28" fill="#31C7D5"
+      stroke="#14181D" stroke-width="14"/>
+    <circle cx="72" cy="360" r="28" fill="#FF7A59"
+      stroke="#14181D" stroke-width="14"/>
+    <circle cx="440" cy="152" r="28" fill="#FF7A59"
+      stroke="#14181D" stroke-width="14"/>
+    <circle cx="440" cy="360" r="28" fill="#31C7D5"
+      stroke="#14181D" stroke-width="14"/>
+  </g>
+</svg>
