@@ -68,7 +68,7 @@ the old root launcher only after proving it belongs to that legacy receipt.
 /usr/bin/codesign --verify --deep --strict --verbose=2 /Applications/ARC.app
 /usr/sbin/spctl --assess --type execute --verbose=2 /Applications/ARC.app
 /usr/bin/xcrun stapler validate /Applications/ARC.app
-/usr/bin/xcrun stapler validate ARC-1.0.6.dmg
+/usr/bin/xcrun stapler validate ARC-1.0.7.dmg
 /usr/bin/lipo -archs /Applications/ARC.app/Contents/MacOS/ARC
 ```
 

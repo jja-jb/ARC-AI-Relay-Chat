@@ -2,6 +2,12 @@
 
 ARC uses semantic versions. Dates use ISO 8601.
 
+## 1.0.7 — 2026-08-18
+
+- Fix a release-blocking macOS SwiftUI/AppKit sheet-layout crash observed in
+  ARC 1.0.6. Sheets now use one explicit, scrollable viewport instead of
+  mixing ideal, minimum, and maximum hosting-window constraints.
+
 ## 1.0.6 — 2026-08-18
 
 - Reject malformed UTF-8 command arguments before request parsing rather than

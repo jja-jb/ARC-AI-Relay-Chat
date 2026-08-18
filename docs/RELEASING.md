@@ -6,7 +6,7 @@ publish, upload, push, or create a tag.
 ## Requirements
 
 Use macOS 15 or later with Xcode Command Line Tools. Start from a clean checkout
-whose `HEAD` is the reviewed annotated `v1.0.6` tag. The source build has no remote
+whose `HEAD` is the reviewed annotated `v1.0.7` tag. The source build has no remote
 package dependency and performs no network access. Signing and notarization are
 the only steps that contact Apple.
 
@@ -52,10 +52,10 @@ staples the app, creates and signs the DMG, notarizes and staples the DMG, makes
 an archive from the exact tag, and writes:
 
 ```text
-output/candidate/ARC-1.0.6/ARC-1.0.6.dmg
-output/candidate/ARC-1.0.6/ARC-1.0.6-source.tar.gz
-output/candidate/ARC-1.0.6/ARC_AI_Relay_Chat_Literature.pdf
-output/candidate/ARC-1.0.6/ARC-1.0.6-MANIFEST.json
+output/candidate/ARC-1.0.7/ARC-1.0.7.dmg
+output/candidate/ARC-1.0.7/ARC-1.0.7-source.tar.gz
+output/candidate/ARC-1.0.7/ARC_AI_Relay_Chat_Literature.pdf
+output/candidate/ARC-1.0.7/ARC-1.0.7-MANIFEST.json
 ```
 
 The candidate manifest records the immutable DMG, source, and literature names,
@@ -72,7 +72,7 @@ the checkout, complete every field and evidence row, and run:
 
 ```sh
 make release-dvt \
-  DVT_REPORT=/absolute/path/ARC-1.0.6-DVT-REPORT.txt
+  DVT_REPORT=/absolute/path/ARC-1.0.7-DVT-REPORT.txt
 ```
 
 A changed candidate, mismatched commit, unfinished evidence, non-PASS row,
@@ -87,18 +87,18 @@ make release-seal \
   SIGNING_IDENTITY="Developer ID Application: REVIEWED IDENTITY" \
   NOTARY_PROFILE="reviewed-keychain-profile" \
   LITERATURE_PDF=/absolute/path/ARC_AI_Relay_Chat_Literature.pdf \
-  DVT_REPORT=/absolute/path/ARC-1.0.6-DVT-REPORT.txt
+  DVT_REPORT=/absolute/path/ARC-1.0.7-DVT-REPORT.txt
 ```
 
 This repeats the clean-tag and DVT binding checks and writes exactly seven public
-assets under `output/release/ARC-1.0.6/`:
+assets under `output/release/ARC-1.0.7/`:
 
 ```text
-ARC-1.0.6.dmg
-ARC-1.0.6-source.tar.gz
+ARC-1.0.7.dmg
+ARC-1.0.7-source.tar.gz
 ARC_AI_Relay_Chat_Literature.pdf
-ARC-1.0.6-MANIFEST.json
-ARC-1.0.6-DVT-REPORT.txt
+ARC-1.0.7-MANIFEST.json
+ARC-1.0.7-DVT-REPORT.txt
 RELEASE-METADATA.json
 SHA256SUMS
 ```

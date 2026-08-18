@@ -1,7 +1,7 @@
 SHELL := /bin/sh
 .DEFAULT_GOAL := help
 
-VERSION := 1.0.6
+VERSION := 1.0.7
 TAG := v$(VERSION)
 # Do not build signed bundles inside a cloud-synchronized source tree: Finder
 # metadata can be attached after signing.  Release output remains explicit and
@@ -75,7 +75,7 @@ command-test: build
 	@/bin/mkdir -p "$(COMMAND_TEST_DIR)/root"
 	@"$(ARC_CLI)" version > "$(COMMAND_TEST_DIR)/actual" \
 		2> "$(COMMAND_TEST_DIR)/error"
-	@/usr/bin/printf 'ARC 1.0.6\n' > "$(COMMAND_TEST_DIR)/expected"
+	@/usr/bin/printf 'ARC 1.0.7\n' > "$(COMMAND_TEST_DIR)/expected"
 	@/usr/bin/cmp "$(COMMAND_TEST_DIR)/expected" "$(COMMAND_TEST_DIR)/actual"
 	@test ! -s "$(COMMAND_TEST_DIR)/error"
 	@/bin/mkdir -p "$(COMMAND_TEST_DIR)/root/current/specifications" \

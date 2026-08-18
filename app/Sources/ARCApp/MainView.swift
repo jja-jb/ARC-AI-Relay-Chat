@@ -199,16 +199,12 @@ struct ARCAdaptiveSheet<Content: View>: View {
         ScrollView {
             content()
                 .padding(24)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(width: idealWidth, alignment: .leading)
         }
-        .frame(
-            minWidth: 340,
-            idealWidth: idealWidth,
-            maxWidth: 700,
-            minHeight: 220,
-            idealHeight: idealHeight,
-            maxHeight: 580
-        )
+        // A fixed viewport keeps the sheet's hosting window from repeatedly
+        // negotiating incompatible intrinsic, ideal, and maximum constraints.
+        // Content remains accessible at larger text sizes through scrolling.
+        .frame(width: idealWidth, height: idealHeight)
     }
 }
 

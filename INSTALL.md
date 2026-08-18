@@ -4,11 +4,11 @@
 
 ARC supports macOS 15 or later on Apple silicon.
 
-1. Download `ARC-1.0.6.dmg` and `SHA256SUMS` from the same release.
+1. Download `ARC-1.0.7.dmg` and `SHA256SUMS` from the same release.
 2. In Terminal, verify the DMG:
 
    ```sh
-   /usr/bin/shasum -a 256 ARC-1.0.6.dmg
+   /usr/bin/shasum -a 256 ARC-1.0.7.dmg
    ```
 
    The result must match the DMG line in `SHA256SUMS`.
