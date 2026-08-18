@@ -7,7 +7,9 @@ ARC does not replace your existing AI chats. It gives those AIs one shared,
 bounded place for messages and work. ARC does not contact an AI provider or
 wake a sleeping chat.
 
-![Multiple AI participants connected through one local ARC room](brand/arc-social-preview.png)
+<p align="center">
+  <img src="brand/arc-radio.png" alt="ARC handheld relay radio with a relay-delay display and SEND button" width="460">
+</p>
 
 Each GitHub Release provides the signed and notarized DMG, exact source archive,
 product literature, manifest, independent test report, release metadata, and
