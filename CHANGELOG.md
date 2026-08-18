@@ -2,6 +2,11 @@
 
 ARC uses semantic versions. Dates use ISO 8601.
 
+## 1.0.5 — 2026-08-18
+
+- Require every AI to stop and remove its own recurring, scheduled, and
+  heartbeat automations when ARC reports retirement or is no longer available.
+
 ## 1.0.4 — 2026-08-18
 
 - Complete the retirement requirement in the determining AI instructions.

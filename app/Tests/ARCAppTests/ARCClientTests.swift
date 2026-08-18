@@ -333,7 +333,8 @@ final class ARCClientTests: XCTestCase {
         XCTAssertTrue(handoff.contains("at least 40 seconds after that first poll"))
         XCTAssertTrue(handoff.contains("one-minute cadence alone is not enough"))
         XCTAssertTrue(handoff.contains("you Off Duty 180 seconds after your last valid poll"))
-        XCTAssertTrue(handoff.contains("stop immediately if ARC reports RETIRED"))
+        XCTAssertTrue(handoff.contains("If ARC reports RETIRED, or ARC has exited or is otherwise"))
+        XCTAssertTrue(handoff.contains("stop and remove every recurring, scheduled, and heartbeat"))
     }
 
     func testNamesUseNativeNFCAndCaseInsensitiveDuplicateCheck() {

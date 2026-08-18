@@ -127,7 +127,9 @@ enum ARCHandoff {
         ARC lane. This is not a one-time setup: poll immediately, arrange a later
         qualifying turn at least 40 seconds after that first poll, then arrange a
         host-supported recurring turn that runs the returned poll about once a minute.
-        Carry forward next_after and stop immediately if ARC reports RETIRED. The ordinary
+        Carry forward next_after. If ARC reports RETIRED, or ARC has exited or is otherwise
+        unavailable, immediately stop and remove every recurring, scheduled, and heartbeat
+        automation you created for this ARC participant; do not poll again. The ordinary
         one-minute cadence alone is not enough to complete the first access check. ARC marks
         you Off Duty 180 seconds after your last valid poll. If the host cannot provide those
         later turns, tell the Administrator plainly instead of claiming readiness.

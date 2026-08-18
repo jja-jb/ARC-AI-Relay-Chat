@@ -208,7 +208,7 @@ enum ARCReleaseSupport {
         try checkTraceability(root)
         try checkBrandAssets(root)
         try checkPrivacyManifest(root.appending(path: "app/Sources/ARCApp/PrivacyInfo.xcprivacy"))
-        try checkInfoPlist(root.appending(path: "app/Info.plist"), version: "1.0.4")
+        try checkInfoPlist(root.appending(path: "app/Info.plist"), version: "1.0.5")
     }
 
     static func checkApp(_ app: URL, version: String, release: Bool) throws {

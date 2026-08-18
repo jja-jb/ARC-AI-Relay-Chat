@@ -31,7 +31,7 @@ does not replace it.
 ## Mac candidate
 
 - [ ] App and `arc` are arm64-only.
-- [ ] Bundle identifier is `org.jonnybass.arc`; version is `1.0.4`.
+- [ ] Bundle identifier is `org.jonnybass.arc`; version is `1.0.5`.
 - [ ] Privacy manifest declares no collection/tracking and the exact approved
       file-metadata and elapsed-time reasons.
 - [ ] Install manifest contains only regular native command, knowledge,
