@@ -2,6 +2,18 @@
 
 ARC uses semantic versions. Dates use ISO 8601.
 
+## 1.0.6 — 2026-08-18
+
+- Reject malformed UTF-8 command arguments before request parsing rather than
+  silently substituting replacement characters.
+- Make `doctor` exit 2 after a completed invalid-room diagnosis, while keeping
+  its safe human and JSON diagnostic bodies.
+- Make `source-archive-test` fail closed outside a Git checkout so an extracted
+  tarball cannot false-pass the generated-archive permission check.
+- Align determining qualification-duty handoff text and architecture Activity
+  retention wording with shipped behavior, and align the View menu contract
+  with the visible `Show Advanced Details` command.
+
 ## 1.0.5 — 2026-08-18
 
 - Require every AI to stop and remove its own recurring, scheduled, and

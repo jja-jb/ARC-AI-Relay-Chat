@@ -16,6 +16,9 @@ make check
 
 This compiles and tests Swift and C, checks the knowledge round trip, validates
 the source and documentation contract, and checks the development app.
+`make source-archive-test` is part of that check. It requires this tree to be
+the Git checkout toplevel and fails closed otherwise, so an extracted source
+tarball cannot false-pass the generated-archive permission check.
 
 Useful focused commands:
 

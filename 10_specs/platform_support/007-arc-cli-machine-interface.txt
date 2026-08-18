@@ -36,7 +36,7 @@ short options, positional alternatives, response files, help topics, aliases,
 abbreviations, hidden compatibility commands, or option values read from stdin.
 Unknown or extra input is INVALID_ARGUMENT.
 
-`version` writes exactly `ARC 1.0.5` plus LF. `help` writes the verified
+`version` writes exactly `ARC 1.0.6` plus LF. `help` writes the verified
 help/arc-help.txt member. `spec list` writes the stable titles for three-digit
 IDs 000 through 012. `spec read ID` writes the corresponding verified member.
 These four commands refuse --root.
@@ -353,6 +353,10 @@ Stable error codes are:
 Only CLOCK_UNAVAILABLE, BUSY, and IO_FAILURE set retryable true. Exit 0 means
 success; 2 a safe refusal; 3 incompatible/corrupt room or unavailable knowledge;
 4 busy or I/O failure. ARC never converts a refusal into apparent success.
+`doctor` returns 0 only when `valid` is true. A completed doctor result with
+`valid` false still uses the CLI-010 diagnostic result (including the normal
+success envelope for `--json`), but exits 2 so shell workflows do not treat an
+invalid room as success.
 
 CLI-012 SECURITY AND PORTABILITY
 

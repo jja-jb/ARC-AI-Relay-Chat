@@ -1,7 +1,7 @@
 SHELL := /bin/sh
 .DEFAULT_GOAL := help
 
-VERSION := 1.0.5
+VERSION := 1.0.6
 TAG := v$(VERSION)
 # Do not build signed bundles inside a cloud-synchronized source tree: Finder
 # metadata can be attached after signing.  Release output remains explicit and
@@ -75,7 +75,7 @@ command-test: build
 	@/bin/mkdir -p "$(COMMAND_TEST_DIR)/root"
 	@"$(ARC_CLI)" version > "$(COMMAND_TEST_DIR)/actual" \
 		2> "$(COMMAND_TEST_DIR)/error"
-	@/usr/bin/printf 'ARC 1.0.5\n' > "$(COMMAND_TEST_DIR)/expected"
+	@/usr/bin/printf 'ARC 1.0.6\n' > "$(COMMAND_TEST_DIR)/expected"
 	@/usr/bin/cmp "$(COMMAND_TEST_DIR)/expected" "$(COMMAND_TEST_DIR)/actual"
 	@test ! -s "$(COMMAND_TEST_DIR)/error"
 	@/bin/mkdir -p "$(COMMAND_TEST_DIR)/root/current/specifications" \
@@ -109,10 +109,23 @@ command-test: build
 		test "$$status" -eq 2
 	@/usr/bin/cmp "$(COMMAND_TEST_DIR)/expected" "$(COMMAND_TEST_DIR)/actual"
 	@test ! -s "$(COMMAND_TEST_DIR)/error"
-	@"$(ARC_CLI)" --root "$(COMMAND_TEST_DIR)/root" doctor --room bad --json \
-		> "$(COMMAND_TEST_DIR)/actual" 2> "$(COMMAND_TEST_DIR)/error"
+	@status=0; "$(ARC_CLI)" --root "$(COMMAND_TEST_DIR)/root" doctor --room bad --json \
+		> "$(COMMAND_TEST_DIR)/actual" 2> "$(COMMAND_TEST_DIR)/error" || status=$$?; \
+		test "$$status" -eq 2
 	@/usr/bin/printf '%s\n' \
 		'{"ok":true,"result":{"context":[{"label":"Room ID","value":"bad"}],"failure":{"check":"PATH","message":"The Room ID is invalid.","next_action":"Return to the room list."},"valid":false}}' \
+		> "$(COMMAND_TEST_DIR)/expected"
+	@/usr/bin/cmp "$(COMMAND_TEST_DIR)/expected" "$(COMMAND_TEST_DIR)/actual"
+	@test ! -s "$(COMMAND_TEST_DIR)/error"
+	@request=`/usr/bin/printf '\377'`; \
+		status=0; "$(ARC_CLI)" --root "$(COMMAND_TEST_DIR)/root" act \
+			--room room-000000000000 --id ai-000000000000 \
+			--binding 00000000-0000-4000-8000-000000000000 \
+			--operation 00000000-0000-4000-8000-000000000000 \
+			--request "$$request" > "$(COMMAND_TEST_DIR)/actual" \
+			2> "$(COMMAND_TEST_DIR)/error" || status=$$?; test "$$status" -eq 2
+	@/usr/bin/printf '%s\n' \
+		'{"error":{"code":"INVALID_ARGUMENT","message":"Command-line arguments must be valid UTF-8.","retryable":false},"ok":false}' \
 		> "$(COMMAND_TEST_DIR)/expected"
 	@/usr/bin/cmp "$(COMMAND_TEST_DIR)/expected" "$(COMMAND_TEST_DIR)/actual"
 	@test ! -s "$(COMMAND_TEST_DIR)/error"
@@ -134,13 +147,24 @@ source-check: build
 	"$(ARC_DEV)" source-check --source "$(CURDIR)"
 
 source-archive-test:
-	@tmp=$$(/usr/bin/mktemp -d "/private/tmp/arc-source-archive.XXXXXX"); \
+	@set -eu; \
+		set -o pipefail; \
+		toplevel=`/usr/bin/git rev-parse --show-toplevel 2>/dev/null` || { \
+			/usr/bin/printf '%s\n' \
+				'source-archive-test: fail closed: not a Git checkout' >&2; \
+			exit 1; \
+		}; \
+		test "$$toplevel" = "$(CURDIR)" || { \
+			/usr/bin/printf '%s\n' \
+				'source-archive-test: fail closed: Git toplevel is not this source tree' >&2; \
+			exit 1; \
+		}; \
+		tmp=`/usr/bin/mktemp -d "/private/tmp/arc-source-archive.XXXXXX"`; \
 		trap '/bin/rm -rf -- "$$tmp"' EXIT HUP INT TERM; \
 		/usr/bin/git -c tar.umask=022 archive --format=tar \
 			--prefix="ARC-$(VERSION)/" HEAD | /usr/bin/gzip -n > "$$tmp/source.tar.gz"; \
 		/usr/bin/tar -tzvf "$$tmp/source.tar.gz" | \
-			/usr/bin/awk 'substr($$1, 6, 1) == "w" || substr($$1, 9, 1) == "w" { exit 1 }'; \
-		test $$? -eq 0
+			/usr/bin/awk 'substr($$1, 6, 1) == "w" || substr($$1, 9, 1) == "w" { exit 1 }'
 
 knowledge: build
 	@/bin/mkdir -p "$(KNOWLEDGE_DIR)"

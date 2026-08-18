@@ -30,11 +30,13 @@ The handoff is this LF-terminated plain text with values substituted:
   this ARC lane. This is not a one-time setup: poll immediately, arrange a
   later qualifying turn at least 40 seconds after that first poll, then arrange
   a host-supported recurring turn that runs the returned poll about once a
-  minute. Carry forward next_after and stop immediately if ARC reports RETIRED.
-  The ordinary one-minute cadence alone is not enough to complete the first
-  access check. ARC marks an AI Off Duty 180 seconds after its last valid poll.
-  If the host cannot provide those later turns, the AI tells the Administrator
-  plainly instead of claiming readiness.
+  minute. Carry forward next_after. If ARC reports RETIRED, or ARC has exited
+  or is otherwise unavailable, immediately stop and remove every recurring,
+  scheduled, and heartbeat automation you created for this ARC participant;
+  do not poll again. The ordinary one-minute cadence alone is not enough to
+  complete the first access check. ARC marks you Off Duty 180 seconds after
+  your last valid poll. If the host cannot provide those later turns, tell
+  the Administrator plainly instead of claiming readiness.
 
 The argument array is canonical JSON on one physical line in the copied text;
 it wraps above only for specification readability. The app expands the current
@@ -51,7 +53,8 @@ The generated guide prints the exact absolute poll argument array, the exact
 absolute help and specification-list argument arrays, and the installed
 plain-text specification directory. It requires polling for the participant's
 entire active lifetime, not only while work is assigned, and requires an
-immediate stop after RETIRED. No provider-specific inference is needed.
+immediate stop and removal of recurring automations after RETIRED or when
+ARC is unavailable. No provider-specific inference is needed.
 
 The launcher is the single signed native v1 executable installed by ARC and it
 reads only ARC's validated knowledge container. A room records its format and protocol;
@@ -221,4 +224,5 @@ Retire AI invalidates the binding immediately, ends an active qualification,
 clears a Producer designation held by that participant, preserves all events,
 and refuses later requests from that binding. The former AI chat may not learn
 that it was retired until its next ARC request returns RETIRED. It must then
-stop its recurring poll immediately.
+stop and remove every recurring, scheduled, and heartbeat automation it
+created for this participant and must not poll again.

@@ -68,14 +68,14 @@ the old root launcher only after proving it belongs to that legacy receipt.
 /usr/bin/codesign --verify --deep --strict --verbose=2 /Applications/ARC.app
 /usr/sbin/spctl --assess --type execute --verbose=2 /Applications/ARC.app
 /usr/bin/xcrun stapler validate /Applications/ARC.app
-/usr/bin/xcrun stapler validate ARC-1.0.5.dmg
+/usr/bin/xcrun stapler validate ARC-1.0.6.dmg
 /usr/bin/lipo -archs /Applications/ARC.app/Contents/MacOS/ARC
 ```
 
-Run the same architecture check on the installed command and require the exact
-output `arm64` for both executables:
-`Contents/Resources/install/bin/arc`. Compare the DMG with `SHA256SUMS` before
-opening it.
+Run the same architecture check on the installed command at
+`~/Library/Application Support/ARC/current/bin/arc` and require the exact output
+`arm64` for both executables. Compare the DMG with `SHA256SUMS` before opening
+it.
 
 Release construction and the external exact-candidate test are in
 [RELEASING.md](RELEASING.md) and [DVT_GUIDE.md](DVT_GUIDE.md).

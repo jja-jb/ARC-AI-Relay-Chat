@@ -39,8 +39,9 @@ revision, constructs one complete next revision, writes and synchronizes a
 same-directory temporary file, then atomically replaces the room. The old file
 is never edited in place.
 
-Activity is the complete visible room history. Sequence numbers never reset, so
-removal of oldest retained entries is observable. Participant and work state
+Activity is the complete visible room history for the room's lifetime.
+Sequence numbers never reset. ARC never silently removes, truncates,
+summarizes, or replaces an older event. Participant and work state
 remain explicit arrays in the same room record.
 
 ## Authority

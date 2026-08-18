@@ -5,10 +5,13 @@ import Foundation
 @main
 struct ARCCommand {
     static func main() {
-        let raw = Array(CommandLine.arguments.dropFirst())
-        let machine = machineCommand(raw)
+        // CommandLine.arguments replaces malformed UTF-8 with U+FFFD.  Keep
+        // that lossy view only to decide whether a safe failure is machine
+        // framed; parse the actual argv bytes below.
+        let lossyRaw = Array(CommandLine.arguments.dropFirst())
+        let machine = machineCommand(lossyRaw)
         do {
-            try run(raw)
+            try run(strictCommandLineArguments())
         } catch let error as ARCError {
             if machine { writeFailure(error) }
             else { writeText("\(error.message)\n") }
@@ -18,6 +21,17 @@ struct ARCCommand {
             if machine { writeFailure(safe) }
             else { writeText("\(safe.message)\n") }
             exit(safe.exitStatus)
+        }
+    }
+
+    private static func strictCommandLineArguments() throws -> [String] {
+        let count = Int(CommandLine.argc)
+        return try (1..<count).map { index in
+            guard let pointer = CommandLine.unsafeArgv[index],
+                  let argument = String(validatingCString: pointer) else {
+                throw ARCError(.invalidArgument, "Command-line arguments must be valid UTF-8.")
+            }
+            return argument
         }
     }
 
@@ -132,6 +146,7 @@ struct ARCCommand {
             else if let failure = result.failure {
                 writeText("\(failure.message)\n\(failure.nextAction)\n")
             }
+            if !result.valid { exit(2) }
 
         default:
             throw usage()

@@ -40,7 +40,7 @@ The selected room has two vertically split, independently scrollable areas:
                 loading while the Administrator scrolls.
 
 The header uses the exact status precedence in RM-007. It leads with human
-words. Show Details reveals format, revision, IDs, generation, logical time,
+words. Show Advanced Details reveals format, revision, IDs, generation, logical time,
 knowledge digest, and structured payloads without replacing the plain view.
 
 Each participant row shows name, participant ID, one phase/duty phrase, whether
@@ -70,7 +70,7 @@ ARC uses normal Mac menus. The complete v1 application command surface is:
   File    New Room...
   Room    Add AI; Rename Room...; Make Selected AI Producer;
           Retire Selected AI...; Diagnose Room...; Delete Room...
-  View    Show Details; Bigger Text; Smaller Text; Actual Size;
+  View    Show Advanced Details; Bigger Text; Smaller Text; Actual Size;
           Reveal ARC Data Location
   Help    ARC Help; Privacy
 

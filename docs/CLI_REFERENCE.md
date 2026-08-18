@@ -34,7 +34,7 @@ options. Specification IDs are the three-digit strings `000` through `012`.
 
 ## Human-readable commands
 
-`version` prints `ARC 1.0.5` and LF. `help` reads the verified user guide from
+`version` prints `ARC 1.0.6` and LF. `help` reads the verified user guide from
 the installed knowledge container. `spec list` prints the 13 specification
 titles. `spec read ID` reads that verified specification. These commands reject
 `--root` because shipping help is always the installed release identity.
@@ -45,7 +45,8 @@ and exact poll argument array. It is read-only.
 
 `doctor` validates a room without changing it. Plain output says either
 `Room file is OK.` or gives the first safe failure and next action. `--json`
-uses the machine envelope described below.
+uses the machine envelope described below. It exits 0 only for a valid room;
+an invalid-room diagnostic exits 2 after emitting its safe result.
 
 ## Poll
 

@@ -203,12 +203,58 @@ enum ARCReleaseSupport {
             throw DevToolError.message("Package.swift has a remote package dependency")
         }
 
+        let makefile = String(
+            decoding: try KnowledgeContainer.readBounded(
+                root.appending(path: "Makefile"), maximum: 131_072
+            ),
+            as: UTF8.self
+        )
+        guard makefile.contains("set -o pipefail"),
+              makefile.contains("rev-parse --show-toplevel") else {
+            throw DevToolError.message(
+                "source-archive-test is not fail-closed outside a Git checkout"
+            )
+        }
+
+        let specDuty = String(
+            decoding: try KnowledgeContainer.readBounded(
+                root.appending(
+                    path: "10_specs/platform_support/005-arc-ai-instructions-qualification-duty-and-polling.txt"
+                ),
+                maximum: 1_048_576
+            ),
+            as: UTF8.self
+        )
+        guard specDuty.contains("remove every recurring, scheduled, and heartbeat"),
+              specDuty.contains("or ARC has exited"),
+              !specDuty.contains(
+                "Carry forward next_after and stop immediately if ARC reports RETIRED."
+              ) else {
+            throw DevToolError.message(
+                "qualification-duty handoff text is stale versus shipped retirement automation removal"
+            )
+        }
+
+        let architecture = String(
+            decoding: try KnowledgeContainer.readBounded(
+                root.appending(path: "ARCHITECTURE.md"), maximum: 131_072
+            ),
+            as: UTF8.self
+        )
+        guard architecture.contains("never silently removes"),
+              !architecture.contains("removal of oldest retained entries is observable")
+        else {
+            throw DevToolError.message(
+                "ARCHITECTURE.md Activity retention text is stale versus DS-007"
+            )
+        }
+
         try checkTree(root)
         try checkDocumentation(root)
         try checkTraceability(root)
         try checkBrandAssets(root)
         try checkPrivacyManifest(root.appending(path: "app/Sources/ARCApp/PrivacyInfo.xcprivacy"))
-        try checkInfoPlist(root.appending(path: "app/Info.plist"), version: "1.0.5")
+        try checkInfoPlist(root.appending(path: "app/Info.plist"), version: "1.0.6")
     }
 
     static func checkApp(_ app: URL, version: String, release: Bool) throws {

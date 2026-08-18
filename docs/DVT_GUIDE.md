@@ -32,7 +32,14 @@ the Swift package, shared core, app, command, C knowledge reader, developer
 tool, tests, specifications, user and developer documentation, editable artwork,
 app icon, brand assets, CI, release procedure, man page, and legal files. Confirm
 there are no links, build products, room data, credentials, caches, or unknown
-binary dependencies. Run `make check` without network access.
+binary dependencies.
+
+In the extracted tree, `make source-archive-test` must fail closed because the
+published archive has no Git metadata. That refusal is required evidence; a
+zero exit is a DVT failure. Rebuild and run the remaining `make check` targets
+from the extracted tree without network access. Separately, from a Git
+checkout of the same tagged revision, run `make source-archive-test` and
+confirm it passes (generated archive modes 0644/0755, no group/other write).
 
 ### DVT-002-NATIVE-BUILD
 

@@ -169,8 +169,11 @@ The external tester receives the frozen DMG, source archive, product-literature
 PDF, candidate manifest, tag, commit, and prepared hashes. Release metadata is
 written only after DVT passes. The tester checks every
 file in both artifacts, rebuilds from the source archive on Apple silicon,
-compares declared identities and knowledge bytes, runs `make check`, and
-performs TV-007 and TV-008 against the exact DMG hash.
+compares declared identities and knowledge bytes, proves
+`source-archive-test` fails closed in the extracted tree and passes from a
+Git checkout of the same tag, runs the remaining `make check` targets from
+the extracted tree, and performs TV-007 and TV-008 against the exact DMG
+hash.
 
 The final text report names tester, organization or independence statement,
 UTC start and finish, machine, operating system, architecture, Xcode and
