@@ -9,7 +9,9 @@ cleanup() { rm -rf "$stage"; }
 trap cleanup EXIT HUP INT TERM
 
 cd "$root"
-swift build -c release --product arc --product arc-admin --product arc-dev
+swift build -c release --product arc
+swift build -c release --product arc-admin
+swift build -c release --product arc-dev
 bin=$(swift build -c release --show-bin-path)
 mkdir -p "$stage/DEBIAN" "$stage/usr/bin" "$stage/usr/share/arc" \
   "$stage/usr/share/applications" "$stage/usr/share/icons/hicolor/512x512/apps"
