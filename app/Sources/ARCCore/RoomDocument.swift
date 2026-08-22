@@ -259,7 +259,8 @@ enum ARCCanonicalJSON {
             if CFGetTypeID(value) == CFBooleanGetTypeID() {
                 output.append(contentsOf: (value.boolValue ? "true" : "false").utf8)
             } else {
-                guard !CFNumberIsFloatType(value),
+                let numericType = String(cString: value.objCType)
+                guard !["f", "d", "D"].contains(numericType),
                       let integer = Int64(value.stringValue) else {
                     throw ARCError(.roomCorrupt, "ARC JSON contains a non-integer number.")
                 }

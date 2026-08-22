@@ -13,7 +13,7 @@ public final class ARCStore: @unchecked Sendable {
                 .appendingPathComponent(".local/share/arc", isDirectory: true)
         }
         #endif
-        FileManager.default.urls(
+        return FileManager.default.urls(
             for: .applicationSupportDirectory, in: .userDomainMask
         )[0].appendingPathComponent("ARC", isDirectory: true)
     }
