@@ -1,5 +1,10 @@
-import Darwin
 import Foundation
+
+#if canImport(Darwin)
+import Darwin
+#else
+import Glibc
+#endif
 
 enum ARCFileCollision: Error {
     case destinationExists
@@ -116,7 +121,7 @@ struct ARCFileStore: Sendable {
 
     private func deleteAdmittedRegularFile(_ url: URL) throws {
         let sourceDirectory = try openRoomsDirectory()
-        defer { Darwin.close(sourceDirectory) }
+        defer { close(sourceDirectory) }
         let source = openat(
             sourceDirectory, url.lastPathComponent,
             O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOFOLLOW
@@ -125,7 +130,7 @@ struct ARCFileStore: Sendable {
             if errno == ENOENT { throw ARCError(.notFound, "ARC could not find that room.") }
             throw ARCError(.ioFailure, "ARC refused an unsafe room file.")
         }
-        defer { Darwin.close(source) }
+        defer { close(source) }
 
         var admitted = stat()
         var pathState = stat()
@@ -162,7 +167,7 @@ struct ARCFileStore: Sendable {
 
     private func removeLockIfUnused(for roomURL: URL) throws {
         let directory = try openRoomsDirectory()
-        defer { Darwin.close(directory) }
+        defer { close(directory) }
         let lockName = roomURL.appendingPathExtension("lock").lastPathComponent
         if unlinkat(directory, lockName, 0) != 0 && errno != ENOENT {
             throw ARCError(.ioFailure, "ARC deleted the room but could not remove its lock file.")
@@ -188,7 +193,7 @@ struct ARCFileStore: Sendable {
         at url: URL, expectedID: String
     ) throws -> ARCRoomFileInspection {
         let directory = try openRoomsDirectory()
-        defer { Darwin.close(directory) }
+        defer { close(directory) }
         let descriptor = openat(
             directory, url.lastPathComponent,
             O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOFOLLOW
@@ -197,7 +202,7 @@ struct ARCFileStore: Sendable {
             if errno == ENOENT { throw ARCError(.notFound, "ARC could not find that room.") }
             throw ARCError(.ioFailure, "ARC could not open that room.")
         }
-        defer { Darwin.close(descriptor) }
+        defer { close(descriptor) }
 
         var info = stat()
         guard fstat(descriptor, &info) == 0,
@@ -213,7 +218,7 @@ struct ARCFileStore: Sendable {
         var buffer = [UInt8](repeating: 0, count: 65_536)
         while true {
             let count = buffer.withUnsafeMutableBytes {
-                Darwin.read(descriptor, $0.baseAddress, $0.count)
+            arcRead(descriptor, $0.baseAddress, $0.count)
             }
             if count == 0 { break }
             if count < 0 {
@@ -231,10 +236,7 @@ struct ARCFileStore: Sendable {
               fstatat(directory, url.lastPathComponent, &pathState, AT_SYMLINK_NOFOLLOW) == 0,
               info.st_dev == after.st_dev, info.st_ino == after.st_ino,
               info.st_size == after.st_size,
-              info.st_mtimespec.tv_sec == after.st_mtimespec.tv_sec,
-              info.st_mtimespec.tv_nsec == after.st_mtimespec.tv_nsec,
-              info.st_ctimespec.tv_sec == after.st_ctimespec.tv_sec,
-              info.st_ctimespec.tv_nsec == after.st_ctimespec.tv_nsec,
+              arcSameFileTimes(info, after),
               after.st_dev == pathState.st_dev, after.st_ino == pathState.st_ino,
               data.count == Int(after.st_size) else {
             throw ARCError(.ioFailure, "The room changed while ARC was reading it.")
@@ -252,7 +254,7 @@ struct ARCFileStore: Sendable {
     private func withLock<T>(for roomURL: URL, body: () throws -> T) throws -> T {
         let lockURL = roomURL.appendingPathExtension("lock")
         let directory = try openRoomsDirectory()
-        defer { Darwin.close(directory) }
+        defer { close(directory) }
         let descriptor = openat(
             directory, lockURL.lastPathComponent,
             O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, S_IRUSR | S_IWUSR
@@ -260,7 +262,7 @@ struct ARCFileStore: Sendable {
         guard descriptor >= 0 else {
             throw ARCError(.ioFailure, "ARC could not open the room lock.")
         }
-        defer { Darwin.close(descriptor) }
+        defer { close(descriptor) }
 
         var info = stat()
         guard fstat(descriptor, &info) == 0,
@@ -290,7 +292,7 @@ struct ARCFileStore: Sendable {
             ".\(destination.lastPathComponent).\(UUID().uuidString.lowercased()).tmp"
         )
         let directory = try openRoomsDirectory()
-        defer { Darwin.close(directory) }
+        defer { close(directory) }
         let descriptor = openat(
             directory, temporary.lastPathComponent,
             O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW,
@@ -301,7 +303,7 @@ struct ARCFileStore: Sendable {
         }
         var shouldRemove = true
         defer {
-            Darwin.close(descriptor)
+            close(descriptor)
             if shouldRemove { _ = unlinkat(directory, temporary.lastPathComponent, 0) }
         }
 
@@ -310,7 +312,7 @@ struct ARCFileStore: Sendable {
                 guard var pointer = raw.baseAddress else { return }
                 var remaining = raw.count
                 while remaining > 0 {
-                    let count = Darwin.write(descriptor, pointer, remaining)
+                    let count = arcWrite(descriptor, pointer, remaining)
                     if count < 0 {
                         if errno == EINTR { continue }
                         throw ARCError(.ioFailure, "ARC could not write its room update.")
@@ -322,7 +324,8 @@ struct ARCFileStore: Sendable {
             guard fsync(descriptor) == 0 else {
                 throw ARCError(.ioFailure, "ARC could not synchronize its room update.")
             }
-            let renameStatus = exclusive
+            #if os(macOS)
+            let publishStatus = exclusive
                 ? renameatx_np(
                     directory, temporary.lastPathComponent,
                     directory, destination.lastPathComponent,
@@ -332,12 +335,31 @@ struct ARCFileStore: Sendable {
                     directory, temporary.lastPathComponent,
                     directory, destination.lastPathComponent
                 )
-            guard renameStatus == 0 else {
-                if exclusive && errno == EEXIST {
-                    throw ARCFileCollision.destinationExists
-                }
+            guard publishStatus == 0 else {
+                if exclusive && errno == EEXIST { throw ARCFileCollision.destinationExists }
                 throw ARCError(.ioFailure, "ARC could not publish its room update.")
             }
+            #else
+            if exclusive {
+                guard linkat(
+                    directory, temporary.lastPathComponent,
+                    directory, destination.lastPathComponent, 0
+                ) == 0 else {
+                    if errno == EEXIST { throw ARCFileCollision.destinationExists }
+                    throw ARCError(.ioFailure, "ARC could not publish its room update.")
+                }
+                guard unlinkat(directory, temporary.lastPathComponent, 0) == 0 else {
+                    throw ARCError(.ioFailure, "ARC could not publish its room update.")
+                }
+            } else {
+                guard renameat(
+                    directory, temporary.lastPathComponent,
+                    directory, destination.lastPathComponent
+                ) == 0 else {
+                    throw ARCError(.ioFailure, "ARC could not publish its room update.")
+                }
+            }
+            #endif
             shouldRemove = false
             guard fsync(directory) == 0 else {
                 throw ARCError(.ioFailure, "ARC could not synchronize its rooms folder.")
@@ -353,7 +375,7 @@ struct ARCFileStore: Sendable {
 
     private func openRoomsDirectory() throws -> Int32 {
         try rejectLinkedPath(roomsURL, allowMissingTail: false)
-        let descriptor = Darwin.open(
+        let descriptor = open(
             roomsURL.path, O_RDONLY | O_CLOEXEC | O_DIRECTORY | O_NOFOLLOW
         )
         guard descriptor >= 0 else {

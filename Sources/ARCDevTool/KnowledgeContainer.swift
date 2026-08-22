@@ -1,7 +1,11 @@
-import CryptoKit
-import Darwin
 import Foundation
 import ARCKnowledge
+
+#if canImport(Darwin)
+import Darwin
+#else
+import Glibc
+#endif
 
 enum DevToolError: Error, CustomStringConvertible {
     case message(String)
@@ -73,7 +77,7 @@ enum KnowledgeContainer {
     }
 
     static func sha256(_ data: Data) -> Data {
-        Data(SHA256.hash(data: data))
+        ARCDevDigest.data(data)
     }
 
     static func hex(_ data: Data) -> String {
@@ -576,9 +580,13 @@ enum KnowledgeContainer {
         // its stable `/tmp` alias. Validate the real system target; no other
         // symbolic parent receives this exception.
         let presented = url.standardizedFileURL.path
+        #if os(macOS)
         let checked = presented == "/tmp" || presented.hasPrefix("/tmp/")
             ? "/private" + presented
             : presented
+        #else
+        let checked = presented
+        #endif
         var current = URL(fileURLWithPath: "/", isDirectory: true)
         for component in URL(fileURLWithPath: checked).pathComponents.dropFirst() {
             current.append(path: component, directoryHint: .isDirectory)

@@ -1,7 +1,11 @@
-import CryptoKit
 import CoreFoundation
-import Darwin
 import Foundation
+
+#if canImport(Darwin)
+import Darwin
+#else
+import Glibc
+#endif
 
 struct ARCRoomDocument: Codable, Sendable {
     var format: String
@@ -255,7 +259,8 @@ enum ARCCanonicalJSON {
             if CFGetTypeID(value) == CFBooleanGetTypeID() {
                 output.append(contentsOf: (value.boolValue ? "true" : "false").utf8)
             } else {
-                guard !CFNumberIsFloatType(value),
+                let numericType = String(cString: value.objCType)
+                guard !["f", "d", "D"].contains(numericType),
                       let integer = Int64(value.stringValue) else {
                     throw ARCError(.roomCorrupt, "ARC JSON contains a non-integer number.")
                 }
@@ -376,11 +381,11 @@ enum ARCRoomCodec {
 
     static func requestDigest(_ value: ARCActionRequest) throws -> String {
         let data = try ARCActionJSON.encode(value)
-        return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        return arcSHA256Hex(data)
     }
 
     static func digest(_ value: String) -> String {
-        SHA256.hash(data: Data(value.utf8)).map { String(format: "%02x", $0) }.joined()
+        arcSHA256Hex(Data(value.utf8))
     }
 
     static func validate(_ document: ARCRoomDocument) throws {

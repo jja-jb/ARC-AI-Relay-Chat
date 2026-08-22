@@ -43,3 +43,28 @@ jobs:
           persist-credentials: false
       - name: Build and inspect Apple silicon release
         run: make app-release-check
+
+  ubuntu-desktop:
+    name: Ubuntu GTK desktop and commands
+    runs-on: ubuntu-24.04
+    container: swift:6.0-jammy
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Install Ubuntu desktop build dependencies
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential pkg-config libgtk-4-dev libjson-glib-dev dpkg-dev
+      - name: Build ARC commands and GTK desktop
+        run: |
+          swift build --product arc --product arc-admin --product arc-dev
+          make -C linux/ubuntu
+      - name: Run portable core tests and assemble a Debian package
+        run: |
+          swift test --filter ARCCoreTests
+          sh linux/ubuntu/build-deb.sh /tmp/ARC-ubuntu
+          dpkg-deb --info /tmp/ARC-ubuntu.deb

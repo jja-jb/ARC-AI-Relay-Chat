@@ -2,7 +2,18 @@ import Foundation
 
 public final class ARCStore: @unchecked Sendable {
     public static var defaultRootURL: URL {
-        FileManager.default.urls(
+        #if os(Linux)
+        if let dataHome = ProcessInfo.processInfo.environment["XDG_DATA_HOME"],
+           dataHome.hasPrefix("/") {
+            return URL(fileURLWithPath: dataHome, isDirectory: true)
+                .appendingPathComponent("arc", isDirectory: true)
+        }
+        if let home = FileManager.default.homeDirectoryForCurrentUser.path as String? {
+            return URL(fileURLWithPath: home, isDirectory: true)
+                .appendingPathComponent(".local/share/arc", isDirectory: true)
+        }
+        #endif
+        return FileManager.default.urls(
             for: .applicationSupportDirectory, in: .userDomainMask
         )[0].appendingPathComponent("ARC", isDirectory: true)
     }
