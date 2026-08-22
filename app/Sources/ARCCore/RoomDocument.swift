@@ -1,7 +1,11 @@
-import CryptoKit
 import CoreFoundation
-import Darwin
 import Foundation
+
+#if canImport(Darwin)
+import Darwin
+#else
+import Glibc
+#endif
 
 struct ARCRoomDocument: Codable, Sendable {
     var format: String
@@ -376,11 +380,11 @@ enum ARCRoomCodec {
 
     static func requestDigest(_ value: ARCActionRequest) throws -> String {
         let data = try ARCActionJSON.encode(value)
-        return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        return arcSHA256Hex(data)
     }
 
     static func digest(_ value: String) -> String {
-        SHA256.hash(data: Data(value.utf8)).map { String(format: "%02x", $0) }.joined()
+        arcSHA256Hex(Data(value.utf8))
     }
 
     static func validate(_ document: ARCRoomDocument) throws {

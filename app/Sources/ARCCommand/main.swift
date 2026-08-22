@@ -1,6 +1,11 @@
 import ARCCore
-import Darwin
 import Foundation
+
+#if canImport(Darwin)
+import Darwin
+#else
+import Glibc
+#endif
 
 @main
 struct ARCCommand {

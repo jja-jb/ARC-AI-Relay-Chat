@@ -1,6 +1,10 @@
-import CryptoKit
-import Darwin
 import Foundation
+
+#if canImport(Darwin)
+import Darwin
+#else
+import Glibc
+#endif
 
 private struct ARCInstallManifest: Codable {
     let schema: Int
@@ -669,6 +673,6 @@ enum ARCReleaseSupport {
     }
 
     private static func hex(_ data: Data) -> String {
-        SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        ARCDevDigest.data(data).map { String(format: "%02x", $0) }.joined()
     }
 }

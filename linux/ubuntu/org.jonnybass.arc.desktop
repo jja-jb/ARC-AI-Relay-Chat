@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=ARC — AI Relay Chat
+Comment=Coordinate local AI participants in shared ARC rooms
+Exec=arc-ubuntu
+Terminal=false
+Categories=Development;Utility;GTK;
+StartupNotify=true
+Icon=org.jonnybass.arc

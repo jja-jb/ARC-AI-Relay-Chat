@@ -1,6 +1,10 @@
-import CryptoKit
-import Darwin
 import Foundation
+
+#if canImport(Darwin)
+import Darwin
+#else
+import Glibc
+#endif
 
 private struct ARCCandidateAsset: Codable, Equatable {
     let mediaType: String
@@ -347,11 +351,11 @@ extension ARCReleaseSupport {
     }
 
     private static func fileIdentity(_ url: URL) throws -> (size: Int64, sha256: String) {
-        let descriptor = Darwin.open(url.path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW)
+        let descriptor = open(url.path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW)
         guard descriptor >= 0 else {
             throw DevToolError.message("release input is not one bounded regular file")
         }
-        defer { Darwin.close(descriptor) }
+        defer { close(descriptor) }
         var before = stat()
         guard fstat(descriptor, &before) == 0,
               (before.st_mode & S_IFMT) == S_IFREG,
@@ -360,12 +364,13 @@ extension ARCReleaseSupport {
               before.st_size <= 4 * 1_024 * 1_024 * 1_024 else {
             throw DevToolError.message("release input is not one bounded regular file")
         }
-        var hasher = SHA256()
+        var bytes = Data()
+        bytes.reserveCapacity(Int(before.st_size))
         var count: Int64 = 0
         var buffer = [UInt8](repeating: 0, count: 1_048_576)
         while true {
             let readCount = buffer.withUnsafeMutableBytes {
-                Darwin.read(descriptor, $0.baseAddress, $0.count)
+                read(descriptor, $0.baseAddress, $0.count)
             }
             if readCount == 0 { break }
             if readCount < 0 {
@@ -376,7 +381,7 @@ extension ARCReleaseSupport {
             guard count <= before.st_size else {
                 throw DevToolError.message("release input changed while hashing")
             }
-            hasher.update(data: Data(buffer.prefix(readCount)))
+            bytes.append(contentsOf: buffer.prefix(readCount))
         }
         var after = stat()
         var pathState = stat()
@@ -386,15 +391,12 @@ extension ARCReleaseSupport {
               before.st_dev == after.st_dev,
               before.st_ino == after.st_ino,
               before.st_size == after.st_size,
-              before.st_mtimespec.tv_sec == after.st_mtimespec.tv_sec,
-              before.st_mtimespec.tv_nsec == after.st_mtimespec.tv_nsec,
-              before.st_ctimespec.tv_sec == after.st_ctimespec.tv_sec,
-              before.st_ctimespec.tv_nsec == after.st_ctimespec.tv_nsec,
+              ARCDevDigest.sameFileTimes(before, after),
               after.st_dev == pathState.st_dev,
               after.st_ino == pathState.st_ino else {
             throw DevToolError.message("release input changed while hashing")
         }
-        return (count, hasher.finalize().map { String(format: "%02x", $0) }.joined())
+        return (count, ARCDevDigest.data(bytes).map { String(format: "%02x", $0) }.joined())
     }
 
     private static func decodeCandidate(_ data: Data) throws -> ARCCandidateManifest {
@@ -616,7 +618,7 @@ extension ARCReleaseSupport {
     }
 
     private static func digest(_ data: Data) -> String {
-        SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        ARCDevDigest.data(data).map { String(format: "%02x", $0) }.joined()
     }
 
     private static func bytewiseLess(_ left: String, _ right: String) -> Bool {

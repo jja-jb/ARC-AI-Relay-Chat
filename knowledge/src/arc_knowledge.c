@@ -271,6 +271,22 @@ static void arc_sha256_final(ArcSha256 *context, unsigned char digest[32])
     memset(context, 0, sizeof(*context));
 }
 
+void arc_knowledge_sha256(const unsigned char *bytes,
+                          size_t length,
+                          unsigned char out_digest[32])
+{
+    ArcSha256 context;
+
+    if (out_digest == NULL || (bytes == NULL && length != 0u)) {
+        return;
+    }
+    arc_sha256_init(&context);
+    if (length != 0u) {
+        arc_sha256_update(&context, bytes, length);
+    }
+    arc_sha256_final(&context, out_digest);
+}
+
 static void arc_sha256(const unsigned char *bytes,
                        size_t length,
                        unsigned char digest[32])

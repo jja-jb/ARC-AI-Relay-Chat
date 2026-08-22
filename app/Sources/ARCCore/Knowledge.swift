@@ -1,7 +1,11 @@
 import ARCKnowledge
-import CryptoKit
-import Darwin
 import Foundation
+
+#if canImport(Darwin)
+import Darwin
+#else
+import Glibc
+#endif
 
 public final class ARCKnowledgeFile: @unchecked Sendable {
     public enum Member: Sendable {
@@ -62,8 +66,7 @@ public final class ARCKnowledgeFile: @unchecked Sendable {
               ARCText.isSHA256(digestText) else {
             throw ARCError(.knowledgeUnavailable, "ARC's AI instruction digest is invalid.")
         }
-        let actual = SHA256.hash(data: containerData)
-            .map { String(format: "%02x", $0) }.joined()
+        let actual = arcSHA256Hex(containerData)
         guard actual == digestText else {
             throw ARCError(.knowledgeUnavailable, "ARC's AI instructions failed verification.")
         }
@@ -194,11 +197,11 @@ private func regularPathExists(_ path: String) -> Bool {
 
 private func readBoundedRegularFile(_ url: URL, maximumBytes: Int) throws -> Data {
     try rejectSymlinkComponents(url)
-    let descriptor = Darwin.open(url.path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW)
+    let descriptor = open(url.path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW)
     guard descriptor >= 0 else {
         throw ARCError(.knowledgeUnavailable, "ARC could not read its AI instructions.")
     }
-    defer { Darwin.close(descriptor) }
+    defer { close(descriptor) }
     var before = stat()
     guard fstat(descriptor, &before) == 0,
           (before.st_mode & S_IFMT) == S_IFREG,
@@ -215,7 +218,7 @@ private func readBoundedRegularFile(_ url: URL, maximumBytes: Int) throws -> Dat
     var buffer = [UInt8](repeating: 0, count: 65_536)
     while true {
         let count = buffer.withUnsafeMutableBytes {
-            Darwin.read(descriptor, $0.baseAddress, $0.count)
+            arcRead(descriptor, $0.baseAddress, $0.count)
         }
         if count == 0 { break }
         if count < 0 {
@@ -234,10 +237,7 @@ private func readBoundedRegularFile(_ url: URL, maximumBytes: Int) throws -> Dat
           before.st_dev == after.st_dev,
           before.st_ino == after.st_ino,
           before.st_size == after.st_size,
-          before.st_mtimespec.tv_sec == after.st_mtimespec.tv_sec,
-          before.st_mtimespec.tv_nsec == after.st_mtimespec.tv_nsec,
-          before.st_ctimespec.tv_sec == after.st_ctimespec.tv_sec,
-          before.st_ctimespec.tv_nsec == after.st_ctimespec.tv_nsec,
+          arcSameFileTimes(before, after),
           after.st_dev == pathState.st_dev,
           after.st_ino == pathState.st_ino,
           result.count == Int(after.st_size) else {

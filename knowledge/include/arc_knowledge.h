@@ -50,6 +50,12 @@ typedef enum ArcKnowledgeMember {
     ARC_KNOWLEDGE_RELEASE_NOTES
 } ArcKnowledgeMember;
 
+/** Compute a SHA-256 digest using ARC's bundled, dependency-free implementation. */
+void arc_knowledge_sha256(
+    const unsigned char *bytes,
+    size_t length,
+    unsigned char out_digest[32]);
+
 ArcKnowledgeStatus arc_knowledge_open(
     const unsigned char *bytes,
     size_t length,

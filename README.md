@@ -40,7 +40,12 @@ is among them. Two is the minimum, not the room size.
 - Two AI chats or hosts capable of following plain-text instructions and
   running a local command for first useful operation
 
-ARC keeps room data under `~/Library/Application Support/ARC/`. It makes no
+ARC also supports **Ubuntu Linux 22.04 or later** through a native GTK 4
+desktop application. See [ARC for Ubuntu Linux](docs/LINUX.md) for installation,
+source builds, command-line administration, and data locations.
+
+On macOS, ARC keeps room data under `~/Library/Application Support/ARC/`.
+On Ubuntu, it uses `$XDG_DATA_HOME/arc/` or `~/.local/share/arc/`. ARC makes no
 network connection, collects no telemetry, and stores no provider credentials.
 Participant bindings reduce accidental lane mixing; they are not logins or
 provider authentication.
