@@ -142,7 +142,8 @@ static void create_room(GtkButton *button, gpointer data) {
 
 static void append_label(GtkWidget *box, const gchar *text, const gchar *css) {
   GtkWidget *label = gtk_label_new(text); gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
-  if (css) gtk_widget_add_css_class(label, css); gtk_box_append(GTK_BOX(box), label);
+  if (css) gtk_widget_add_css_class(label, css);
+  gtk_box_append(GTK_BOX(box), label);
 }
 
 static void load_room(ArcUbuntu *app) {
@@ -200,7 +201,7 @@ int main(int argc, char **argv) {
   app.admin = g_strdup(g_getenv("ARC_ADMIN") ? g_getenv("ARC_ADMIN") : "arc-admin");
   app.arc = g_strdup(g_getenv("ARC_COMMAND") ? g_getenv("ARC_COMMAND") : "arc");
   for (int i = 1; i + 1 < argc; i++) if (g_str_equal(argv[i], "--root")) { g_free(app.root); app.root = g_strdup(argv[++i]); }
-  GtkApplication *application = gtk_application_new("org.jonnybass.arc", G_APPLICATION_DEFAULT_FLAGS);
+  GtkApplication *application = gtk_application_new("org.jonnybass.arc", G_APPLICATION_FLAGS_NONE);
   g_signal_connect(application, "activate", G_CALLBACK(on_activate), &app); int status = g_application_run(G_APPLICATION(application), argc, argv);
   g_object_unref(application); g_free(app.root); g_free(app.admin); g_free(app.arc); g_free(app.room_id); return status;
 }
