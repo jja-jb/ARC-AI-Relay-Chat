@@ -580,9 +580,13 @@ enum KnowledgeContainer {
         // its stable `/tmp` alias. Validate the real system target; no other
         // symbolic parent receives this exception.
         let presented = url.standardizedFileURL.path
+        #if os(macOS)
         let checked = presented == "/tmp" || presented.hasPrefix("/tmp/")
             ? "/private" + presented
             : presented
+        #else
+        let checked = presented
+        #endif
         var current = URL(fileURLWithPath: "/", isDirectory: true)
         for component in URL(fileURLWithPath: checked).pathComponents.dropFirst() {
             current.append(path: component, directoryHint: .isDirectory)
