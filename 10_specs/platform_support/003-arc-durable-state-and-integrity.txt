@@ -32,6 +32,13 @@ slashes, LF line endings, and exactly one final LF. Persisted field names are
 lowercase snake case. Strings use native NFC normalization. Numbers are signed
 64-bit integers; floating-point values do not exist.
 
+Normal writes reserve 1,024 bytes plus 4,096 bytes per non-retired participant
+within that maximum. Retirement and tick updates may consume this reserve for
+retirement events, due qualification failures, and clock/counter growth. They
+still obey the complete 8 MiB bound. Existing files already lacking this reserve
+are not pruned or automatically deleted; DS-011 defines their confirmed
+recovery exception.
+
 An accepted file must decode to the exact 011 types and encode byte-for-byte to
 the supplied file. This equality rejects duplicate or unknown keys, alternate
 whitespace, alternate escapes, noncanonical number spelling, reordered keys,
@@ -143,6 +150,12 @@ After a definitive act, ARC supplies one new operation UUID. An Administrator
 mutation similarly stores one last operation ID and request digest at room
 level so a lost local result cannot duplicate the change.
 
+Room creation derives stable ID candidates from the creation operation UUID
+and a bounded collision counter. The original ROOM_CREATED event identifies
+the replay and its normalized name, even after later Administrator changes.
+A repeated UUID/name returns the existing room; changing the name with that
+creation UUID returns OPERATION_CONFLICT. Deletion ends this replay lifetime.
+
 DS-010 REFUSAL AND RECOVERY
 
 Missing rooms return NOT_FOUND. A different `format` returns ROOM_INCOMPATIBLE.
@@ -157,7 +170,14 @@ invariants. ARC does not rewrite, discard, or field-repair unreadable bytes.
 DS-011 PERMANENT ROOM DELETION
 
 Delete Room acquires the same room lock, validates the room identity, and
-requires every participant to be RETIRED. ARC then unlinks exactly the selected
+normally requires every participant to be RETIRED. If a non-writing simulation
+of every remaining retirement exceeds the room limit, deletion may proceed
+without retirement only with usable time, no On Duty or unexpired Working AI,
+and no unexpired active qualification test. The simulation uses the same
+retirement code as the normal action. Every condition is rechecked under the
+deletion lock; stale UI permission does not authorize a changed room. The
+confirmation explicitly warns that remaining lanes end without recording
+retirement and that complete history is permanently lost. ARC then unlinks exactly the selected
 `.arcroom` file, synchronizes the rooms directory, removes its empty adjacent
 lock, and synchronizes again. It never uses the macOS Trash, deletes another
 room, or offers restoration. The confirmation states that deletion and the

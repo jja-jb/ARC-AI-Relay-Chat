@@ -10,6 +10,11 @@ network connection and requires no provider account or API credential.
 ARC has one main window: a standard macOS room sidebar and the selected room.
 It has no setup wizard, provider picker, settings maze, background agent,
 dashboard, multiple-room window mode, or second administrator console.
+An optional, single-instance Room Activity window is a read-only viewer of
+the main window's selected room. It is an ordinary resizable Mac window that
+other windows may cover, not an always-on-top panel. Closing it does not close
+the main window, change the room, or end AI participation. It opens only on
+request and can be reopened.
 
 UI-002 FIRST USE IN MINUTES
 
@@ -20,8 +25,15 @@ On first launch ARC shows:
 
 One primary New Room button follows. New Room asks only for a friendly name.
 After Create, ARC shows the friendly name, generated non-editable Room ID, and
-`Needs two AIs On Duty.` Nothing creates a participant on the Administrator's
+`Needs two available AIs.` Nothing creates a participant on the Administrator's
 behalf.
+
+Below the room list, Messages to operator offers one English/Deutsch segmented
+selector. English is the initial default. The setting is saved across launches,
+applies to every room, and affects only AI replies to the operator in the
+existing human chat, not ARC's menus or AI-to-AI fallback. Active AIs receive the
+current choice in their next poll. A failed save keeps the prior selection and
+reports the error. No room, participant, or history is rewritten for this setting.
 
 The room always presents one AI-name field beside `Copy AI Instructions to
 Paste Buffer`. Directly beneath them it says `Paste the instructions directly
@@ -38,6 +50,23 @@ The selected room has two vertically split, independently scrollable areas:
   Details       room header, AIs, and current work;
   Room History  every committed event, newest first, with seamless older-page
                 loading while the Administrator scrolls.
+
+Open Activity Window opens the separate read-only viewer. It follows room
+selection in the main window and never mixes activity from different rooms.
+The viewer shows all committed event kinds, with message text directly visible,
+in chronological order from top to bottom. Opening it or changing rooms starts
+at the newest activity. Scrolling to the top loads earlier pages without moving
+the passage being read; Show Earlier History provides a keyboard-accessible
+alternative. The full retained history remains available, without trimming.
+
+Follow Live is on initially. When on, new activity scrolls into view; when off,
+new activity still arrives but preserves the reading position. Turning it back
+on jumps to the newest activity. Loading an earlier page is not new activity.
+Participant colors remain consistent, system event categories have distinct
+styling, and text labels identify sender, recipient, kind, and time without
+relying on color alone. Text is selectable and copyable, with native Find;
+URLs, markup, and command-looking content are inert. Room-management commands
+are disabled while the read-only viewer is focused.
 
 The header uses the exact status precedence in RM-007. It leads with human
 words. Show Advanced Details reveals format, revision, IDs, generation, logical time,
@@ -68,15 +97,18 @@ UI-005 MENUS AND KEYBOARD
 ARC uses normal Mac menus. The complete v1 application command surface is:
 
   File    New Room...
+  Edit    Find in Activity... (alongside standard text editing commands)
   Room    Add AI; Rename Room...; Make Selected AI Producer;
           Retire Selected AI...; Diagnose Room...; Delete Room...
-  View    Show Advanced Details; Bigger Text; Smaller Text; Actual Size;
+  View    Open Activity Window; Show Advanced Details; Bigger Text; Smaller Text; Actual Size;
           Reveal ARC Data Location
   Help    ARC Help; Privacy
 
 Command-N opens New Room. Command-Plus, Command-Minus, and Command-0 adjust
 text. Command-Question-Mark opens help. A visible button exists for every
 essential action; keyboard shortcuts are conveniences, never the only path.
+Command-Shift-L opens the activity viewer; the normal close control or
+Command-W closes that window. Command-F finds text in the loaded transcript.
 
 UI-006 PLAIN CONFIRMATIONS AND ERRORS
 
@@ -116,6 +148,8 @@ Text targets a typical reader age 14 or older. A sentence is preferred over an
 acronym when the sentence is equally exact. Monospaced identifiers may wrap or
 be copied; they never force the rest of the window off screen. The window has
 a tested minimum size of 900 by 650 points.
+The separate read-only activity window has a minimum size of 520 by 360 points
+and follows the same text-size setting.
 
 UI-009 RESPONSIVE LOCAL OPERATION
 
@@ -129,6 +163,9 @@ facts change. Refresh invokes the same ARCCore read used by an explicit open;
 it does not maintain a second state model. Timer labels are derived from room
 time and do not append events. Closing ARC stops its timer and affects no AI
 host.
+The activity viewer observes that same feed and timer, including while another
+window covers it. Opening it creates no additional polling loop or room-file
+reader. Closing only the viewer does not stop the main window's observation.
 
 UI-010 DIRECT CORE AND ONE RECORD
 

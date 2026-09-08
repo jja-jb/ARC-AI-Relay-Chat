@@ -347,7 +347,7 @@ extension ARCReleaseSupport {
     }
 
     private static func fileIdentity(_ url: URL) throws -> (size: Int64, sha256: String) {
-        let descriptor = Darwin.open(url.path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW)
+        let descriptor = Darwin.open(url.path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK)
         guard descriptor >= 0 else {
             throw DevToolError.message("release input is not one bounded regular file")
         }

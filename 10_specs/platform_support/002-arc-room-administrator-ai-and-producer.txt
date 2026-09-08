@@ -30,7 +30,8 @@ poll, work ownership, or message identity.
 The Administrator may create and name the room; add, inspect, replace
 instructions for, retry, or retire AI participants; choose the Producer;
 observe events and work; diagnose local data; and permanently delete an
-inactive room after every participant is retired. ARC
+inactive room after every participant is retired, or through the narrowly
+limited full-room recovery exception in DS-011. ARC
 records each administrative change as an event.
 
 The Administrator cannot make ARC claim that an AI checked in, sent a message,
@@ -74,8 +75,9 @@ Each participant has exactly one persisted phase:
   FAILED                  The fixed test ended without a pass.
   RETIRED                 The Administrator ended participation; terminal.
 
-For a QUALIFIED participant, On Duty or Off Duty is a live display derived
-only from its last valid poll under QD-006. Duty is not another persisted
+For a QUALIFIED participant, On Duty, Working, or Off Duty is a live display
+derived from its last valid poll or explicit Working deadline under QD-006.
+Duty is not another persisted
 phase. Missing ordinary polls never erases qualification. A late valid poll
 immediately restores On Duty without replacement instructions, reconnect, or
 another qualification test.
@@ -138,29 +140,38 @@ QUALIFIED participants are On Duty, and the designated Producer is On Duty.
 ARC shows the first plain statement that applies:
 
   ARC cannot check time    The room clock is unavailable.
-  Needs two AIs On Duty   No participant is On Duty.
-  Needs one more AI On Duty
-                          Exactly one participant is On Duty.
-  Choose a Producer       At least two are On Duty, but the Producer is not.
-  Active                  At least two are On Duty, including the Producer.
+  Needs two available AIs  No participant is On Duty or unexpired Working.
+  Needs one more available AI
+                          Exactly one participant is available.
+  Choose a Producer       At least two are available, but the Producer is not.
+  Active                  At least two are available, including the Producer.
 
 When ARC cannot check time, no participant is shown On Duty and no Producer is
 live. The one primary action is Try Again, which samples the clock without
 contacting an AI. Each participant row otherwise uses one plain label: Waiting
-to connect, Waiting for the Producer, Checking ARC access, On Duty, Off Duty,
+to connect, Waiting for the Producer, Checking ARC access, On Duty, Working, Off Duty,
 ARC access check failed, or Retired. The uppercase stored phase is an advanced
 detail. The primary room status never depends on a hidden queue or technical
 code.
 
 RM-008 CONTROLS ARE ALWAYS FINDABLE
 
+Working is a distinct qualified duty label governed by QD-006. An unexpired
+Working AI counts as available wherever the room, Producer, and work rules use
+On Duty; it keeps its existing authority without claiming prompt responses.
+An expired Working deadline is Off Duty. Working does not bypass retirement
+or permit room deletion.
+
 The AI-name field and Copy AI Instructions to Paste Buffer control remain
 visible in every valid room view. INVITED shows Copy Instructions Again,
 Replace Instructions, and
 Retire AI. WAITING_FOR_PRODUCER and QUALIFYING show Replace Instructions under
-More plus Retire AI. FAILED shows Try Again, Replace Instructions, and Retire
-AI. A qualified Off Duty AI shows Copy Instructions Again and Retire AI. A
-qualified On Duty AI shows Make Producer when eligible plus Retire AI. Copying
+More plus Retire AI. Copy Instructions Again is also in that More menu.
+FAILED shows Try Again, Copy Instructions Again, Replace Instructions, and Retire
+AI. A qualified Off Duty AI shows Copy Instructions Again, Replace Instructions
+under More, and Retire AI. A qualified On Duty or Working AI shows Make Producer
+when eligible, Copy Instructions Again and Replace Instructions under More,
+plus Retire AI. Copying
 changes no state; replacement and retirement require confirmation. While room
 time is unavailable, a qualified row shows Copy Instructions Again, Replace
 Instructions under More, and Retire AI because ARC cannot judge duty.
@@ -180,10 +191,11 @@ diagnosis remain available. Make Producer and qualification Try Again wait
 until ARC can judge duty and deadlines again.
 
 Delete Room is visible in the Room menu and the selected room's sidebar
-context menu. It is enabled only when every participant is RETIRED. One normal
+context menu. It is enabled when every participant is RETIRED, or when the
+core reports that the full-room recovery conditions in DS-011 hold. One normal
 Mac confirmation names the room and says that its complete history will be
 permanently deleted and cannot be recovered. ARC has no permanent-delete path
-for an active or otherwise participating room.
+for a room with an On Duty or unexpired Working AI or an active access check.
 
 RM-009 ROOM AND LANE ISOLATION
 

@@ -15,11 +15,24 @@ struct ARCApplication: App {
         .commands {
             ARCMenuCommands(state: state)
         }
+
+        Window("Room Activity", id: ARCActivityWindow.id) {
+            ActivityWindowView()
+                .environmentObject(state)
+                .frame(minWidth: 520, minHeight: 360)
+        }
+        .defaultSize(width: 760, height: 650)
+        .windowResizability(.contentMinSize)
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
     }
 }
 
 private struct ARCMenuCommands: Commands {
     @ObservedObject var state: AppState
+    @Environment(\.openWindow) private var openWindow
+    @FocusedValue(\.arcReadOnlyActivity) private var readOnlyActivity
+    @FocusedValue(\.arcActivityFind) private var findActivity
 
     private var hasRoom: Bool { state.installationReady && state.selectedRoom != nil }
     private var hasCurrentRoom: Bool {
@@ -30,32 +43,44 @@ private struct ARCMenuCommands: Commands {
         CommandGroup(replacing: .newItem) {
             Button("New Room…") { state.showingCreateRoom = true }
                 .keyboardShortcut("n", modifiers: .command)
-                .disabled(!state.installationReady || state.isBusy)
+                .disabled(!state.installationReady || state.isBusy || readOnlyActivity == true)
         }
 
         CommandMenu("Room") {
-            Button("Add AI") { state.focusAddAI() }
-                .disabled(!hasCurrentRoom || state.isBusy)
-            Button("Rename Room…") { state.showingRenameRoom = true }
-                .disabled(!hasCurrentRoom || state.isBusy)
-            Divider()
-            Button("Make Selected AI Producer") {
-                state.makeSelectedParticipantProducer()
+            Group {
+                Button("Add AI") { state.focusAddAI() }
+                    .disabled(!hasCurrentRoom || state.isBusy)
+                Button("Rename Room…") { state.showingRenameRoom = true }
+                    .disabled(!hasCurrentRoom || state.isBusy)
+                Divider()
+                Button("Make Selected AI Producer") {
+                    state.makeSelectedParticipantProducer()
+                }
+                .disabled(!state.canMakeSelectedParticipantProducer || state.isBusy)
+                Button("Retire Selected AI…") { state.retireSelectedParticipant() }
+                    .disabled(!state.canRetireSelectedParticipant || state.isBusy)
+                Divider()
+                Button("Diagnose Room…") { state.runDiagnostics() }
+                    .disabled(!hasRoom || state.isBusy)
+                Divider()
+                Button("Delete Room…", role: .destructive) {
+                    state.deleteCurrentRoom()
+                }
+                .disabled(!state.canDeleteCurrentRoom || state.isBusy)
             }
-            .disabled(!state.canMakeSelectedParticipantProducer || state.isBusy)
-            Button("Retire Selected AI…") { state.retireSelectedParticipant() }
-                .disabled(!state.canRetireSelectedParticipant || state.isBusy)
-            Divider()
-            Button("Diagnose Room…") { state.runDiagnostics() }
-                .disabled(!hasRoom || state.isBusy)
-            Divider()
-            Button("Delete Room…", role: .destructive) {
-                state.deleteCurrentRoom()
-            }
-            .disabled(!state.canDeleteCurrentRoom || state.isBusy)
+            .disabled(readOnlyActivity == true)
+        }
+
+        CommandGroup(after: .textEditing) {
+            Button("Find in Activity…") { findActivity?() }
+                .keyboardShortcut("f", modifiers: .command)
+                .disabled(findActivity == nil)
         }
 
         CommandGroup(after: .toolbar) {
+            Button("Open Activity Window") { openWindow(id: ARCActivityWindow.id) }
+                .keyboardShortcut("l", modifiers: [.command, .shift])
+            Divider()
             Toggle("Show Advanced Details", isOn: $state.showDetails)
             Divider()
             Button("Bigger Text") { state.increaseTextSize() }

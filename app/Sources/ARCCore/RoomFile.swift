@@ -83,6 +83,7 @@ struct ARCFileStore: Sendable {
 
     func update<T>(
         _ id: String,
+        reservingRecoverySpace: Bool = true,
         body: (inout ARCRoomDocument) throws -> (value: T, commit: Bool)
     ) throws -> T {
         let url = try roomURL(id)
@@ -91,22 +92,22 @@ struct ARCFileStore: Sendable {
             var document = try readDocument(at: url, expectedID: id)
             let result = try body(&document)
             if result.commit {
-                let data = try dataForCommit(&document)
+                let data = try dataForCommit(&document, reservingRecoverySpace: reservingRecoverySpace)
                 try atomicWrite(data, to: url, exclusive: false)
             }
             return result.value
         }
     }
 
-    func delete(_ id: String) throws {
+    func delete(_ id: String, permitted: (ARCRoomDocument) -> Bool) throws {
         let url = try roomURL(id)
         try requireExistingRoom(at: url)
         try withLock(for: url) {
             let document = try readDocument(at: url, expectedID: id)
-            guard document.participants.allSatisfy({ $0.phase == .retired }) else {
+            guard permitted(document) else {
                 throw ARCError(
                     .wrongState,
-                    "Retire every AI participant before permanently deleting this room."
+                    "Retire every AI before deleting this room. A full room can bypass retirement only when no AI is On Duty, Working, or in an active access check and ARC can verify time."
                 )
             }
             try deleteAdmittedRegularFile(url)
@@ -245,8 +246,17 @@ struct ARCFileStore: Sendable {
         )
     }
 
-    private func dataForCommit(_ document: inout ARCRoomDocument) throws -> Data {
-        try ARCRoomCodec.encode(document)
+    private func dataForCommit(
+        _ document: inout ARCRoomDocument, reservingRecoverySpace: Bool = true
+    ) throws -> Data {
+        let data = try ARCRoomCodec.encode(document)
+        // Each live row reserves more than the maximum retirement and due
+        // qualification-failure events combined, plus room counter growth.
+        let reserve = 1_024 + 4_096 * document.participants.filter { $0.phase != .retired }.count
+        guard !reservingRecoverySpace || data.count <= ARCConstants.maximumRoomBytes - reserve else {
+            throw ARCError(.limitExceeded, "Further work would use space needed for retirement. Start a new room; ARC will not discard this room's history.")
+        }
+        return data
     }
 
     private func withLock<T>(for roomURL: URL, body: () throws -> T) throws -> T {
@@ -368,7 +378,7 @@ struct ARCFileStore: Sendable {
     }
 }
 
-private func rejectLinkedPath(_ url: URL, allowMissingTail: Bool) throws {
+func rejectLinkedPath(_ url: URL, allowMissingTail: Bool) throws {
     guard url.isFileURL, url.path.hasPrefix("/") else {
         throw ARCError(.ioFailure, "ARC refused an unsafe data path.")
     }
@@ -386,7 +396,7 @@ private func rejectLinkedPath(_ url: URL, allowMissingTail: Bool) throws {
     }
 }
 
-private func ensureDirectory(_ url: URL) throws {
+func ensureDirectory(_ url: URL) throws {
     var value = stat()
     if lstat(url.path, &value) == 0 {
         guard (value.st_mode & S_IFMT) == S_IFDIR else {

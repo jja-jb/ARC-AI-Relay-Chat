@@ -1,7 +1,7 @@
 import Foundation
 
 public enum ARCConstants {
-    public static let version = "1.0.7"
+    public static let version = "1.1.0"
     public static let roomFormat = "arc.room/1"
     public static let roomProtocol = "arc.protocol/1"
     public static let maximumRoomBytes = 8 * 1_024 * 1_024
@@ -65,8 +65,8 @@ public enum ARCRoomStatus: String, Codable, CaseIterable, Sendable {
     public var plainText: String {
         switch self {
         case .timeUnavailable: "ARC cannot check time."
-        case .needsTwoAIs: "Needs two AIs On Duty."
-        case .needsOneAI: "Needs one more AI On Duty."
+        case .needsTwoAIs: "Needs two available AIs."
+        case .needsOneAI: "Needs one more available AI."
         case .needsProducer: "Choose a Producer."
         case .active: "Active."
         }
@@ -84,6 +84,7 @@ public enum ARCParticipantPhase: String, Codable, CaseIterable, Sendable {
 
 public enum ARCDuty: String, Codable, Sendable {
     case on = "ON"
+    case working = "WORKING"
     case off = "OFF"
     case notApplicable = "NOT_APPLICABLE"
 }
@@ -103,6 +104,7 @@ public enum ARCEvidenceMode: String, Codable, Sendable {
 public enum ARCScheduleKind: String, Codable, Sendable {
     case qualification = "QUALIFICATION"
     case duty = "DUTY"
+    case working = "WORKING"
     case none = "NONE"
 }
 
@@ -337,8 +339,12 @@ public struct ARCParticipantView: Codable, Hashable, Identifiable, Sendable {
         case .qualifying: return "Checking ARC access"
         case .failed: return "ARC access check failed"
         case .retired: return "Retired"
-        case .qualified: return duty == .on ? "On Duty" : "Off Duty"
+        case .qualified: return duty == .working ? "Working" : duty == .on ? "On Duty" : "Off Duty"
         }
+    }
+
+    public var isAvailable: Bool {
+        phase == .qualified && (duty == .on || duty == .working)
     }
 }
 
@@ -493,15 +499,18 @@ public struct ARCRoomOpenResult: Codable, Sendable {
     public let producer: ARCProducerView
     public let participants: [ARCParticipantView]
     public let work: [ARCWorkView]
+    public let canDeleteWithoutRetirement: Bool
 
     public init(
         room: ARCRoomView, producer: ARCProducerView,
-        participants: [ARCParticipantView], work: [ARCWorkView]
+        participants: [ARCParticipantView], work: [ARCWorkView],
+        canDeleteWithoutRetirement: Bool = false
     ) {
         self.room = room
         self.producer = producer
         self.participants = participants
         self.work = work
+        self.canDeleteWithoutRetirement = canDeleteWithoutRetirement
     }
 }
 
@@ -602,6 +611,7 @@ public struct ARCDeleteResult: Codable, Sendable {
 }
 
 public struct ARCPollResult: Codable, Sendable {
+    public let communication: ARCCommunicationNotice
     public let room: ARCRoomView
     public let participant: ARCParticipantView
     public let producer: ARCProducerView
@@ -616,7 +626,7 @@ public struct ARCPollResult: Codable, Sendable {
     public let earlierActivityUnavailable: Bool
 
     enum CodingKeys: String, CodingKey {
-        case room
+        case room, communication
         case participant = "self"
         case producer, roster, schedule, qualification, events, nextAfter, more, work, operation
         case earlierActivityUnavailable = "earlier_activity_unavailable"
@@ -627,7 +637,8 @@ public struct ARCPollResult: Codable, Sendable {
         producer: ARCProducerView, roster: [ARCParticipantView],
         schedule: ARCScheduleView, qualification: ARCQualificationView?,
         events: [ARCEventView], nextAfter: Int64, more: Bool,
-        work: [ARCWorkView], operation: String, earlierActivityUnavailable: Bool
+        work: [ARCWorkView], operation: String, earlierActivityUnavailable: Bool,
+        communication: ARCCommunicationNotice
     ) {
         self.room = room
         self.participant = participant
@@ -641,11 +652,13 @@ public struct ARCPollResult: Codable, Sendable {
         self.work = work
         self.operation = operation
         self.earlierActivityUnavailable = earlierActivityUnavailable
+        self.communication = communication
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(room, forKey: .room)
+        try container.encode(communication, forKey: .communication)
         try container.encode(participant, forKey: .participant)
         try container.encode(producer, forKey: .producer)
         try container.encode(roster, forKey: .roster)
@@ -694,6 +707,7 @@ public struct ARCActResult: Codable, Hashable, Sendable {
 }
 
 public enum ARCActionRequest: Hashable, Sendable {
+    case working(untilLogicalUs: Int64)
     case message(to: String, text: String)
     case qualificationStart(participant: String, producerGeneration: Int64)
     case qualificationAnswer(answer: String)

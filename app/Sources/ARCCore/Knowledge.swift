@@ -192,9 +192,9 @@ private func regularPathExists(_ path: String) -> Bool {
     return lstat(path, &value) == 0
 }
 
-private func readBoundedRegularFile(_ url: URL, maximumBytes: Int) throws -> Data {
+func readBoundedRegularFile(_ url: URL, maximumBytes: Int) throws -> Data {
     try rejectSymlinkComponents(url)
-    let descriptor = Darwin.open(url.path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW)
+    let descriptor = Darwin.open(url.path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK)
     guard descriptor >= 0 else {
         throw ARCError(.knowledgeUnavailable, "ARC could not read its AI instructions.")
     }

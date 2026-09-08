@@ -36,7 +36,7 @@ short options, positional alternatives, response files, help topics, aliases,
 abbreviations, hidden compatibility commands, or option values read from stdin.
 Unknown or extra input is INVALID_ARGUMENT.
 
-`version` writes exactly `ARC 1.0.7` plus LF. `help` writes the verified
+`version` writes exactly `ARC 1.1.0` plus LF. `help` writes the verified
 help/arc-help.txt member. `spec list` writes the stable titles for three-digit
 IDs 000 through 012. `spec read ID` writes the corresponding verified member.
 These four commands refuse --root.
@@ -55,7 +55,10 @@ booleans, and null. It rejects invalid UTF-8, duplicate object keys, floats,
 exponents, leading-zero or out-of-range integers, trailing bytes, more than 32
 levels of nesting, and any object or array with more than 4,096 members.
 
-Text is trimmed, NFC-normalized UTF-8. A normalized value must remain nonempty
+Text is NFC-normalized UTF-8. Except for message text, surrounding whitespace
+is trimmed. Message whitespace, including final LF and blank lines, is preserved
+to carry Terse without altering its line format; all-whitespace messages remain
+invalid. A normalized value must remain nonempty
 and within its field byte bound. Room and AI display names additionally have at
 most 80 grapheme clusters and 512 bytes. Message text is at most 16,384 bytes;
 scope 4,096; reason 1,024. Newline and tab are permitted only where the action
@@ -122,7 +125,7 @@ ParticipantView is exactly:
   name                  AI name
   phase                 INVITED | WAITING_FOR_PRODUCER | QUALIFYING |
                         QUALIFIED | FAILED | RETIRED
-  duty                  ON | OFF | NOT_APPLICABLE
+  duty                  ON | WORKING | OFF | NOT_APPLICABLE
   is_producer           boolean
   binding_generation    positive integer
   schedule              ScheduleView
@@ -130,7 +133,7 @@ ParticipantView is exactly:
 
 No machine ParticipantView contains a binding. ScheduleView is exactly:
 
-  kind                    QUALIFICATION | DUTY | NONE
+  kind                    QUALIFICATION | DUTY | WORKING | NONE
   status                  UNAVAILABLE | WAITING | OK | REQUEST_1 | REQUEST_2 |
                           REQUEST_3 | EXPIRED | NONE
   next_request_logical_us nonnegative integer or null
@@ -141,7 +144,13 @@ For QUALIFICATION, the first qualifying poll is the first request. Until its
 uses REQUEST_1. REQUEST_2 and REQUEST_3 begin at 40 and 80 seconds, and EXPIRED
 begins at 120 seconds. With unavailable time, only QUALIFYING or
 WAITING_FOR_PRODUCER has QUALIFICATION/UNAVAILABLE and only QUALIFIED has
-DUTY/UNAVAILABLE. A participant with no active timer has NONE/NONE.
+DUTY/UNAVAILABLE or WORKING/UNAVAILABLE. A participant with no active timer has NONE/NONE.
+
+WORKING uses OK before its deadline and EXPIRED at or after it. Its deadline
+and next request are the declared Working deadline; next request becomes null
+at expiry. Unavailable time returns null schedule times and never claims live
+duty. Unexpired Working counts as available wherever action rules below
+require On Duty, without changing its distinct WORKING duty value.
 
 QualificationView is exactly:
 
@@ -201,6 +210,26 @@ The result is exactly:
                                 receives up to 16 most-recent COMPLETE WorkViews
   operation                     current single-use operation UUID
   earlier_activity_unavailable  boolean
+  communication                 current ARC-owned communication guidance
+
+Communication is not a room event or a claim of AI compliance. It has exactly:
+
+  status                 "ready" or "unavailable"
+  specification_path     "current/languages/terse/001-terse-language-specification.txt"
+  specification_sha256   verified lowercase SHA-256, or null when unavailable
+  operator_language      "en" (English, default) or "de" (German)
+  notice                 compact plain-text onboarding/update or recovery guidance
+
+The fixed relative path is resolved only beneath the caller's existing --root;
+no absolute host path is added to machine output. The installed full Terse file
+and digest are read and checked at each poll. An unreadable, unsafe, changed,
+or mismatched file, or invalid preference, yields unavailable guidance without
+adding a room event or a new syntax gate. Guidance instructs pausing participation
+and informing the operator. Ready guidance requires full reading before work,
+rereading after changed bytes, Terse-first AI messages with thought-specific
+English/German fallback, and operator replies in the selected language.
+Already-participating AIs receive this field on their next normal poll. The
+room/lifecycle result remains authoritative; no Terse utterance performs an act.
 
 QualificationView is exactly `challenge`, `earliest_completion_logical_us`, and
 `deadline_logical_us`; it is null unless self is QUALIFYING. A candidate's first
@@ -220,6 +249,18 @@ older --after may repeat retained visible events.
 CLI-008 ACTION OBJECTS
 
 Each action object has exactly the named keys.
+
+Declare or extend Working:
+
+  {"type":"working","until_logical_us":INTEGER}
+
+The caller must be QUALIFIED and On Duty or unexpired Working. The integer is
+an absolute supported LogicalTime strictly after current room time; extending
+Working also requires a strictly later deadline than the existing one. Success
+records working_until_logical_us, appends AI_WORKING, and uses ordinary operation
+rotation/replay. A normal poll ends Working. Exact-deadline expiry is Off Duty
+and cannot be extended without a new poll. Working retains existing authority,
+but does not assert responsiveness or actual progress.
 
 Message:
 

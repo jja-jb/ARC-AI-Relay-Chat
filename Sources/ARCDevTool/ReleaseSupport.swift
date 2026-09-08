@@ -52,6 +52,8 @@ private struct ARCBrandAsset: Codable {
 }
 
 enum ARCReleaseSupport {
+    static let terseSpecification = "languages/terse/001-terse-language-specification.txt"
+    static let terseDigest = "languages/terse/TERSE.sha256"
     static let licenseSHA256 =
         "988a906412af48c37e35fc3272402818677d31572fb65ea931aa98f21e003c24"
 
@@ -79,6 +81,7 @@ enum ARCReleaseSupport {
             "ARC_AI.sha256",
             "legal/LICENSE",
             "legal/NOTICE.md",
+            terseSpecification, terseDigest,
         ] + KnowledgeContainer.canonicalSources
             .filter { $0.logical.hasPrefix("specifications/") }
             .map(\.logical))
@@ -108,6 +111,7 @@ enum ARCReleaseSupport {
         guard digestFile == Data((knowledgeSHA256 + "\n").utf8) else {
             throw DevToolError.message("ARC_AI.sha256 is not the exact knowledge digest plus LF")
         }
+        try checkTersePayload(current)
 
         var entries: [ARCInstallEntry] = []
         entries.append(try installEntry(
@@ -167,6 +171,7 @@ enum ARCReleaseSupport {
             "Sources/ARCDevTool/ReleaseEvidence.swift",
             "Sources/ARCDevTool/ReleaseSupport.swift",
             "Sources/ARCDevTool/KnowledgeContainer.swift",
+            terseSpecification,
         ] + KnowledgeContainer.canonicalSources.map(\.source)
         for relative in Set(required) {
             try KnowledgeContainer.requireRegularFile(
@@ -254,7 +259,7 @@ enum ARCReleaseSupport {
         try checkTraceability(root)
         try checkBrandAssets(root)
         try checkPrivacyManifest(root.appending(path: "app/Sources/ARCApp/PrivacyInfo.xcprivacy"))
-        try checkInfoPlist(root.appending(path: "app/Info.plist"), version: "1.0.7")
+        try checkInfoPlist(root.appending(path: "app/Info.plist"), version: "1.1.0")
     }
 
     static func checkApp(_ app: URL, version: String, release: Bool) throws {
@@ -301,6 +306,7 @@ enum ARCReleaseSupport {
         }
         let expectedCurrent = Set([
             "ARC_AI.arc-kb", "ARC_AI.sha256", "legal/LICENSE", "legal/NOTICE.md",
+            terseSpecification, terseDigest,
         ] + KnowledgeContainer.canonicalSources
             .filter { $0.logical.hasPrefix("specifications/") }
             .map(\.logical))
@@ -346,6 +352,16 @@ enum ARCReleaseSupport {
         )
         guard digestBytes == Data((manifest.knowledgeSha256 + "\n").utf8) else {
             throw DevToolError.message("app knowledge digest file differs")
+        }
+        try checkTersePayload(contents.appending(path: "Resources/install/current"))
+    }
+
+    static func checkTersePayload(_ current: URL) throws {
+        let text = try KnowledgeContainer.readBounded(current.appending(path: terseSpecification), maximum: 524_288)
+        try KnowledgeContainer.validateText(text)
+        let digest = try KnowledgeContainer.readBounded(current.appending(path: terseDigest), maximum: 65)
+        guard digest == Data((hex(text) + "\n").utf8) else {
+            throw DevToolError.message("Terse specification and digest differ")
         }
     }
 

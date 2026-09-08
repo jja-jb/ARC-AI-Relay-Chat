@@ -230,10 +230,10 @@ enum KnowledgeContainer {
         }
         let memberCount = Int(try cursor.u32())
         let entrySize = Int(try cursor.u32())
-        let directoryOffset = Int(try cursor.u64())
-        let directoryLength = Int(try cursor.u64())
-        let payloadOffset = Int(try cursor.u64())
-        let fileLength = Int(try cursor.u64())
+        let directoryOffset = try cursor.boundedSize()
+        let directoryLength = try cursor.boundedSize()
+        let payloadOffset = try cursor.boundedSize()
+        let fileLength = try cursor.boundedSize()
         let reserved = try cursor.u64()
         guard memberCount == 18 || memberCount == 19,
               memberCount <= maxMembers,
@@ -261,8 +261,8 @@ enum KnowledgeContainer {
             let required = try cursor.u8()
             let type = try cursor.u8()
             let entryReserved = try cursor.u32()
-            let offset = Int(try cursor.u64())
-            let length = Int(try cursor.u64())
+            let offset = try cursor.boundedSize()
+            let length = try cursor.boundedSize()
             let digest = try cursor.read(32)
             let nameField = try cursor.read(maxNameBytes)
             let tail = try cursor.u64()
@@ -637,6 +637,14 @@ private struct DataCursor {
     mutating func u16() throws -> UInt16 { try readInteger(UInt16.self) }
     mutating func u32() throws -> UInt32 { try readInteger(UInt32.self) }
     mutating func u64() throws -> UInt64 { try readInteger(UInt64.self) }
+
+    mutating func boundedSize() throws -> Int {
+        let value = try u64()
+        guard value <= UInt64(data.count) else {
+            throw DevToolError.message("knowledge size exceeds container bounds")
+        }
+        return Int(value)
+    }
 
     mutating func readInteger<T: FixedWidthInteger>(_ type: T.Type) throws -> T {
         let bytes = try read(MemoryLayout<T>.size)

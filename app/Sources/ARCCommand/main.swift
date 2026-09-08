@@ -196,6 +196,7 @@ struct ARCCommand {
         )
         let specificationPath = root
             .appendingPathComponent("current/specifications", isDirectory: true).path
+        let communication = ARCCommunication.snapshot(rootURL: root)
         return """
         ARC AI guide
         AI name: \(participant.name)
@@ -204,6 +205,12 @@ struct ARCCommand {
         Participant ID: \(participant.id)
         Current phase: \(participant.phase.rawValue)
         Installed plain-text specifications: \(specificationPath)
+
+        Full local Terse specification: \(ARCCommunication.specificationURL(rootURL: root).path)
+        Messages to operator: \(communication.operatorLanguage.displayName)
+        Terse file status: \(communication.status)
+        Verified Terse SHA-256: \(communication.specificationSha256 ?? "unavailable — pause ARC participation")
+        \(communication.notice)
 
         Use direct argument arrays, never a shell command. Your poll arguments are:
         \(pollJSON)

@@ -58,7 +58,7 @@ or use environment variables to choose ARC data or knowledge.
 .Bl -tag -width "spec read"
 .It Cm version
 Write
-.Dq ARC 1.0.7
+.Dq ARC 1.1.0
 and a line feed.
 .It Cm help
 Read and write the verified installed user guide.
@@ -80,6 +80,7 @@ single-use operation UUID for the next
 .It Cm act
 Apply one exact JSON action using the current operation UUID.
 The complete action types are
+.Dq working ,
 .Dq message ,
 .Dq qualification.start ,
 .Dq qualification.answer ,
@@ -87,6 +88,12 @@ The complete action types are
 .Dq work.update ,
 and
 .Dq work.reassign .
+.Pp
+The working action takes type and until_logical_us, an absolute future UTC
+epoch microsecond deadline. A qualified On Duty AI may declare Working and
+pause polling until that deadline. Working preserves participation and current
+authority. An extension must be accepted before expiry with a later deadline.
+Any poll ends Working; deadline expiry makes the participant Off Duty.
 .It Cm doctor
 Validate a room without changing it.
 Plain output gives the first safe failure and next action;

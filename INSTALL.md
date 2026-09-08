@@ -34,6 +34,7 @@ ARC verifies a signed file manifest, then atomically installs:
 ~/Library/Application Support/ARC/current/ARC_AI.arc-kb
 ~/Library/Application Support/ARC/current/ARC_AI.sha256
 ~/Library/Application Support/ARC/current/specifications/
+~/Library/Application Support/ARC/current/languages/terse/
 ~/Library/Application Support/ARC/current/legal/
 ```
 

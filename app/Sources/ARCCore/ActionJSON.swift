@@ -12,12 +12,15 @@ public enum ARCActionJSON {
         }
 
         switch type {
+        case "working":
+            try exact(object, keys: ["type", "until_logical_us"])
+            return .working(untilLogicalUs: try positive(object["until_logical_us"], label: "Working deadline"))
         case "message":
             try exact(object, keys: ["type", "to", "text"])
             return .message(
                 to: try id(object["to"], prefix: "ai-", label: "Message target"),
                 text: try text(object["text"], label: "Message", maximum: 16_384,
-                               allowNewlines: true)
+                               allowNewlines: true, trimWhitespace: false)
             )
         case "qualification.start":
             try exact(object, keys: ["type", "participant", "producer_generation"])
@@ -87,6 +90,8 @@ public enum ARCActionJSON {
     public static func encode(_ request: ARCActionRequest) throws -> Data {
         let value: ARCJSONValue
         switch request {
+        case .working(let deadline):
+            value = .object(["type": .string("working"), "until_logical_us": .integer(deadline)])
         case .message(let to, let text):
             value = .object(["type": .string("message"), "to": .string(to), "text": .string(text)])
         case .qualificationStart(let participant, let generation):
@@ -130,13 +135,15 @@ public enum ARCActionJSON {
     }
 
     private static func text(
-        _ value: ARCJSONValue?, label: String, maximum: Int, allowNewlines: Bool = false
+        _ value: ARCJSONValue?, label: String, maximum: Int, allowNewlines: Bool = false,
+        trimWhitespace: Bool = true
     ) throws -> String {
         guard let string = value?.stringValue else {
             throw ARCError(.invalidArgument, "\(label) must be text.")
         }
         return try ARCText.require(
-            string, label: label, maximumBytes: maximum, allowNewlines: allowNewlines
+            string, label: label, maximumBytes: maximum, allowNewlines: allowNewlines,
+            trimWhitespace: trimWhitespace
         )
     }
 

@@ -42,11 +42,22 @@ Exit status is 0, 2, 3, or 4 as described in
 
 ## Request rules
 
+Qualified participant duty is `ON`, `WORKING`, or `OFF`; other phases use
+`NOT_APPLICABLE`. Working uses schedule kind `WORKING`, status `OK` before
+the deadline and `EXPIRED` at or after it. Both deadline and next request
+point to the Working deadline until expiry; the next request is then null.
+Unavailable time gives `WORKING/UNAVAILABLE` with null schedule times and
+does not claim live duty. The `working` action takes exactly
+`type` and `until_logical_us`; see the CLI reference.
+
 Act accepts at most 131,072 bytes. ARC rejects invalid UTF-8, duplicate or
 unknown keys, floats, exponent notation, leading-zero or out-of-range integers,
 more than 32 levels of nesting, and an object or array with more than 4,096
 members. Text is trimmed, NFC-normalized, bounded, and free of disallowed
-control characters before use.
+control characters before use. Message text is the whitespace exception: its
+leading/trailing whitespace, blank lines, and final LF are retained after NFC
+normalization. All-whitespace messages remain invalid; the full retained text
+counts against the 16,384-byte message bound. ARC does not validate Terse syntax.
 
 An accepted act returns `event_sequences`, `room_revision`, nullable affected
 `participant` and `work` views, and `next_operation`. The exact retry of the
@@ -56,3 +67,12 @@ the current operation UUID available.
 Poll result and nested view fields are normatively defined in specification
 007. The durable JSON file is separately defined in specification 011; it is
 not a machine response and must not be used as an AI command surface.
+
+Every poll also includes `communication`: `status` (`ready` or `unavailable`),
+`specification_path` (the fixed root-relative local Terse path),
+`specification_sha256` (verified SHA-256 or explicit null), `operator_language`
+(`en` or `de`), and a compact `notice`. This is current app guidance, not a room
+event or evidence that an AI read anything. It reaches old and new rooms alike;
+no binding replacement, history mutation, translation, or syntax rejection is
+introduced. The AI must read the complete specification before work and after
+any changed digest, or pause and report a read/verification failure.

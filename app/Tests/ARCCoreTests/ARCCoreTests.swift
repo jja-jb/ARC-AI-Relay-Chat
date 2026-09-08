@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 import XCTest
 @testable import ARCCore
 
@@ -6,9 +7,289 @@ final class ARCCoreTests: XCTestCase {
     private let digest = String(repeating: "a", count: 64)
     private var roots: [URL] = []
 
+    func testTerseGuidanceDoesNotRejectOrTranslateMessageText() throws {
+        let context = try qualifiedPair()
+        let text = "\nTHIS IS NOT VALID TERSE\n[de] Dieser Gedanke braucht eine genaue Erklärung.\n[en] Keep the original words.\n"
+        _ = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation,
+            request: .message(to: context.second.id, text: text))
+        let event = try XCTUnwrap(context.store.activityRead(room: context.room).events.first)
+        XCTAssertEqual(event.kind, "MESSAGE")
+        XCTAssertEqual(event.payload.objectValue?["text"]?.stringValue, text)
+        let reopened = ARCStore(rootURL: context.store.rootURL, knowledgeSHA256: digest)
+        XCTAssertEqual(try reopened.activityRead(room: context.room).events.first?.payload.objectValue?["text"]?.stringValue, text)
+        XCTAssertTrue(try reopened.diagnose(room: context.room).valid)
+    }
+
     override func tearDownWithError() throws {
         for root in roots { try? FileManager.default.removeItem(at: root) }
         roots.removeAll()
+    }
+
+    func testCreationRetrySurvivesLaterMutationsAndRejectsChangedRequest() throws {
+        let setup = try makeStore()
+        let operation = UUID()
+        let created = try setup.store.roomCreate(displayName: "Original", operationID: operation)
+        _ = try setup.store.roomRename(room: created.room.id, displayName: "Renamed", operationID: UUID())
+        let replay = try setup.store.roomCreate(displayName: "Original", operationID: operation)
+        XCTAssertEqual(replay.room.id, created.room.id)
+        XCTAssertEqual(replay.room.name, "Renamed")
+        XCTAssertEqual(try setup.store.roomList().rooms.count, 1)
+        XCTAssertThrowsError(try setup.store.roomCreate(displayName: "Different", operationID: operation)) {
+            XCTAssertEqual(($0 as? ARCError)?.code, .operationConflict)
+        }
+        let distinct = try setup.store.roomCreate(displayName: "Original", operationID: UUID())
+        XCTAssertNotEqual(distinct.room.id, created.room.id)
+    }
+
+    func testWorkingExtendsReplaysReturnsAndExpiresAtExactDeadline() throws {
+        let context = try qualifiedPair()
+        let now = try context.store.roomOpen(room: context.room).room.logicalUs
+        let deadline = now + 600_000_000
+        let request = ARCActionRequest.working(untilLogicalUs: deadline)
+        XCTAssertEqual(try ARCActionJSON.decode(ARCActionJSON.encode(request)), request)
+        let started = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation, request: request)
+        context.clock.advance(seconds: 300)
+        let reopened = ARCStore(rootURL: context.store.rootURL,
+            clock: ARCClock { context.clock.now() }, knowledgeSHA256: digest)
+        let working = try reopened.roomOpen(room: context.room)
+        XCTAssertEqual(working.participants.first { $0.id == context.first.id }?.duty, .working)
+        XCTAssertTrue(working.producer.live)
+        XCTAssertEqual(working.participants.first { $0.id == context.first.id }?.schedule.deadlineLogicalUs, deadline)
+        let replay = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation, request: request)
+        XCTAssertEqual(replay.roomRevision, started.roomRevision)
+        XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: started.nextOperation,
+            request: .working(untilLogicalUs: deadline)))
+        _ = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: started.nextOperation,
+            request: .working(untilLogicalUs: deadline + 600_000_000))
+        let returned = try context.store.poll(room: context.room, participant: context.first.id,
+            binding: context.first.binding)
+        XCTAssertEqual(returned.participant.duty, .on)
+        XCTAssertEqual(returned.schedule.kind, .duty)
+        let shortDeadline = returned.room.logicalUs + 30_000_000
+        let short = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: returned.operation,
+            request: .working(untilLogicalUs: shortDeadline))
+        context.clock.advance(seconds: 30)
+        _ = try context.store.roomTick(room: context.room)
+        context.clock.advance(seconds: -1)
+        let expired = try context.store.roomOpen(room: context.room)
+        XCTAssertEqual(expired.participants.first { $0.id == context.first.id }?.duty, .off)
+        XCTAssertFalse(expired.producer.live)
+        XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: short.nextOperation,
+            request: .working(untilLogicalUs: shortDeadline + 60_000_000))) {
+            XCTAssertEqual(($0 as? ARCError)?.code, .wrongState)
+        }
+        let onDuty = try context.store.poll(room: context.room, participant: context.first.id,
+            binding: context.first.binding)
+        XCTAssertEqual(onDuty.participant.duty, .on)
+        XCTAssertTrue(try context.store.diagnose(room: context.room).valid)
+    }
+
+    func testWorkingRequiresQualificationAndValidFutureDeadline() throws {
+        let setup = try makeStore()
+        let room = try setup.store.roomCreate(displayName: "Working admission", operationID: UUID()).room.id
+        let invited = try setup.store.participantInvite(room: room, name: "Candidate", operationID: UUID())
+        let poll = try setup.store.poll(room: room, participant: invited.participant.id,
+            binding: invited.instructions.bindingReference)
+        XCTAssertThrowsError(try setup.store.act(room: room, participant: invited.participant.id,
+            binding: invited.instructions.bindingReference, operation: poll.operation,
+            request: .working(untilLogicalUs: poll.room.logicalUs + 60_000_000)))
+        let context = try qualifiedPair()
+        let now = try context.store.roomOpen(room: context.room).room.logicalUs
+        for deadline in [Int64(-1), now, Int64.max] {
+            XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.first.id,
+                binding: context.first.binding, operation: context.first.operation,
+                request: .working(untilLogicalUs: deadline))) {
+                XCTAssertEqual(($0 as? ARCError)?.code, .invalidArgument)
+            }
+        }
+        _ = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation,
+            request: .working(untilLogicalUs: now + 60_000_000))
+        _ = try context.store.participantReplaceInstructions(room: context.room,
+            participant: context.first.id, operationID: UUID())
+        XCTAssertTrue(try context.store.diagnose(room: context.room).valid)
+        XCTAssertEqual(try context.store.roomOpen(room: context.room).participants.first {
+            $0.id == context.first.id
+        }?.phase, .invited)
+    }
+
+    func testFullNormalWritePreservesCapacityForRetirementAndDeletion() throws {
+        let context = try qualifiedPair()
+        let roomURL = try context.store.roomFileURL(room: context.room)
+        var document = try ARCRoomCodec.decode(Data(contentsOf: roomURL), expectedID: context.room)
+        let now = document.room.lastClockLogicalUs
+        document.activity = (1...500).map { sequence in
+            ARCEventRecord(sequence: Int64(sequence), at: ARCTime.timestamp(now), logicalUs: now,
+                kind: "MESSAGE", actor: context.first.id, recipient: context.second.id, subject: nil,
+                payload: .object(["text": .string(String(repeating: "x", count: 15_000))]),
+                operationId: UUID().uuidString.lowercased(), knowledgeSha256: digest)
+        }
+        document.room.nextSequence = 501
+        let limit = ARCConstants.maximumRoomBytes - 1_024 - 2 * 4_096
+        var remaining = limit - (try ARCRoomCodec.encode(document)).count
+        XCTAssertGreaterThan(remaining, 0)
+        for index in document.activity.indices {
+            let extra = min(1_384, remaining)
+            document.activity[index].payload = .object(["text": .string(String(repeating: "x", count: 15_000 + extra))])
+            remaining -= extra
+        }
+        XCTAssertEqual(remaining, 0)
+        let fileStore = try ARCFileStore(rootURL: context.store.rootURL)
+        let fixture = document
+        try fileStore.update(context.room) { value in value = fixture; return ((), true) }
+        let bytes = try Data(contentsOf: roomURL)
+        XCTAssertEqual(bytes.count, limit)
+        XCTAssertThrowsError(try fileStore.update(context.room) { value in
+            value.activity[499].payload = .object(["text": .string(String(repeating: "x", count: 15_001))])
+            return ((), true)
+        }) { XCTAssertEqual(($0 as? ARCError)?.code, .limitExceeded) }
+        XCTAssertEqual(try Data(contentsOf: roomURL), bytes)
+        for participant in [context.first, context.second] {
+            _ = try context.store.participantRetire(room: context.room, participant: participant.id, operationID: UUID())
+        }
+        XCTAssertTrue(try context.store.diagnose(room: context.room).valid)
+        _ = try context.store.roomDelete(room: context.room)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: roomURL.path))
+    }
+
+    func testDutyExpiryTickPersistsClockAcrossRollbackAndRestart() throws {
+        let context = try qualifiedPair()
+        let before = try context.store.activityRead(room: context.room)
+        context.clock.advance(seconds: 180)
+        let expired = try context.store.roomTick(room: context.room)
+        context.clock.advance(seconds: -180)
+        let restarted = ARCStore(rootURL: context.store.rootURL,
+            clock: ARCClock { context.clock.now() }, knowledgeSHA256: digest)
+        let opened = try restarted.roomOpen(room: context.room)
+        XCTAssertEqual(opened.room.logicalUs, expired.room.logicalUs)
+        XCTAssertTrue(opened.participants.allSatisfy { $0.duty == .off })
+        XCTAssertFalse(opened.producer.live)
+        XCTAssertEqual(try restarted.activityRead(room: context.room).events.count, before.events.count)
+        let tick = try restarted.roomTick(room: context.room)
+        XCTAssertEqual(tick.room.revision, expired.room.revision)
+        XCTAssertThrowsError(try restarted.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation,
+            request: .message(to: context.second.id, text: "Expired")))
+    }
+
+    func testLegacyFullRoomRecoveryRechecksDutyWorkingAndClockBeforeDeletion() throws {
+        let context = try qualifiedPair()
+        _ = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation,
+            request: .message(to: context.second.id, text: "Seed"))
+        for participant in [context.first, context.second] {
+            _ = try context.store.participantRetire(room: context.room,
+                participant: participant.id, operationID: UUID())
+        }
+        let remaining = try context.store.participantInvite(room: context.room,
+            name: "Remaining", operationID: UUID()).participant.id
+        let url = try context.store.roomFileURL(room: context.room)
+        var document = try ARCRoomCodec.decode(Data(contentsOf: url), expectedID: context.room)
+        let messageIndex = try XCTUnwrap(document.activity.firstIndex { $0.kind == "MESSAGE" })
+        let template = document.activity[messageIndex]
+        let copies = (0..<500).map { _ -> ARCEventRecord in
+            var event = template
+            event.operationId = UUID().uuidString.lowercased()
+            return event
+        }
+        document.activity.insert(contentsOf: copies, at: messageIndex + 1)
+        for index in document.activity.indices { document.activity[index].sequence = Int64(index + 1) }
+        document.room.nextSequence = Int64(document.activity.count + 1)
+
+        func writeFull(_ fixture: ARCRoomDocument) throws {
+            var fixture = fixture
+            let messages = fixture.activity.indices.filter { fixture.activity[$0].kind == "MESSAGE" }
+            for index in messages {
+                fixture.activity[index].payload = .object(["text": .string(String(repeating: "x", count: 15_000))])
+            }
+            var available = ARCConstants.maximumRoomBytes - (try ARCRoomCodec.encode(fixture)).count
+            XCTAssertGreaterThanOrEqual(available, 0)
+            for index in messages {
+                let extra = min(1_384, available)
+                fixture.activity[index].payload = .object(["text": .string(String(repeating: "x", count: 15_000 + extra))])
+                available -= extra
+            }
+            XCTAssertEqual(available, 0)
+            let data = try ARCRoomCodec.encode(fixture)
+            XCTAssertEqual(data.count, ARCConstants.maximumRoomBytes)
+            try data.write(to: url)
+        }
+
+        try writeFull(document)
+        XCTAssertTrue(try context.store.diagnose(room: context.room).valid)
+        XCTAssertThrowsError(try context.store.participantRetire(room: context.room,
+            participant: remaining, operationID: UUID())) {
+            XCTAssertEqual(($0 as? ARCError)?.code, .limitExceeded)
+        }
+        XCTAssertTrue(try context.store.roomOpen(room: context.room).canDeleteWithoutRetirement)
+
+        // A stale UI authorization must not permit deletion after an AI becomes
+        // available. These synthetic revisions are admitted by the real codec.
+        let index = try XCTUnwrap(document.participants.firstIndex { $0.id == remaining })
+        document.participants[index].phase = .qualifying
+        document.participants[index].qualification = ARCQualificationRecord(
+            challenge: String(repeating: "a", count: 32),
+            startedLogicalUs: document.room.lastClockLogicalUs,
+            firstPollLogicalUs: document.room.lastClockLogicalUs, answerLogicalUs: nil)
+        try writeFull(document)
+        XCTAssertThrowsError(try context.store.roomDelete(room: context.room))
+        document.participants[index].phase = .qualified
+        document.participants[index].qualification = nil
+        document.participants[index].lastPollLogicalUs = document.room.lastClockLogicalUs
+        try writeFull(document)
+        XCTAssertThrowsError(try context.store.roomDelete(room: context.room)) {
+            XCTAssertEqual(($0 as? ARCError)?.code, .wrongState)
+        }
+        document.participants[index].workingUntilLogicalUs = document.room.lastClockLogicalUs + 600_000_000
+        try writeFull(document)
+        context.clock.advance(seconds: 300)
+        XCTAssertThrowsError(try context.store.roomDelete(room: context.room))
+        let badClock = ARCStore(rootURL: context.store.rootURL,
+            clock: ARCClock { throw TestClockFailure.unavailable }, knowledgeSHA256: digest)
+        XCTAssertThrowsError(try badClock.roomDelete(room: context.room))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
+        context.clock.advance(seconds: 300)
+        XCTAssertTrue(try context.store.roomDelete(room: context.room).deleted)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
+    }
+
+    func testInactiveRoomWithSpaceStillRequiresRetirementBeforeDeletion() throws {
+        let setup = try makeStore()
+        let room = try setup.store.roomCreate(displayName: "Not full", operationID: UUID()).room.id
+        let participant = try setup.store.participantInvite(room: room, name: "Waiting", operationID: UUID()).participant
+        XCTAssertFalse(try setup.store.roomOpen(room: room).canDeleteWithoutRetirement)
+        XCTAssertThrowsError(try setup.store.roomDelete(room: room)) {
+            XCTAssertEqual(($0 as? ARCError)?.code, .wrongState)
+        }
+        _ = try setup.store.participantRetire(room: room, participant: participant.id, operationID: UUID())
+        XCTAssertTrue(try setup.store.roomDelete(room: room).deleted)
+    }
+
+    func testKnowledgeRejectsFIFOWithoutWaitingForAWriter() throws {
+        let root = newRoot()
+        let current = root.appendingPathComponent("current")
+        try FileManager.default.createDirectory(at: current, withIntermediateDirectories: true)
+        let container = current.appendingPathComponent("ARC_AI.arc-kb")
+        let digestURL = current.appendingPathComponent("ARC_AI.sha256")
+        try Data((digest + "\n").utf8).write(to: digestURL)
+        XCTAssertEqual(mkfifo(container.path, 0o600), 0)
+        let started = Date()
+        XCTAssertThrowsError(try ARCKnowledgeFile.openDefault(rootURL: root)) {
+            XCTAssertEqual(($0 as? ARCError)?.code, .knowledgeUnavailable)
+        }
+        XCTAssertLessThan(Date().timeIntervalSince(started), 1)
+        try FileManager.default.removeItem(at: container)
+        try Data("invalid".utf8).write(to: container)
+        try FileManager.default.removeItem(at: digestURL)
+        XCTAssertEqual(mkfifo(digestURL.path, 0o600), 0)
+        XCTAssertThrowsError(try ARCKnowledgeFile.openDefault(rootURL: root))
     }
 
     func testVisualEvidenceRequiresCanonicalTimestamp() throws {

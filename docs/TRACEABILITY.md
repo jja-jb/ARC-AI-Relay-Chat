@@ -6,6 +6,32 @@ human, host, installation, and exact signed-candidate behavior that automation
 cannot honestly prove. An unlisted identifier, implementation surface, or
 public behavior fails `source-check`.
 
+## Local regression additions — September 2026
+
+Core tests cover creation replay after rename, Working admission, deadline
+extension/replay/expiry/return, clock rollback, hostile instruction FIFOs, and
+normal-write capacity reserved for complete retirement and deletion. App tests
+cover missing installed payload repair, creation retry tokens, preserving
+loaded history across multi-page refresh, restarting observation after failed
+confirmed mutations, and Working labels/deadlines. Dev-tool tests exercise
+hostile unsigned container geometry and every mounted release-check failure
+with inert command stubs. Release signing, notarization, and external DVT are
+not replaced by these tests. Legacy full-room tests verify that exceptional
+deletion requires insufficient retirement capacity and refuses newly On Duty
+or Working AIs, active qualification, and unavailable time. Ordinary inactive
+rooms still require retirement. The app test verifies the explicit warning
+and cancellation. No history is trimmed to make room.
+
+Terse integration: `Communication.swift`, the handoff/guide, poll response,
+sidebar language selector, and manifest build/install checks cover QD-001,
+MW-003, UI-002, CLI-007, and IR-003. `ARCCommunicationTests` verifies digest
+changes in existing rooms, language persistence, unavailable notices, hostile
+paths and size limits, and canonical line-ending transport. App tests cover
+copy text, saved selector state, failed saves, installation/upgrade/repair, and
+preserving operator preferences. Dev-tool tests bind the supplied full text to
+its digest and reject mismatched packaged files. No test claims AI compliance
+or measured accuracy/cost gains.
+
 ## Constitution and reading rules
 
 Implementation: specifications 000–001, public documentation, and
@@ -114,10 +140,13 @@ DVT-005, DVT-006, and DVT-010.
 
 ## Mac application
 
-Implementation: `ARCApp.swift`, `MainView.swift`, `RoomView.swift`,
+Implementation: `ARCApp.swift`, `MainView.swift`, `RoomView.swift`, `ActivityWindow.swift`,
 `AppState.swift`, and `ARCInstallation.swift`. Verification: ARCApp client,
 help, large-text, monitoring, paging, interruption, install, deletion, and
-recovery tests; DVT-003, DVT-004, DVT-013, and DVT-014.
+recovery tests; `ARCActivityWindowTests` covers read-only native text, literal
+message rendering, event labels/colors, room changes, Follow Live on/off,
+initial layout, and anchored earlier-history paging. DVT-003, DVT-004,
+DVT-013, and DVT-014 remain the manual application checks.
 
 - `UI-001` ONE ORDINARY PRODUCT
 - `UI-002` FIRST USE IN MINUTES

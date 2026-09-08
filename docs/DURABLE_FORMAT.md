@@ -36,6 +36,20 @@ the room exists. The 8 MiB room limit is fail-closed: ARC refuses a mutation
 that would exceed it, leaving the prior complete room unchanged. Activity is a
 durable coordination record, not a cryptographic journal.
 
+Ordinary writes additionally reserve 1,024 bytes plus 4,096 bytes per
+non-retired participant for retirement, due qualification failures, and clock
+updates. Those recovery writes may use the reserve but never exceed 8 MiB.
+Already-full files created by earlier builds may lack that reserve. ARC does
+not trim their history. A narrowly limited confirmed deletion exception is
+described below.
+
+A qualified participant may carry optional `working_until_logical_us`.
+It is an absolute supported UTC microsecond deadline later than its last poll.
+Working remains a derived duty state, not a new qualification phase. A normal
+poll, replacement, or retirement clears the field. Older files without it
+retain their original meaning. Older executables do not understand Working
+records/events; use this updated build for rooms that have used Working.
+
 ## Lock and atomic update
 
 Each room has one adjacent stable lock file:
@@ -67,10 +81,21 @@ instruction replacement, and retirement remain available to the Administrator
 using the last stored logical time and mark their Activity time unverified.
 Read views say `TIME_UNAVAILABLE` when time cannot be sampled.
 
+A tick persists an advancing logical clock and revision even when no event
+is due, so an observed duty expiry cannot be undone by a later clock rollback.
+Creation retries use the original operation UUID and name to find the same
+room, including after rename. A changed creation request with that UUID is
+refused; deletion ends that room's replay lifetime.
+
 There is no hidden recovery store or alternate room representation. ARC either
 opens the one canonical room or places it in a visible recovery state. Doctor
-reports the first safe failure. ARC deletes only a valid room after every AI is
-Retired. Deletion permanently unlinks the room and adjacent lock and
+reports the first safe failure. ARC normally deletes a valid room only after
+every AI is Retired. If simulating all remaining retirements would exceed the
+room limit, confirmed deletion may bypass retirement, but only with valid time,
+no On Duty or unexpired Working AI, and no unexpired active qualification test.
+The core repeats this check while holding the deletion lock, so an AI returning
+or extending Working after the dialog opens blocks deletion.
+Deletion permanently unlinks the room and adjacent lock and
 synchronizes the rooms directory.
 
 Specification 003 defines the file and commit rules. Specification 011 defines

@@ -242,7 +242,7 @@ private struct ParticipantRow: View {
     private var canMakeProducer: Bool {
         result.room.status != .timeUnavailable
             && participant.phase == .qualified
-            && participant.duty == .on
+            && participant.isAvailable
             && !participant.isProducer
     }
 
@@ -355,10 +355,14 @@ private struct ParticipantRow: View {
                 replaceButton
                 retireButton
             case .waitingForProducer, .qualifying:
-                Menu("More") { replaceButton }
+                Menu("More") {
+                    copyAgainButton
+                    replaceButton
+                }
                 retireButton
             case .failed:
                 tryAgainButton
+                copyAgainButton
                 replaceButton
                 retireButton
             case .qualified:
@@ -367,8 +371,15 @@ private struct ParticipantRow: View {
                     Menu("More") { replaceButton }
                 } else if participant.duty == .off {
                     copyAgainButton
+                    Menu("More") { replaceButton }
                 } else if canMakeProducer {
                     makeProducerButton
+                }
+                if result.room.status != .timeUnavailable && participant.isAvailable {
+                    Menu("More") {
+                        copyAgainButton
+                        replaceButton
+                    }
                 }
                 retireButton
             case .retired:
@@ -427,7 +438,7 @@ private struct ParticipantRow: View {
         case .qualifying: "checklist"
         case .failed: "xmark.circle"
         case .retired: "minus.circle"
-        case .qualified: participant.duty == .on ? "checkmark.circle" : "clock"
+        case .qualified: participant.duty == .working ? "hammer" : participant.duty == .on ? "checkmark.circle" : "clock"
         }
     }
 
@@ -448,6 +459,10 @@ enum ARCParticipantSchedulePresentation {
     ) -> String? {
         guard roomStatus != .timeUnavailable else { return nil }
         let schedule = participant.schedule
+        if participant.duty == .working,
+           let deadline = ARCFormatting.logicalTime(schedule.deadlineLogicalUs, nowLogical: nowLogical) {
+            return "Busy on a task · Check-in or extension due by \(deadline)"
+        }
         if participant.phase == .qualifying {
             let request: String
             switch schedule.status {
@@ -502,7 +517,7 @@ enum ARCWorkPresentation {
     ) -> Bool {
         guard roomStatus != .timeUnavailable,
               let participant = participants[item.owner] else { return false }
-        return participant.phase == .qualified && participant.duty == .on
+        return participant.isAvailable
     }
 
     static func state(
@@ -658,6 +673,7 @@ private struct WorkRow: View {
 
 private struct ActivitySection: View {
     @EnvironmentObject private var state: AppState
+    @Environment(\.openWindow) private var openWindow
     let result: ARCRoomOpenResult
 
     private var participants: [String: ARCParticipantView] {
@@ -666,8 +682,17 @@ private struct ActivitySection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Room History")
-                .font(.title2.bold())
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    Text("Room History").font(.title2.bold())
+                    Spacer()
+                    openActivityButton
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Room History").font(.title2.bold())
+                    openActivityButton
+                }
+            }
             if state.activity.isEmpty {
                 Text("No room activity yet.")
                     .foregroundStyle(.secondary)
@@ -688,6 +713,12 @@ private struct ActivitySection: View {
                         .disabled(state.isBusy)
                 }
             }
+        }
+    }
+
+    private var openActivityButton: some View {
+        Button("Open Activity Window", systemImage: "macwindow.on.rectangle") {
+            openWindow(id: ARCActivityWindow.id)
         }
     }
 }
@@ -797,6 +828,11 @@ enum ARCActivityPresentation {
             return "\(subjectName) qualified for ARC work."
         case "AI_RETURNED_ON_DUTY":
             return "\(subjectName) returned On Duty."
+        case "AI_WORKING":
+            let deadline = payload["until_logical_us"]?.integerValue.flatMap {
+                ARCFormatting.recordedLogicalTime($0, event: event)
+            } ?? "the recorded deadline"
+            return "\(subjectName) is Working until \(deadline)."
         case "MESSAGE":
             let sender = actorName(event.actor, participants: participants)
             let recipient = event.recipient.map {
@@ -860,6 +896,13 @@ enum ARCFormatting {
         let interval = Double(value - nowLogical) / 1_000_000
         return Date().addingTimeInterval(interval)
             .formatted(date: .omitted, time: .standard)
+    }
+
+    static func recordedLogicalTime(_ value: Int64, event: ARCEventView) -> String? {
+        guard event.timeIsVerified, event.logicalUs >= 0, value >= event.logicalUs,
+              let recordedAt = parse(event.at) else { return nil }
+        return recordedAt.addingTimeInterval(Double(value - event.logicalUs) / 1_000_000)
+            .formatted(date: .abbreviated, time: .standard)
     }
 
     private static func parse(_ value: String) -> Date? {

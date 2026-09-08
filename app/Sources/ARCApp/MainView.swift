@@ -1,6 +1,37 @@
 import ARCCore
 import SwiftUI
 
+struct OperatorLanguageSelector: View {
+    @EnvironmentObject private var state: AppState
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text("Messages to operator")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Picker("Messages to operator", selection: Binding(
+                get: { state.operatorLanguage },
+                set: { state.setOperatorLanguage($0) }
+            )) {
+                ForEach(ARCOperatorLanguage.allCases, id: \.self) { language in
+                    Text(language.displayName).tag(language)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .disabled(!state.installationReady || state.isBusy)
+            .help("Language for AI replies to the operator in every room. AI-to-AI messages prefer Terse and choose English or German only when necessary.")
+            if let failure = state.operatorLanguageFailure {
+                Text(failure).font(.caption).foregroundStyle(.red)
+                Button("Save Language Again") { state.setOperatorLanguage(state.operatorLanguage) }
+                    .disabled(!state.installationReady || state.isBusy)
+            }
+        }
+        .padding(12)
+        .background(Color(nsColor: .windowBackgroundColor))
+    }
+}
+
 struct MainView: View {
     @EnvironmentObject private var state: AppState
     @Environment(\.scenePhase) private var scenePhase
@@ -56,6 +87,9 @@ struct MainView: View {
                 }
             }
             .navigationTitle("Rooms")
+            .safeAreaInset(edge: .bottom) {
+                OperatorLanguageSelector()
+            }
             .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 340)
         } detail: {
             detail
@@ -442,10 +476,14 @@ enum ARCHelpContent {
                 + "at any time."
         ),
         Section(
-            title: "On Duty and Off Duty",
+            title: "On Duty, Working, and Off Duty",
             text: "An AI is On Duty while it keeps polling ARC. It becomes Off Duty 180 seconds "
                 + "after its last valid poll and returns On Duty on its next valid poll. ARC does "
-                + "not wake or contact an AI; the AI's chat or host must run each poll."
+                + "not wake or contact an AI; the AI's chat or host must run each poll. "
+                + "For a lengthy or critical task, a qualified AI can declare Working with a "
+                + "deadline and pause polling. It remains available for room work until that "
+                + "deadline, which it may extend before expiry. A poll returns it to On Duty; "
+                + "an expired deadline makes it Off Duty."
         ),
         Section(
             title: "Work",
@@ -458,6 +496,27 @@ enum ARCHelpContent {
             text: "Room History shows the complete messages, AI changes, and work changes "
                 + "for as long as the room exists. Newest items appear first. Open Details "
                 + "when you need the exact recorded facts."
+        ),
+        Section(
+            title: "Terse and operator language",
+            text: "Copied AI instructions name ARC's full local Terse specification. Each AI "
+                + "must read it before participating and reread it after changes. If it cannot, "
+                + "it must pause and tell you. Between AIs, use Terse whenever it expresses the "
+                + "meaning accurately; otherwise the AI chooses English or German for that thought. "
+                + "Use Messages to operator below the room list to choose English or Deutsch for "
+                + "AI replies to you. The choice is remembered for every room and reaches existing "
+                + "AIs on their next poll. It does not translate room history or change ARC's menus. "
+                + "ARC does not validate Terse syntax or guarantee accuracy or token savings."
+        ),
+        Section(
+            title: "Separate activity window",
+            text: "Choose View > Open Activity Window, or use the button beside Room History. "
+                + "The read-only window follows the room selected in the main window. It shows "
+                + "all activity with participant colors and event labels. Newest activity is at "
+                + "the bottom; scroll up for earlier history. Follow Live scrolls to new activity "
+                + "automatically. Turn it off to keep your reading position while updates continue. "
+                + "Select text to copy it; Command-F searches loaded history. Other windows can "
+                + "cover it. Close and reopen it normally; manage the room in the main window."
         ),
         Section(
             title: "Instructions",
@@ -476,7 +535,9 @@ enum ARCHelpContent {
             text: "Diagnose checks a room and explains the first problem it finds. To delete "
                 + "a room, first retire every AI. Then use Delete Room in the Room menu or "
                 + "right-click the selected room in the sidebar. Deletion is permanent and "
-                + "removes the room's complete history."
+                + "removes the room's complete history. If an older room is too full to record "
+                + "retirement, ARC can offer deletion after every AI is inactive. The warning "
+                + "explains this exception; On Duty, Working, and active access checks block it."
         ),
     ]
 

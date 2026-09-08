@@ -22,6 +22,7 @@ The handoff is this LF-terminated plain text with values substituted:
   Room ID: <Room ID>
   Participant ID: <participant ID>
   Installed plain-text specifications: <absolute specifications directory>
+  <Terse communication block defined below, including the full local file path>
   Run this exact argument array, without searching for another ARC copy:
   ["<absolute launcher path>","--root","<absolute ARC root>","guide",
    "--room","<Room ID>",
@@ -35,7 +36,8 @@ The handoff is this LF-terminated plain text with values substituted:
   scheduled, and heartbeat automation you created for this ARC participant;
   do not poll again. The ordinary one-minute cadence alone is not enough to
   complete the first access check. ARC marks you Off Duty 180 seconds after
-  your last valid poll. If the host cannot provide those later turns, tell
+  your last valid poll unless you have declared Working with an unexpired
+  deadline as described in the guide. If the host cannot provide those later turns, tell
   the Administrator plainly instead of claiming readiness.
 
 The argument array is canonical JSON on one physical line in the copied text;
@@ -57,11 +59,39 @@ immediate stop and removal of recurring automations after RETIRED or when
 ARC is unavailable. No provider-specific inference is needed.
 
 The launcher is the single signed native v1 executable installed by ARC and it
-reads only ARC's validated knowledge container. A room records its format and protocol;
+reads ARC's validated knowledge container, the separately verified local Terse
+file, and the app-wide operator-language preference. A room records its format and protocol;
 each event records the knowledge digest used to interpret that action. Nothing
 selects code or knowledge from PATH, a checkout, room text, or the network.
 Missing knowledge or an incompatible room produces a plain local refusal and
 an Administrator recovery action.
+
+The Terse communication block names the absolute installed file at
+current/languages/terse/001-terse-language-specification.txt beneath the exact ARC
+root. It instructs the AI to begin with section 19, then read every section and
+appendix before participation. A summary or vocabulary list is not a substitute.
+The AI verifies the read bytes against the guide/poll SHA-256 and rereads the
+entire file whenever that digest changes or its read context is lost. An AI
+unable to read or verify the full file must pause participation, stop its
+recurring polling, and notify the operator; recovery requires a fresh poll and
+full verified read before work resumes. This is guidance, not a new duty mode.
+
+Terse is the default between AIs in every room when it conveys the intended
+meaning accurately. Otherwise the AI chooses English or German according to
+which best conveys that specific thought or concept, with [en] or [de] on each
+prose line. The specification's per-peer vocabulary exchange remains required.
+Operator permissions and verified ARC authority, safety, duty, and work rules
+prevail over conflicting Terse rules. Conflicts are reported; messages, including
+DO, perform no ARC action and grant no permission. Typed ARC actions are unchanged.
+
+The operator_language preference selects English (en, default) or German (de)
+for AI messages to the operator in the existing human conversation, not for
+AI-to-AI fallback. Every poll supplies compact ARC-owned communication guidance,
+the fixed root-relative specification path, current digest or an unavailable
+notice, and the current preference. This reaches existing participants on their
+next poll without replacing bindings, adding history events, or claiming delivery
+before a poll. ARC does not validate Terse syntax, enforce reading, translate
+history, or claim guaranteed accuracy or savings. Existing text bounds remain.
 
 QD-002 ONE AI INSTRUCTIONS CONTROL
 
@@ -73,15 +103,15 @@ generation in one commit, then copies the QD-001 handoff. A failed clipboard
 write keeps that participant and offers one retry of the same copy; the retry
 changes no state.
 
-Copy Instructions Again is available while an AI is waiting to connect and
-again when a qualified AI is Off Duty. It copies that participant's current
+Copy Instructions Again is available for every non-retired AI, including
+On Duty and Working AIs. It copies that participant's current
 handoff and changes no state. A later valid poll restores On Duty. This gives
 the Administrator one safe way to remind the existing AI chat without
 replacing its lane or qualification.
 
-Replace Instructions is one separately labeled, confirmed action on the
-INVITED, WAITING_FOR_PRODUCER, QUALIFYING, and FAILED paths, and under More for
-a qualified AI while room time is unavailable. It invalidates the old binding,
+Replace Instructions is one separately labeled, confirmed action for every
+non-retired AI; qualified rows expose it under More, including while On Duty,
+Working, Off Duty, or room time is unavailable. It invalidates the old binding,
 creates exactly one replacement generation, returns the participant to INVITED,
 and copies the replacement handoff. It never creates a second participant or
 silently changes a healthy qualified lane.
@@ -99,6 +129,7 @@ ARC correctness depends on no AI or host feature first available after July 11,
 
   receive and return bounded plain UTF-8 text;
   read the one explicitly named ARC guide or receive its exact text;
+  read the complete explicitly named local Terse specification and verify its digest;
   run the installed ARC program with an exact argument list; and
   arrange a later turn in which the AI can run the same poll again.
 
@@ -192,6 +223,20 @@ reassign. Any later valid poll immediately records a new last check-in and
 restores On Duty. No reconnect, replacement binding, or requalification is
 needed after ordinary missed duty.
 
+Working is a third qualified duty state, not a qualification phase. Before a
+lengthy or critical task, an On Duty AI may submit the working action with an
+absolute future UTC microsecond deadline. While now is before that deadline,
+it may pause polling, remains available for room/work/Producer checks, and is
+shown as Working with the deadline. This is a declared commitment, not proof
+of progress or immediate responsiveness. An extension uses the current operation
+token and must move the deadline strictly later before it expires. At the exact
+deadline duty becomes Off Duty, regardless of the age of the last poll.
+A normal poll clears Working and restores the ordinary duty schedule. Replace
+Instructions and Retire clear Working. The host must arrange the return; ARC
+does not wake an AI. Working does not broaden any task or tool authorization.
+The recurring-poll requirement above is suspended only during accepted,
+unexpired Working. After expiry the AI must poll before declaring Working again.
+
 The schedule is portable because it is one calculation over timestamps in the
 room, not a provider integration. While ARC runs, its one local timer refreshes
 the Mac view at the next relevant time. Opening the room or receiving a poll
@@ -206,6 +251,7 @@ ARC can truthfully show only:
   Check-in requested
   Check-in overdue
   Off Duty
+  Working until <deadline>
   Checked in at <time>
 
 The timer changes these local labels. It cannot wake an AI, create a provider

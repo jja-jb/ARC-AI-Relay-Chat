@@ -40,6 +40,7 @@ struct ARCParticipantRecord: Codable, Sendable {
     var lastPollLogicalUs: Int64?
     var nextOperation: String
     var lastOperation: ARCLastOperationRecord?
+    var workingUntilLogicalUs: Int64? = nil
 }
 
 struct ARCQualificationRecord: Codable, Sendable {
@@ -110,10 +111,10 @@ enum ARCText {
     static func require(
         _ raw: String, label: String, maximumBytes: Int,
         maximumCharacters: Int? = nil, allowNewlines: Bool = false,
-        allowPathSeparator: Bool = true
+        allowPathSeparator: Bool = true, trimWhitespace: Bool = true
     ) throws -> String {
-        let value = normalized(raw)
-        guard !value.isEmpty, value.utf8.count <= maximumBytes,
+        let value = trimWhitespace ? normalized(raw) : raw.precomposedStringWithCanonicalMapping
+        guard !normalized(value).isEmpty, value.utf8.count <= maximumBytes,
               maximumCharacters.map({ value.count <= $0 }) ?? true else {
             let limit = maximumCharacters.map { "\($0) characters and " } ?? ""
             throw ARCError(
@@ -135,9 +136,11 @@ enum ARCText {
 
     static func isCanonical(
         _ value: String, maximumBytes: Int, maximumCharacters: Int? = nil,
-        allowNewlines: Bool = false, allowPathSeparator: Bool = true
+        allowNewlines: Bool = false, allowPathSeparator: Bool = true,
+        trimWhitespace: Bool = true
     ) -> Bool {
-        value == normalized(value) && !value.isEmpty && value.utf8.count <= maximumBytes
+        let canonical = trimWhitespace ? normalized(value) : value.precomposedStringWithCanonicalMapping
+        return value == canonical && !normalized(value).isEmpty && value.utf8.count <= maximumBytes
             && (maximumCharacters.map { value.count <= $0 } ?? true)
             && (allowPathSeparator || !value.contains("/"))
             && !value.unicodeScalars.contains(where: {
@@ -427,6 +430,12 @@ enum ARCRoomCodec {
         var participantNames = Set<String>()
         var bindings = Set<String>()
         for participant in document.participants {
+            if let deadline = participant.workingUntilLogicalUs {
+                guard participant.phase == .qualified, ARCTime.isLogical(deadline),
+                      let lastPoll = participant.lastPollLogicalUs, deadline > lastPoll else {
+                    throw ARCError(.roomCorrupt, "An AI Working deadline is invalid.")
+                }
+            }
             guard ARCText.isSafeID(participant.id, prefix: "ai-"),
                   participantIDs.insert(participant.id).inserted,
                   ARCText.isCanonical(
@@ -608,12 +617,12 @@ enum ARCRoomCodec {
         }
         func text(
             _ key: String, maximum: Int, characters: Int? = nil,
-            newlines: Bool = false, pathSeparator: Bool = true
+            newlines: Bool = false, pathSeparator: Bool = true, trimWhitespace: Bool = true
         ) -> Bool {
             guard let value = payload[key]?.stringValue else { return false }
             return ARCText.isCanonical(
                 value, maximumBytes: maximum, maximumCharacters: characters,
-                allowNewlines: newlines, allowPathSeparator: pathSeparator
+                allowNewlines: newlines, allowPathSeparator: pathSeparator, trimWhitespace: trimWhitespace
             )
         }
         func integer(_ key: String, upper: Int64 = Int64.max - 1) -> Bool {
@@ -657,6 +666,12 @@ enum ARCRoomCodec {
 
         let valid: Bool
         switch event.kind {
+        case "AI_WORKING":
+            valid = ai(event.actor) && event.actor == event.subject
+                && event.recipient == nil && exact(["until_logical_us"])
+                && payload["until_logical_us"]?.integerValue.map {
+                    ARCTime.isLogical($0) && $0 > event.logicalUs
+                } == true
         case "ROOM_CREATED":
             valid = event.actor == "administrator" && emptyTarget()
                 && exact(["name"])
@@ -712,7 +727,7 @@ enum ARCRoomCodec {
         case "MESSAGE":
             valid = ai(event.actor) && ai(event.recipient) && event.subject == nil
                 && exact(["text"])
-                && text("text", maximum: 16_384, newlines: true)
+                && text("text", maximum: 16_384, newlines: true, trimWhitespace: false)
         case "WORK_ASSIGNED":
             valid = ai(event.actor) && ai(event.recipient) && work(event.subject)
                 && exact(["evidence_mode", "scope"])
@@ -760,7 +775,7 @@ enum ARCRoomCodec {
         for (index, item) in try array(root["participants"], path: "room.participants").enumerated() {
             let participant = try object(item, allowed: [
                 "id", "name", "phase", "binding", "binding_generation", "qualification",
-                "last_poll_logical_us", "next_operation", "last_operation",
+                "last_poll_logical_us", "next_operation", "last_operation", "working_until_logical_us",
             ], required: ["id", "name", "phase", "binding_generation", "next_operation"],
                path: "room.participants[\(index)]")
             if let qualification = participant["qualification"] {

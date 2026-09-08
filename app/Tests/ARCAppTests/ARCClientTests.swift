@@ -7,6 +7,219 @@ import XCTest
 @testable import ARCApp
 
 final class ARCClientTests: XCTestCase {
+    @MainActor
+    func testOperatorLanguagePersistsAndIsIncludedInCopiedInstructions() async throws {
+        let root = URL(fileURLWithPath: "/private/tmp/arc-language-ui-\(UUID().uuidString)", isDirectory: true)
+        defer { removeTemporaryRoot(root) }
+        try ARCOperatorPreferences.save(.german, rootURL: root)
+        let state = AppState(client: TestClient(rootURL: root), installation: TestInstallation())
+        try await waitUntil { state.installationReady && !state.isBusy }
+        XCTAssertEqual(state.operatorLanguage, .german)
+        let participant = testParticipant(phase: .invited, schedule: ARCScheduleView(
+            kind: .none, status: .none, nextRequestLogicalUs: nil, deadlineLogicalUs: nil))
+        let handoff = try XCTUnwrap(ARCHandoff.text(rootURL: root,
+            room: testRoom(id: "room-012345abcdef", name: "Language room", revision: 1),
+            participant: participant, operatorLanguage: state.operatorLanguage))
+        XCTAssertTrue(handoff.contains(ARCCommunication.specificationURL(rootURL: root).path))
+        XCTAssertTrue(handoff.contains("entire file, including all sections and appendices"))
+        XCTAssertTrue(handoff.contains("operator use Deutsch"))
+        XCTAssertTrue(handoff.contains("choose English or German"))
+        state.setOperatorLanguage(.english)
+        try await waitUntil { !state.isBusy && state.operatorLanguage == .english }
+        let reopened = AppState(client: TestClient(rootURL: root), installation: TestInstallation())
+        try await waitUntil { reopened.installationReady && !reopened.isBusy }
+        XCTAssertEqual(reopened.operatorLanguage, .english)
+        XCTAssertEqual(try ARCOperatorPreferences.load(rootURL: root), .english)
+        XCTAssertTrue(state.notice.contains("all rooms"))
+        if let snapshots = ProcessInfo.processInfo.environment["ARC_LANGUAGE_TEST_SNAPSHOTS"] {
+            let directory = URL(fileURLWithPath: snapshots, isDirectory: true)
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 220, height: 100),
+                styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+            window.isReleasedWhenClosed = false
+            defer { window.close() }
+            let hosting = NSHostingView(rootView: OperatorLanguageSelector().environmentObject(state))
+            window.contentView = hosting
+            for (name, appearance) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {
+                window.appearance = NSAppearance(named: appearance)
+                window.setContentSize(NSSize(width: 220, height: 100))
+                try await Task.sleep(nanoseconds: 50_000_000)
+                hosting.layoutSubtreeIfNeeded()
+                let bitmap = try XCTUnwrap(hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds))
+                hosting.cacheDisplay(in: hosting.bounds, to: bitmap)
+                let data = try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))
+                try data.write(to: directory.appendingPathComponent("operator-language-\(name).png"))
+            }
+        }
+    }
+
+    @MainActor
+    func testLanguageSaveFailureKeepsPriorSelectionAndReportsError() async throws {
+        let root = URL(fileURLWithPath: "/private/tmp/arc-language-failure-\(UUID().uuidString)", isDirectory: true)
+        defer { removeTemporaryRoot(root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: false)
+        let state = AppState(client: TestClient(rootURL: root), installation: TestInstallation())
+        try await waitUntil { state.installationReady && !state.isBusy }
+        let outside = root.appendingPathComponent("keep.txt")
+        try Data("keep".utf8).write(to: outside)
+        try FileManager.default.createSymbolicLink(at: root.appendingPathComponent(ARCOperatorPreferences.fileName),
+            withDestinationURL: outside)
+        state.setOperatorLanguage(.german)
+        try await waitUntil { !state.isBusy && !state.notice.isEmpty }
+        XCTAssertEqual(state.operatorLanguage, .english)
+        XCTAssertEqual(try String(contentsOf: outside, encoding: .utf8), "keep")
+    }
+
+    @MainActor
+    func testActivityWindowRendersBothAppearancesAndClearsStaleRoomContent() async throws {
+        let state = AppState(client: TestClient(rootURL: temporaryRoot("arc-activity-window")),
+            installation: TestInstallation())
+        try await waitUntil { state.installationReady && !state.isBusy }
+        let roomID = "room-012345abcdef"
+        state.rooms = [ARCRoomListItem(id: roomID, name: "Design review", health: .current, failure: nil)]
+        state.selectedRoomID = roomID
+        state.roomResult = ARCRoomOpenResult(room: testRoom(id: roomID, name: "Design review", revision: 1),
+            producer: testProducer(), participants: [testParticipant(phase: .qualified,
+                schedule: ARCScheduleView(kind: .none, status: .none,
+                    nextRequestLogicalUs: nil, deadlineLogicalUs: nil))], work: [])
+        state.activity = [
+            ARCEventView(sequence: 1, at: "2026-09-08T12:00:00Z", logicalUs: 1,
+                kind: "AI_JOINED", actor: "arc", recipient: nil, subject: "ai-012345abcdef",
+                payload: .object([:]), operationId: "one", knowledgeSha256: "test"),
+            ARCEventView(sequence: 2, at: "2026-09-08T12:01:00Z", logicalUs: 2,
+                kind: "MESSAGE", actor: "ai-012345abcdef", recipient: "ai-2", subject: nil,
+                payload: .object(["text": .string("The review is complete. I found two edge cases and added tests for both.\nThe room history stays intact.")]),
+                operationId: "two", knowledgeSha256: "test"),
+            ARCEventView(sequence: 3, at: "2026-09-08T12:02:00Z", logicalUs: 3,
+                kind: "MESSAGE", actor: "ai-2", recipient: "ai-012345abcdef", subject: nil,
+                payload: .object(["text": .string("Thanks. I’ll verify the changes and report the result here.")]),
+                operationId: "three", knowledgeSha256: "test"),
+        ].reversed()
+        state.nextActivityBefore = 1
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 520, height: 360),
+            styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer { window.close() }
+        let hosting = NSHostingView(rootView: ActivityWindowView().environmentObject(state))
+        window.contentView = hosting
+        for (name, appearance, sizeIndex) in [("light", NSAppearance.Name.aqua, 2),
+            ("dark", .darkAqua, 2), ("large-text", .aqua, 8)] {
+            state.textSizeIndex = sizeIndex
+            window.appearance = NSAppearance(named: appearance)
+            window.setContentSize(NSSize(width: 520, height: 360))
+            try await Task.sleep(nanoseconds: 50_000_000)
+            hosting.layoutSubtreeIfNeeded()
+            let transcript = try XCTUnwrap(activityTextView(in: hosting))
+            XCTAssertTrue(transcript.string.contains("The review is complete"))
+            XCTAssertFalse(transcript.isEditable)
+            let viewport = try XCTUnwrap(transcript.enclosingScrollView)
+            let viewportBounds = hosting.convert(viewport.bounds, from: viewport)
+            XCTAssertGreaterThan(viewportBounds.height, 80)
+            XCTAssertLessThanOrEqual(viewportBounds.maxX, hosting.bounds.maxX + 1)
+            XCTAssertGreaterThanOrEqual(viewportBounds.minX, -1)
+            if let path = ProcessInfo.processInfo.environment["ARC_ACTIVITY_TEST_SNAPSHOTS"] {
+                let directory = URL(fileURLWithPath: path, isDirectory: true)
+                try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+                let bitmap = try XCTUnwrap(hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds))
+                hosting.cacheDisplay(in: hosting.bounds, to: bitmap)
+                let png = try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))
+                try png.write(to: directory.appendingPathComponent("activity-\(name).png"))
+            }
+        }
+        state.selectedRoomID = "room-fedcba543210"
+        try await Task.sleep(nanoseconds: 50_000_000)
+        hosting.layoutSubtreeIfNeeded()
+        XCTAssertNil(activityTextView(in: hosting), "Do not show the previous room during a pending selection.")
+        state.selectedRoomID = nil
+        state.roomResult = nil
+        state.activity = []
+        try await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertNil(activityTextView(in: hosting), "Deleted or missing rooms must clear the transcript.")
+    }
+
+    @MainActor
+    private func activityTextView(in view: NSView) -> NSTextView? {
+        if let text = view as? NSTextView { return text }
+        return view.subviews.lazy.compactMap { self.activityTextView(in: $0) }.first
+    }
+
+    @MainActor
+    func testFullRoomDeletionShowsExplicitRecoveryWarningAndCanBeCancelled() async throws {
+        var warning = ""
+        let state = AppState(client: TestClient(rootURL: temporaryRoot("arc-delete-warning")),
+            installation: TestInstallation(), confirmation: { _, message, _ in
+                warning = message
+                return false
+            })
+        try await waitUntil { state.installationReady && !state.isBusy }
+        state.rooms = [ARCRoomListItem(id: "room-012345abcdef", name: "Full room", health: .current, failure: nil)]
+        state.selectedRoomID = "room-012345abcdef"
+        state.roomResult = ARCRoomOpenResult(room: testRoom(id: "room-012345abcdef", name: "Full room", revision: 1),
+            producer: testProducer(), participants: [testParticipant(phase: .invited,
+                schedule: ARCScheduleView(kind: .none, status: .none,
+                    nextRequestLogicalUs: nil, deadlineLogicalUs: nil))],
+            work: [], canDeleteWithoutRetirement: true)
+        XCTAssertTrue(state.canDeleteCurrentRoom)
+        state.deleteCurrentRoom()
+        XCTAssertTrue(warning.contains("without recording retirement"))
+        XCTAssertTrue(warning.contains("This cannot be undone"))
+        XCTAssertNotNil(state.roomResult)
+    }
+
+    @MainActor
+    func testRefreshPreservesLoadedHistoryAndBridgesMultipleNewPages() async throws {
+        let client = HistoryReviewClient(rootURL: temporaryRoot("arc-history-regression"))
+        let state = AppState(client: client, installation: TestInstallation())
+        try await waitUntil { state.activity.count == 50 && !state.isBusy }
+        state.loadEarlierActivity()
+        try await waitUntil { state.activity.count == 100 && !state.isBusy }
+        state.applicationBecameActive()
+        try await waitUntil { !state.isBusy }
+        XCTAssertEqual(state.activity.count, 100)
+        client.advance(to: 225)
+        state.applicationBecameActive()
+        try await waitUntil { state.activity.count == 225 && !state.isBusy }
+        XCTAssertEqual(state.activity.map(\.sequence), Array((1...225).reversed()).map(Int64.init))
+        XCTAssertNil(state.nextActivityBefore)
+    }
+
+    @MainActor
+    func testConfirmedMutationFailureRestartsRoomMonitor() async throws {
+        let client = ChangingRoomClient(rootURL: temporaryRoot("arc-confirmed-failure"))
+        let stamps = StampBox()
+        let state = AppState(client: client, installation: TestInstallation(),
+            roomStampProvider: { _, _ in stamps.value }, monitorIntervalNanoseconds: 20_000_000,
+            confirmation: { _, _, _ in true })
+        try await waitUntil { state.roomResult != nil && !state.isBusy }
+        state.replaceInstructions(for: try XCTUnwrap(state.roomResult?.participants.first))
+        try await waitUntil { !state.isBusy && state.notice.contains("Unexpected test operation") }
+        client.advance()
+        stamps.advance()
+        try await waitUntil { state.roomResult?.participants.first?.phase == .qualifying }
+    }
+
+    @MainActor
+    func testCreateRetainsOperationAcrossRetryableFailure() async throws {
+        let client = CreateRetryClient(rootURL: temporaryRoot("arc-create-retry"))
+        let state = AppState(client: client, installation: TestInstallation())
+        try await waitUntil { state.installationReady && !state.isBusy }
+        state.createRoom(named: "Retry")
+        try await waitUntil { client.operations.count == 1 && !state.isBusy }
+        state.createRoom(named: "Retry")
+        try await waitUntil { client.operations.count == 2 && !state.isBusy }
+        XCTAssertEqual(client.operations[0], client.operations[1])
+    }
+
+    func testWorkingIsVisibleWithDeadlineAndDoesNotLookOffDuty() throws {
+        let participant = ARCParticipantView(id: "ai-012345abcdef", name: "Worker",
+            phase: .qualified, duty: .working, isProducer: false, binding: nil,
+            bindingGeneration: 1, schedule: ARCScheduleView(kind: .working, status: .ok,
+                nextRequestLogicalUs: 3_600_000_000, deadlineLogicalUs: 3_600_000_000), lastCheckIn: nil)
+        XCTAssertEqual(participant.plainState(roomStatus: .active), "Working")
+        XCTAssertTrue(participant.isAvailable)
+        XCTAssertTrue(try XCTUnwrap(ARCParticipantSchedulePresentation.text(
+            for: participant, roomStatus: .active, nowLogical: 0)).contains("extension due"))
+    }
     func testRoomFileStampObservesOnlyNativeRoomAndAdjacentLock() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(
             "arc-room-stamp-\(UUID().uuidString)",
@@ -718,6 +931,28 @@ final class ARCInstallationTests: XCTestCase {
         if let temporary { try? FileManager.default.removeItem(at: temporary) }
     }
 
+    func testTerseUpgradePreservesOperatorPreferenceAndRepairsMissingSpecification() throws {
+        let bundle = temporary.appendingPathComponent("ARC.app", isDirectory: true)
+        let root = temporary.appendingPathComponent("root", isDirectory: true)
+        try writeBundle(bundle, specificationText: "Terse first version\n", launcherText: "launcher")
+        try ARCOperatorPreferences.save(.german, rootURL: root)
+        let installation = ARCInstallation(bundleURL: bundle, developmentBypass: false)
+        try installation.ensureInstalled(rootURL: root)
+        let before = ARCCommunication.snapshot(rootURL: root)
+        XCTAssertEqual(before.status, "ready")
+        XCTAssertEqual(before.operatorLanguage, .german)
+        try writeBundle(bundle, specificationText: "Terse updated version\n", launcherText: "launcher")
+        try installation.ensureInstalled(rootURL: root)
+        let after = ARCCommunication.snapshot(rootURL: root)
+        XCTAssertEqual(after.status, "ready")
+        XCTAssertNotEqual(before.specificationSha256, after.specificationSha256)
+        XCTAssertEqual(after.operatorLanguage, .german)
+        try FileManager.default.removeItem(at: ARCCommunication.specificationURL(rootURL: root))
+        try installation.ensureInstalled(rootURL: root, force: true)
+        XCTAssertEqual(ARCCommunication.snapshot(rootURL: root).status, "ready")
+        XCTAssertEqual(try ARCOperatorPreferences.load(rootURL: root), .german)
+    }
+
     func testVerifiedInstallAndInterruptedUpgradePreserveRooms() throws {
         let bundle = temporary.appendingPathComponent("ARC.app", isDirectory: true)
         try writeBundle(
@@ -946,6 +1181,23 @@ final class ARCInstallationTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: addedFile), Data("not ARC\n".utf8))
     }
 
+    func testReinstallRestoresMissingOwnedPayloads() throws {
+        let bundle = temporary.appendingPathComponent("ARC.app", isDirectory: true)
+        try writeBundle(bundle, specificationText: "verified\n", launcherText: "#!/bin/sh\nexit 0\n")
+        let installer = ARCInstallation(bundleURL: bundle, developmentBypass: false)
+        for force in [false, true] {
+            let root = temporary.appendingPathComponent("repair-\(force)")
+            try installer.ensureInstalled(rootURL: root, force: false)
+            for path in ["current/ARC_AI.arc-kb", "current/bin/arc", "current/specifications/000-product.txt"] {
+                let file = root.appendingPathComponent(path)
+                let expected = try Data(contentsOf: file)
+                try FileManager.default.removeItem(at: file)
+                try installer.ensureInstalled(rootURL: root, force: force)
+                XCTAssertEqual(try Data(contentsOf: file), expected, path)
+            }
+        }
+    }
+
     func testInstallerReplacesVerifiedLegacyRuntimeAndPreservesRooms() throws {
         let bundle = temporary.appendingPathComponent("ARC.app", isDirectory: true)
         try writeBundle(
@@ -1146,7 +1398,9 @@ final class ARCInstallationTests: XCTestCase {
             "current/specifications/000-product.txt"
         )
         let launcher = install.appendingPathComponent("bin/arc")
-        for file in [knowledge, specification, launcher] {
+        let terse = install.appendingPathComponent("current/" + ARCCommunication.specificationRelativePath)
+        let terseDigest = install.appendingPathComponent("current/" + ARCCommunication.digestRelativePath)
+        for file in [knowledge, specification, launcher, terse, terseDigest] {
             try FileManager.default.createDirectory(
                 at: file.deletingLastPathComponent(),
                 withIntermediateDirectories: true
@@ -1155,7 +1409,9 @@ final class ARCInstallationTests: XCTestCase {
         try Data("sealed knowledge".utf8).write(to: knowledge)
         try Data(specificationText.utf8).write(to: specification)
         try Data(launcherText.utf8).write(to: launcher)
-        for file in [knowledge, specification] {
+        try Data(specificationText.utf8).write(to: terse)
+        try Data((digest(Data(specificationText.utf8)) + "\n").utf8).write(to: terseDigest)
+        for file in [knowledge, specification, terse, terseDigest] {
             try FileManager.default.setAttributes(
                 [.posixPermissions: 0o644],
                 ofItemAtPath: file.path
@@ -1174,6 +1430,10 @@ final class ARCInstallationTests: XCTestCase {
                 specification
             ),
             ("current/bin/arc", "Resources/install/bin/arc", launcher),
+            ("current/" + ARCCommunication.specificationRelativePath,
+                "Resources/install/current/" + ARCCommunication.specificationRelativePath, terse),
+            ("current/" + ARCCommunication.digestRelativePath,
+                "Resources/install/current/" + ARCCommunication.digestRelativePath, terseDigest),
         ]
         let rows = try descriptions.map { path, source, file in
             let data = try Data(contentsOf: file)
@@ -1366,6 +1626,45 @@ private class TestClient: ARCClientProtocol, @unchecked Sendable {
 
     private func unsupported<T>() throws -> T {
         throw ARCError(.wrongState, "Unexpected test operation.")
+    }
+}
+
+private final class CreateRetryClient: TestClient, @unchecked Sendable {
+    private let lock = NSLock()
+    private var storedOperations: [UUID] = []
+    var operations: [UUID] {
+        lock.lock(); defer { lock.unlock() }
+        return storedOperations
+    }
+    override func roomCreate(displayName: String, operationID: UUID) throws -> ARCRoomOpenResult {
+        lock.lock(); storedOperations.append(operationID); lock.unlock()
+        throw ARCError(.busy, "Retry creation.")
+    }
+}
+
+private final class HistoryReviewClient: TestClient, @unchecked Sendable {
+    private let lock = NSLock()
+    private var latest: Int64 = 100
+    func advance(to value: Int64) { lock.lock(); latest = value; lock.unlock() }
+    override func roomList(afterSafeID: String?) throws -> ARCRoomListPage {
+        ARCRoomListPage(rooms: [ARCRoomListItem(id: "room-012345abcdef", name: "History",
+            health: .current, failure: nil)], nextSafeId: nil)
+    }
+    override func roomOpen(room: String) throws -> ARCRoomOpenResult {
+        ARCRoomOpenResult(room: testRoom(id: room, name: "History", revision: 1),
+            producer: testProducer(), participants: [], work: [])
+    }
+    override func activityRead(room: String, beforeSequence: Int64?) throws -> ARCActivityPage {
+        lock.lock(); let newest = latest; lock.unlock()
+        let upper = min(newest, (beforeSequence ?? (newest + 1)) - 1)
+        let lower = max(1, upper - 49)
+        let events = (lower...upper).reversed().map { sequence in
+            ARCEventView(sequence: sequence, at: "2026-09-08T00:00:00.000000Z", logicalUs: sequence,
+                kind: "ROOM_RENAMED", actor: "administrator", recipient: nil, subject: nil,
+                payload: .object([:]), operationId: "22222222-2222-4222-8222-222222222222",
+                knowledgeSha256: String(repeating: "a", count: 64))
+        }
+        return ARCActivityPage(events: events, nextBefore: lower > 1 ? lower : nil)
     }
 }
 

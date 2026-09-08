@@ -104,8 +104,11 @@ public final class ARCStore: @unchecked Sendable {
         let timestamp = ARCTime.timestamp(logical)
         let operation = operationID.uuidString.lowercased()
 
-        for _ in 0..<16 {
-            let id = ARCText.randomID(prefix: "room-")
+        for attempt in 0..<16 {
+            // Stable candidates make a lost creation response safe to retry,
+            // without adding another store or an unlocked directory scan.
+            let suffix = ARCRoomCodec.digest("room.create\u{0}\(operation)\u{0}\(attempt)").prefix(12)
+            let id = "room-\(suffix)"
             var document = ARCRoomDocument(
                 format: ARCConstants.roomFormat,
                 room: ARCRoomRecord(
@@ -142,6 +145,19 @@ public final class ARCStore: @unchecked Sendable {
                     self.openResult($0, now: logical, knowledge: knowledge)
                 }
             } catch is ARCFileCollision {
+                let replay: ARCRoomOpenResult? = try files().read(id) { existing in
+                    guard let created = existing.activity.first,
+                          created.kind == "ROOM_CREATED",
+                          created.operationId == operation else { return nil }
+                    guard created.payload == .object(["name": .string(name)]) else {
+                        throw ARCError(.operationConflict, "That room creation retry changed its request.")
+                    }
+                    return self.openResult(
+                        existing, now: max(logical, existing.room.lastClockLogicalUs),
+                        knowledge: knowledge
+                    )
+                }
+                if let replay { return replay }
                 continue
             }
         }
@@ -282,6 +298,7 @@ public final class ARCStore: @unchecked Sendable {
             value.phase = .invited
             value.qualification = nil
             value.lastPollLogicalUs = nil
+            value.workingUntilLogicalUs = nil
             value.nextOperation = ARCText.randomUUID()
             value.lastOperation = nil
             document.participants[index] = value
@@ -350,7 +367,7 @@ public final class ARCStore: @unchecked Sendable {
         let knowledge = try knowledgeSHA256()
         let operation = operationID.uuidString.lowercased()
         let request = ARCRoomCodec.digest("participant.retire\u{0}\(id)")
-        return try files().update(room) { document in
+        return try files().update(room, reservingRecoverySpace: false) { document in
             guard let index = document.participants.firstIndex(where: { $0.id == id }) else {
                 throw ARCError(.notFound, "ARC could not find that AI participant.")
             }
@@ -361,28 +378,9 @@ public final class ARCStore: @unchecked Sendable {
                 return (ARCRevisionResult(roomRevision: document.room.revision), false)
             }
             let time = self.administrativeMutationTime(&document)
-            let logical = time.logical
-            let wasProducer = document.room.producerId == id
-            document.participants[index].phase = .retired
-            document.participants[index].binding = nil
-            document.participants[index].qualification = nil
-            document.participants[index].lastPollLogicalUs = nil
-            document.participants[index].lastOperation = nil
-            if wasProducer {
-                document.room.producerId = nil
-                document.room.producerGeneration += 1
-            }
-            try self.appendEvent(
-                to: &document, logical: logical, kind: "AI_RETIRED",
-                actor: "administrator", subject: id,
-                payload: .object([
-                    "producer_cleared": .boolean(wasProducer),
-                    "time_verified": .boolean(time.verified),
-                ]),
+            try self.applyRetirement(
+                &document, index: index, logical: time.logical, verified: time.verified,
                 operation: operation, knowledge: knowledge
-            )
-            self.finishAdminMutation(
-                &document, logical: logical, operation: operation, request: request
             )
             return (ARCRevisionResult(roomRevision: document.room.revision), true)
         }
@@ -403,7 +401,7 @@ public final class ARCStore: @unchecked Sendable {
                 return (ARCRevisionResult(roomRevision: document.room.revision), false)
             }
             let logical = try self.mutationTime(&document)
-            guard self.isOnDuty(document.participants[index], now: logical) else {
+            guard self.isAvailable(document.participants[index], now: logical) else {
                 throw ARCError(.wrongState, "Choose a qualified AI that is On Duty.")
             }
             if document.room.producerId == id {
@@ -429,11 +427,13 @@ public final class ARCStore: @unchecked Sendable {
 
     public func roomTick(room: String) throws -> ARCRoomTickResult {
         let knowledge = try knowledgeSHA256()
-        return try files().update(room) { document in
+        return try files().update(room, reservingRecoverySpace: false) { document in
+            let previousClock = document.room.lastClockLogicalUs
             let logical = try self.mutationTime(&document)
-            let changed = try self.applyDueQualificationFailures(
+            let failed = try self.applyDueQualificationFailures(
                 &document, now: logical, knowledge: knowledge
             )
+            let changed = failed || logical > previousClock
             if changed {
                 self.finishMutation(&document, logical: logical)
             }
@@ -543,7 +543,10 @@ public final class ARCStore: @unchecked Sendable {
     }
 
     public func roomDelete(room: String) throws -> ARCDeleteResult {
-        try files().delete(room)
+        try files().delete(room) { document in
+            document.participants.allSatisfy { $0.phase == .retired }
+                || self.canDeleteFullRoom(document, now: self.readTime(document))
+        }
         return ARCDeleteResult(deleted: true)
     }
 
@@ -608,7 +611,7 @@ public final class ARCStore: @unchecked Sendable {
             let high = document.room.nextSequence - 1
             let nextAfter = eventPage.count > 50 ? (events.last?.sequence ?? after) : high
             let callerIsLiveProducer = document.room.producerId == id
-                && self.isOnDuty(participant, now: logical)
+                && self.isAvailable(participant, now: logical)
             let currentWork = document.work.filter {
                 $0.state != .complete && ($0.owner == id || callerIsLiveProducer)
             }
@@ -642,7 +645,8 @@ public final class ARCStore: @unchecked Sendable {
                 more: eventPage.count > 50,
                 work: relevantWork,
                 operation: participant.nextOperation,
-                earlierActivityUnavailable: earliestRetainedSequence > after + 1
+                earlierActivityUnavailable: earliestRetainedSequence > after + 1,
+                communication: ARCCommunication.snapshot(rootURL: self.rootURL)
             ), changed)
         }
     }
@@ -692,9 +696,9 @@ extension ARCStore {
         let status: ARCRoomStatus
         if now == nil { status = .timeUnavailable }
         else {
-            let onDuty = document.participants.filter { isOnDuty($0, now: now!) }
-            if onDuty.isEmpty { status = .needsTwoAIs }
-            else if onDuty.count == 1 { status = .needsOneAI }
+            let available = document.participants.filter { isAvailable($0, now: now!) }
+            if available.isEmpty { status = .needsTwoAIs }
+            else if available.count == 1 { status = .needsOneAI }
             else if !producerView(document, now: now).live { status = .needsProducer }
             else { status = .active }
         }
@@ -720,7 +724,7 @@ extension ARCStore {
             id: id,
             name: participant.name,
             generation: document.room.producerGeneration,
-            live: now.map { isOnDuty(participant, now: $0) } ?? false
+            live: now.map { isAvailable(participant, now: $0) } ?? false
         )
     }
 
@@ -731,7 +735,8 @@ extension ARCStore {
         includeBinding: Bool = false
     ) -> ARCParticipantView {
         let duty: ARCDuty = participant.phase == .qualified
-            ? (now.map { isOnDuty(participant, now: $0) } == true ? .on : .off)
+            ? (now.map { isAvailable(participant, now: $0) } == true
+                ? (participant.workingUntilLogicalUs != nil ? .working : .on) : .off)
             : .notApplicable
         return ARCParticipantView(
             id: participant.id,
@@ -785,7 +790,8 @@ extension ARCStore {
                     $0, document: document, now: now, includeBinding: true
                 )
             },
-            work: document.work.filter { $0.state != .complete }.map(workView)
+            work: document.work.filter { $0.state != .complete }.map(workView),
+            canDeleteWithoutRetirement: canDeleteFullRoom(document, now: now)
         )
     }
 
@@ -805,10 +811,70 @@ extension ARCStore {
         )
     }
 
-    private func isOnDuty(_ participant: ARCParticipantRecord, now: Int64) -> Bool {
+    private func isAvailable(_ participant: ARCParticipantRecord, now: Int64) -> Bool {
         guard participant.phase == .qualified, let poll = participant.lastPollLogicalUs,
               now >= poll else { return false }
+        // Working preserves availability and existing authority, but expires
+        // at its explicit deadline even if the previous poll was recent.
+        if let deadline = participant.workingUntilLogicalUs { return now < deadline }
         return now - poll < 180_000_000
+    }
+
+    private func canDeleteFullRoom(_ document: ARCRoomDocument, now: Int64?) -> Bool {
+        let remaining = document.participants.indices.filter {
+            document.participants[$0].phase != .retired
+        }
+        guard !remaining.isEmpty, let now,
+              !document.participants.contains(where: { isAvailable($0, now: now) }),
+              document.room.revision < Int64.max - Int64(remaining.count),
+              document.room.nextSequence < Int64.max - Int64(remaining.count) else { return false }
+        // A live access check also deserves the opportunity to finish.
+        guard !document.participants.contains(where: {
+            $0.phase == .qualifying && ($0.qualification?.firstPollLogicalUs.map {
+                now < $0 + 120_000_000
+            } ?? false)
+        }) else { return false }
+        // Simulate the exact retirement code without writing or removing any
+        // history. Only an otherwise valid result that exceeds capacity enables
+        // the exceptional delete path. Ordinary inactive rooms still retire first.
+        var retired = document
+        let operation = "00000000-0000-4000-8000-000000000000"
+        guard let knowledge = document.activity.last?.knowledgeSha256 else { return false }
+        do {
+            for index in remaining {
+                try applyRetirement(&retired, index: index, logical: now, verified: true,
+                                    operation: operation, knowledge: knowledge)
+            }
+            _ = try ARCRoomCodec.encode(retired)
+            return false
+        } catch let error as ARCError {
+            return error.code == .limitExceeded
+        } catch { return false }
+    }
+
+    private func applyRetirement(
+        _ document: inout ARCRoomDocument, index: Int, logical: Int64,
+        verified: Bool, operation: String, knowledge: String
+    ) throws {
+        let id = document.participants[index].id
+        let wasProducer = document.room.producerId == id
+        document.participants[index].phase = .retired
+        document.participants[index].binding = nil
+        document.participants[index].qualification = nil
+        document.participants[index].lastPollLogicalUs = nil
+        document.participants[index].workingUntilLogicalUs = nil
+        document.participants[index].lastOperation = nil
+        if wasProducer {
+            document.room.producerId = nil
+            document.room.producerGeneration += 1
+        }
+        try appendEvent(to: &document, logical: logical, kind: "AI_RETIRED",
+            actor: "administrator", subject: id,
+            payload: .object(["producer_cleared": .boolean(wasProducer),
+                              "time_verified": .boolean(verified)]),
+            operation: operation, knowledge: knowledge)
+        finishAdminMutation(&document, logical: logical, operation: operation,
+            request: ARCRoomCodec.digest("participant.retire\u{0}\(id)"))
     }
 
     private func schedule(_ participant: ARCParticipantRecord, now: Int64?) -> ARCScheduleView {
@@ -817,7 +883,7 @@ extension ARCStore {
             let status: ARCScheduleStatus
             switch participant.phase {
             case .qualified:
-                kind = .duty
+                kind = participant.workingUntilLogicalUs == nil ? .duty : .working
                 status = .unavailable
             case .waitingForProducer, .qualifying:
                 kind = .qualification
@@ -856,6 +922,13 @@ extension ARCStore {
             return ARCScheduleView(
                 kind: .qualification, status: status,
                 nextRequestLogicalUs: next, deadlineLogicalUs: boundaries[2]
+            )
+        }
+        if participant.phase == .qualified, let deadline = participant.workingUntilLogicalUs {
+            return ARCScheduleView(
+                kind: .working, status: now < deadline ? .ok : .expired,
+                nextRequestLogicalUs: now < deadline ? deadline : nil,
+                deadlineLogicalUs: deadline
             )
         }
         if participant.phase == .qualified, let poll = participant.lastPollLogicalUs {
@@ -1086,10 +1159,12 @@ extension ARCStore {
                 changed = true
             }
         case .qualified:
-            let wasOnDuty = isOnDuty(document.participants[index], now: now)
+            let wasAvailable = isAvailable(document.participants[index], now: now)
+            let wasWorking = document.participants[index].workingUntilLogicalUs != nil
+            document.participants[index].workingUntilLogicalUs = nil
             document.participants[index].lastPollLogicalUs = now
             changed = true
-            if !wasOnDuty {
+            if !wasAvailable || wasWorking {
                 try appendEvent(
                     to: &document, logical: now, kind: "AI_RETURNED_ON_DUTY",
                     actor: id, subject: id, payload: .object([:]),
@@ -1242,8 +1317,21 @@ extension ARCStore {
     ) throws -> (participant: String?, work: String?) {
         let caller = document.participants[callerIndex]
         switch request {
+        case .working(let deadline):
+            try requireAvailable(caller, now: now)
+            guard ARCTime.isLogical(deadline), deadline > now,
+                  caller.workingUntilLogicalUs.map({ deadline > $0 }) ?? true else {
+                throw ARCError(.invalidArgument, "Working needs a future deadline; an extension must move it later.")
+            }
+            document.participants[callerIndex].workingUntilLogicalUs = deadline
+            try appendEvent(
+                to: &document, logical: now, kind: "AI_WORKING", actor: caller.id,
+                subject: caller.id, payload: .object(["until_logical_us": .integer(deadline)]),
+                operation: operation, knowledge: knowledge
+            )
+            return (caller.id, nil)
         case .message(let targetID, let text):
-            try requireOnDuty(caller, now: now)
+            try requireAvailable(caller, now: now)
             guard let target = document.participants.first(where: { $0.id == targetID }) else {
                 throw ARCError(.notFound, "ARC could not find the message target.")
             }
@@ -1306,7 +1394,7 @@ extension ARCStore {
             guard let owner = document.participants.first(where: { $0.id == ownerID }) else {
                 throw ARCError(.notFound, "ARC could not find the work owner.")
             }
-            try requireOnDuty(owner, now: now)
+            try requireAvailable(owner, now: now)
             guard document.work.lazy.filter({ $0.state != .complete }).count
                     < ARCConstants.maximumCurrentWorkItems else {
                 throw ARCError(
@@ -1349,7 +1437,7 @@ extension ARCStore {
             return (nil, workID)
 
         case .workUpdate(let workID, let revision, let state, let evidence):
-            try requireOnDuty(caller, now: now)
+            try requireAvailable(caller, now: now)
             guard let index = document.work.firstIndex(where: { $0.id == workID }) else {
                 throw ARCError(.notFound, "ARC could not find that work item.")
             }
@@ -1395,7 +1483,7 @@ extension ARCStore {
             guard let owner = document.participants.first(where: { $0.id == ownerID }) else {
                 throw ARCError(.notFound, "ARC could not find the new work owner.")
             }
-            try requireOnDuty(owner, now: now)
+            try requireAvailable(owner, now: now)
             document.work[index].owner = ownerID
             document.work[index].state = .open
             document.work[index].evidence = .object([:])
@@ -1437,8 +1525,8 @@ extension ARCStore {
         )
     }
 
-    private func requireOnDuty(_ participant: ARCParticipantRecord, now: Int64) throws {
-        guard isOnDuty(participant, now: now) else {
+    private func requireAvailable(_ participant: ARCParticipantRecord, now: Int64) throws {
+        guard isAvailable(participant, now: now) else {
             throw ARCError(.wrongState, "This action requires a qualified AI that is On Duty.")
         }
     }
@@ -1450,7 +1538,7 @@ extension ARCStore {
         generation: Int64
     ) throws {
         guard document.room.producerId == participant.id,
-              isOnDuty(participant, now: now) else {
+              isAvailable(participant, now: now) else {
             throw ARCError(.notProducer, "This action requires the current On Duty Producer.")
         }
         guard document.room.producerGeneration == generation else {

@@ -45,6 +45,8 @@ The current tree contains at least:
     specifications/012-arc-ai-knowledge-container.txt
   legal/LICENSE
   legal/NOTICE.md
+  languages/terse/001-terse-language-specification.txt
+  languages/terse/TERSE.sha256
 
 All shipping executables are arm64 Mach-O files. The app
 stages the command inside the verified tree and publishes that one tree
@@ -55,6 +57,20 @@ atomically to:
 It stores the exact manifest bytes as
 `current/ARC-INSTALL-MANIFEST.json` after publication. That receipt is not a
 manifest entry. Installation never enumerates or changes `rooms/`.
+
+The complete supplied Terse specification is installed verbatim as a separate
+plain-text file, not as a new Profile 1 knowledge-container member. Its sidecar
+contains its lowercase SHA-256 plus LF; both files belong to the signed manifest
+and atomic current-tree replacement. The app refuses a bundle manifest missing
+either file. AIs reread the full file when its bytes change, regardless of the
+vocabulary version. No update is fetched from a peer or the network.
+
+The app-wide preference lives at ARC-root/operator-language.txt, outside current/
+and rooms/. It is exactly en plus LF or de plus LF, owner-readable/writable, and
+atomically replaced by the app's language selector. Absence defaults to English;
+malformed or unsafe files are reported, not silently accepted. Installation and
+room deletion preserve this preference. It contains no room state, binding, or
+credential, and has no public AI mutation command.
 
 IR-004 CANONICAL INSTALL MANIFEST
 
@@ -145,13 +161,13 @@ record is made complete.
 
 IR-009 PUBLIC RELEASE ASSETS
 
-The sealed public release contains exactly these assets for VERSION `1.0.7`:
+The sealed public release contains exactly these assets for VERSION `1.1.0`:
 
-  ARC-1.0.7.dmg
-  ARC-1.0.7-source.tar.gz
+  ARC-1.1.0.dmg
+  ARC-1.1.0-source.tar.gz
   ARC_AI_Relay_Chat_Literature.pdf
-  ARC-1.0.7-MANIFEST.json
-  ARC-1.0.7-DVT-REPORT.txt
+  ARC-1.1.0-MANIFEST.json
+  ARC-1.1.0-DVT-REPORT.txt
   RELEASE-METADATA.json
   SHA256SUMS
 

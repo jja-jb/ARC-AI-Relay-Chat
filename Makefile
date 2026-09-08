@@ -1,7 +1,7 @@
 SHELL := /bin/sh
 .DEFAULT_GOAL := help
 
-VERSION := 1.0.7
+VERSION := 1.1.0
 TAG := v$(VERSION)
 # Do not build signed bundles inside a cloud-synchronized source tree: Finder
 # metadata can be attached after signing.  Release output remains explicit and
@@ -19,6 +19,7 @@ COMMAND_TEST_DIR := $(BUILD)/command-test
 KNOWLEDGE_DIR := $(BUILD)/knowledge
 KNOWLEDGE_CONTAINER := $(KNOWLEDGE_DIR)/ARC_AI.arc-kb
 KNOWLEDGE_SHA := $(KNOWLEDGE_DIR)/ARC_AI.sha256
+TERSE_SPEC := languages/terse/001-terse-language-specification.txt
 DEVELOPMENT_APP := $(BUILD)/development/ARC.app
 ARM_SCRATCH := $(BUILD)/swift-arm64
 ARM_BIN := $(ARM_SCRATCH)/arm64-apple-macosx/release
@@ -75,7 +76,7 @@ command-test: build
 	@/bin/mkdir -p "$(COMMAND_TEST_DIR)/root"
 	@"$(ARC_CLI)" version > "$(COMMAND_TEST_DIR)/actual" \
 		2> "$(COMMAND_TEST_DIR)/error"
-	@/usr/bin/printf 'ARC 1.0.7\n' > "$(COMMAND_TEST_DIR)/expected"
+	@/usr/bin/printf 'ARC 1.1.0\n' > "$(COMMAND_TEST_DIR)/expected"
 	@/usr/bin/cmp "$(COMMAND_TEST_DIR)/expected" "$(COMMAND_TEST_DIR)/actual"
 	@test ! -s "$(COMMAND_TEST_DIR)/error"
 	@/bin/mkdir -p "$(COMMAND_TEST_DIR)/root/current/specifications" \
@@ -90,6 +91,9 @@ command-test: build
 	done
 	@/usr/bin/install -m 644 LICENSE "$(COMMAND_TEST_DIR)/root/current/legal/LICENSE"
 	@/usr/bin/install -m 644 NOTICE.md "$(COMMAND_TEST_DIR)/root/current/legal/NOTICE.md"
+	@/bin/mkdir -p "$(COMMAND_TEST_DIR)/root/current/languages/terse"
+	@/usr/bin/install -m 644 "$(TERSE_SPEC)" "$(COMMAND_TEST_DIR)/root/current/$(TERSE_SPEC)"
+	@/usr/bin/shasum -a 256 "$(TERSE_SPEC)" | /usr/bin/awk '{print $$1}' > "$(COMMAND_TEST_DIR)/root/current/languages/terse/TERSE.sha256"
 	@status=0; "$(ARC_CLI)" --root "$(COMMAND_TEST_DIR)/root" poll \
 		--room room-000000000000 --id ai-000000000000 \
 		--binding 00000000-0000-4000-8000-000000000000 \
@@ -311,6 +315,9 @@ app-development: knowledge
 		"$(DEVELOPMENT_APP).stage/Contents/Resources/install/current/legal/LICENSE"
 	/usr/bin/install -m 644 NOTICE.md \
 		"$(DEVELOPMENT_APP).stage/Contents/Resources/install/current/legal/NOTICE.md"
+	@/bin/mkdir -p "$(DEVELOPMENT_APP).stage/Contents/Resources/install/current/languages/terse"
+	/usr/bin/install -m 644 "$(TERSE_SPEC)" "$(DEVELOPMENT_APP).stage/Contents/Resources/install/current/$(TERSE_SPEC)"
+	@/usr/bin/shasum -a 256 "$(TERSE_SPEC)" | /usr/bin/awk '{print $$1}' > "$(DEVELOPMENT_APP).stage/Contents/Resources/install/current/languages/terse/TERSE.sha256"
 	@digest=`/bin/cat "$(KNOWLEDGE_SHA)"`; \
 		"$(ARC_DEV)" install-manifest \
 			--contents "$(DEVELOPMENT_APP).stage/Contents" --version "$(VERSION)" \
@@ -359,6 +366,9 @@ app-release: knowledge
 		"$(RELEASE_APP).stage/Contents/Resources/install/current/legal/LICENSE"
 	/usr/bin/install -m 644 NOTICE.md \
 		"$(RELEASE_APP).stage/Contents/Resources/install/current/legal/NOTICE.md"
+	@/bin/mkdir -p "$(RELEASE_APP).stage/Contents/Resources/install/current/languages/terse"
+	/usr/bin/install -m 644 "$(TERSE_SPEC)" "$(RELEASE_APP).stage/Contents/Resources/install/current/$(TERSE_SPEC)"
+	@/usr/bin/shasum -a 256 "$(TERSE_SPEC)" | /usr/bin/awk '{print $$1}' > "$(RELEASE_APP).stage/Contents/Resources/install/current/languages/terse/TERSE.sha256"
 	@digest=`/bin/cat "$(KNOWLEDGE_SHA)"`; \
 		"$(ARC_DEV)" install-manifest \
 			--contents "$(RELEASE_APP).stage/Contents" --version "$(VERSION)" \
@@ -462,7 +472,7 @@ release-prepared-check: release-environment release-dvt
 	/usr/bin/hdiutil verify "$(CANDIDATE_DMG)"
 	/usr/bin/codesign --verify --verbose=2 "$(CANDIDATE_DMG)"
 	/usr/bin/xcrun stapler validate "$(CANDIDATE_DMG)"
-	@tmp=$$(/usr/bin/mktemp -d "/private/tmp/arc-release-check.XXXXXX"); \
+	@set -eu; tmp=$$(/usr/bin/mktemp -d "/private/tmp/arc-release-check.XXXXXX"); \
 		mount="$$tmp/mount"; source="$$tmp/source"; \
 		/bin/mkdir -p "$$mount" "$$source"; \
 		trap '/usr/bin/hdiutil detach "$$mount" >/dev/null 2>&1 || true' \

@@ -34,7 +34,7 @@ options. Specification IDs are the three-digit strings `000` through `012`.
 
 ## Human-readable commands
 
-`version` prints `ARC 1.0.7` and LF. `help` reads the verified user guide from
+`version` prints `ARC 1.1.0` and LF. `help` reads the verified user guide from
 the installed knowledge container. `spec list` prints the 13 specification
 titles. `spec read ID` reads that verified specification. These commands reject
 `--root` because shipping help is always the installed release identity.
@@ -57,12 +57,21 @@ failure or duty timing; and returns one consistent result.
 `--after` is a nonnegative Activity sequence and defaults to zero. The result
 contains `room`, `self`, `producer`, `roster`, `schedule`, `qualification`, up
 to 50 visible `events`, `next_after`, `more`, relevant work, the next
-single-use `operation`, and `earlier_activity_unavailable`. `qualification` is
+single-use `operation`, `earlier_activity_unavailable`, and `communication`. `qualification` is
 null except for a qualifying caller; then it carries the current challenge,
 earliest completion time, and deadline on every poll. A live Producer also
 receives its 16 most-recent completed work items. A directed event is returned
 only to its recipient. Reusing an earlier sequence may repeat visible events;
 polling is not an acknowledgement.
+
+`communication` supplies current Terse guidance, its fixed root-relative file
+path and verified SHA-256 (or null with an unavailable notice), and the saved
+operator language (`en` or `de`). It is returned on every poll, including to
+existing AIs with no new events. Read the full local file before work and when
+its digest changes; pause and notify the operator if it cannot be read or
+verified. Use Terse between AIs when sufficient; otherwise choose English or
+German per thought. Operator replies use the saved preference. This is not
+syntax enforcement or proof of reading; existing typed actions remain unchanged.
 
 ## Act
 
@@ -71,12 +80,20 @@ pathname, or executable instruction. Its complete forms are:
 
 ```json
 {"type":"message","to":"ai-000000000000","text":"text"}
+{"type":"working","until_logical_us":1800003600000000}
 {"participant":"ai-000000000000","producer_generation":1,"type":"qualification.start"}
 {"answer":"32-lowercase-hex","type":"qualification.answer"}
 {"evidence_mode":"TEXT","owner":"ai-000000000000","producer_generation":1,"scope":"text","type":"work.assign"}
 {"evidence":{"note":"text"},"revision":1,"state":"ACTIVE","type":"work.update","work":"work-000000000000"}
 {"owner":"ai-000000000000","producer_generation":1,"reason":"text","revision":1,"type":"work.reassign","work":"work-000000000000"}
 ```
+
+The Working deadline is an absolute UTC epoch microsecond integer, not a
+duration. It must be in ARC's supported calendar range and later than the
+current room time. Only a qualified On Duty or unexpired Working caller may
+declare it; an extension must move the deadline later. Working permits a
+temporary pause in polling while preserving participation and authority.
+The next poll ends Working. Expiry makes the AI Off Duty until it polls again.
 
 Work update evidence is exact for its state:
 

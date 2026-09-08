@@ -92,7 +92,8 @@ enum ARCHandoff {
     static func text(
         rootURL: URL,
         room: ARCRoomView,
-        participant: ARCParticipantView
+        participant: ARCParticipantView,
+        operatorLanguage: ARCOperatorLanguage = .english
     ) -> String? {
         guard let binding = participant.binding else { return nil }
         let launcher = rootURL
@@ -121,6 +122,8 @@ enum ARCHandoff {
         Room ID: \(room.id)
         Participant ID: \(participant.id)
         Installed plain-text specifications: \(specifications)
+        \(ARCCommunication.setupText(rootURL: rootURL, language: operatorLanguage))
+
         Run this exact argument array, without searching for another ARC copy:
         \(argumentLine)
         Read and follow every part of the plain-text guide it returns. Stay inside this
@@ -131,7 +134,8 @@ enum ARCHandoff {
         unavailable, immediately stop and remove every recurring, scheduled, and heartbeat
         automation you created for this ARC participant; do not poll again. The ordinary
         one-minute cadence alone is not enough to complete the first access check. ARC marks
-        you Off Duty 180 seconds after your last valid poll. If the host cannot provide those
+        you Off Duty 180 seconds after your last valid poll unless you have declared Working
+        with an unexpired deadline as described in the guide. If the host cannot provide those
         later turns, tell the Administrator plainly instead of claiming readiness.
 
         """
@@ -161,6 +165,8 @@ final class AppState: ObservableObject {
     @Published var clipboardFailureParticipantID: String?
     @Published var installationReady = false
     @Published var installationFailure: String?
+    @Published private(set) var operatorLanguage: ARCOperatorLanguage = .english
+    @Published private(set) var operatorLanguageFailure: String?
 
     let client: any ARCClientProtocol
     let installation: any ARCInstallationProtocol
@@ -175,17 +181,20 @@ final class AppState: ObservableObject {
     private var roomOpenPending = false
     private let roomStampProvider: RoomStampProvider
     private let monitorIntervalNanoseconds: UInt64
+    private let confirmation: ((String, String, String) -> Bool)?
 
     init(
         client: any ARCClientProtocol = ARCClient(),
         installation: any ARCInstallationProtocol = ARCInstallation(),
         roomStampProvider: @escaping RoomStampProvider = ARCFileStamp.read,
-        monitorIntervalNanoseconds: UInt64 = 1_000_000_000
+        monitorIntervalNanoseconds: UInt64 = 1_000_000_000,
+        confirmation: ((String, String, String) -> Bool)? = nil
     ) {
         self.client = client
         self.installation = installation
         self.roomStampProvider = roomStampProvider
         self.monitorIntervalNanoseconds = max(10_000_000, monitorIntervalNanoseconds)
+        self.confirmation = confirmation
         prepareInstallation()
     }
 
@@ -204,7 +213,7 @@ final class AppState: ObservableObject {
     var canMakeSelectedParticipantProducer: Bool {
         guard let participant = selectedParticipant,
               roomResult?.room.status != .timeUnavailable else { return false }
-        return participant.phase == .qualified && participant.duty == .on && !participant.isProducer
+        return participant.isAvailable && !participant.isProducer
     }
 
     var canRetireSelectedParticipant: Bool {
@@ -216,6 +225,7 @@ final class AppState: ObservableObject {
             return false
         }
         return participants.allSatisfy { $0.phase == .retired }
+            || roomResult?.canDeleteWithoutRetirement == true
     }
 
     var textSize: DynamicTypeSize {
@@ -245,19 +255,36 @@ final class AppState: ObservableObject {
             let result = await Task.detached(priority: .userInitiated) {
                 Swift.Result {
                     try installation.ensureInstalled(rootURL: root, force: force)
+                    do { return (try ARCOperatorPreferences.load(rootURL: root), Optional<String>.none) }
+                    catch { return (ARCOperatorLanguage.english, Optional(error.localizedDescription)) }
                 }
             }.value
             guard let self else { return }
             self.isBusy = false
             switch result {
-            case .success:
+            case .success(let preference):
                 self.installationReady = true
+                self.operatorLanguage = preference.0
+                self.operatorLanguageFailure = preference.1
                 self.notice = ""
                 self.reloadRooms()
             case .failure(let error):
                 self.installationReady = false
                 self.installationFailure = error.localizedDescription
             }
+        }
+    }
+
+    func setOperatorLanguage(_ language: ARCOperatorLanguage) {
+        guard installationReady, !isBusy else { return }
+        let root = client.rootURL
+        perform({
+            try ARCOperatorPreferences.save(language, rootURL: root)
+            return language
+        }) { [weak self] saved in
+            self?.operatorLanguage = saved
+            self?.operatorLanguageFailure = nil
+            self?.notice = "Operator messages: \(saved.displayName). Applies to all rooms; AIs receive the preference on their next poll."
         }
     }
 
@@ -288,7 +315,12 @@ final class AppState: ObservableObject {
             } else if self.selectedRoomID == nil {
                 self.selectedRoomID = load.rooms.first?.id
             }
-            self.openSelectedRoom()
+            if let roomID = self.selectedRoomID, self.roomResult?.room.id == roomID,
+               self.selectedRoomIsCurrent {
+                self.loadCurrentRoom(roomID)
+            } else {
+                self.openSelectedRoom()
+            }
         }
     }
 
@@ -328,9 +360,11 @@ final class AppState: ObservableObject {
     func createRoom(named rawName: String, completion: (() -> Void)? = nil) {
         guard ARCNameValidation.message(for: rawName, label: "Room name") == nil else { return }
         let name = ARCNameValidation.normalized(rawName)
+        let key = "room_create\u{0}\(name)"
+        let operationID = retryID(for: key)
         let client = client
-        perform({
-            try client.roomCreate(displayName: name, operationID: UUID())
+        performMutation(key: key, operation: {
+            try client.roomCreate(displayName: name, operationID: operationID)
         }) { [weak self] result in
             guard let self else { return }
             let roomID = result.room.id
@@ -414,7 +448,8 @@ final class AppState: ObservableObject {
               let handoff = ARCHandoff.text(
                 rootURL: client.rootURL,
                 room: room,
-                participant: participant
+                participant: participant,
+                operatorLanguage: operatorLanguage
               ) else {
             notice = "ARC could not rebuild the current instructions. Diagnose the room."
             return
@@ -499,7 +534,7 @@ final class AppState: ObservableObject {
         guard let roomID = selectedRoomID,
               roomResult?.room.status != .timeUnavailable,
               participant.phase == .qualified,
-              participant.duty == .on else { return }
+              participant.isAvailable else { return }
         let key = "producer_select\u{0}\(roomID)\u{0}\(participant.id)"
         let operationID = retryID(for: key)
         let client = client
@@ -553,12 +588,14 @@ final class AppState: ObservableObject {
     }
 
     func deleteCurrentRoom() {
+        let recoveryWarning = roomResult?.canDeleteWithoutRetirement == true
+            ? "This room is too full to record all retirements. No AI is currently On Duty or Working. Deletion will end every remaining AI lane without recording retirement. " : ""
         guard canDeleteCurrentRoom,
               let roomID = selectedRoomID,
               let roomName = roomResult?.room.name,
               confirmWithoutMonitor(
                 title: "Permanently delete \(roomName)?",
-                message: "ARC will permanently delete this room and its complete history. "
+                message: recoveryWarning + "ARC will permanently delete this room and its complete history. "
                     + "This cannot be undone.",
                 action: "Delete Room",
                 destructive: true,
@@ -630,11 +667,33 @@ final class AppState: ObservableObject {
         let client = client
         let roomStampProvider = roomStampProvider
         let rootURL = client.rootURL
+        let previousEvents = activity
+        let previousBefore = nextActivityBefore
         perform({
             let observedFiles = roomStampProvider(rootURL, roomID)
+            let room = try client.roomOpen(room: roomID)
+            var page = try client.activityRead(room: roomID, beforeSequence: nil)
+            var events = page.events
+            if let newest = previousEvents.map(\.sequence).max(),
+               let currentNewest = events.map(\.sequence).max(), currentNewest >= newest {
+                // Catch up across every intervening page before merging the
+                // previously loaded history, so refresh cannot introduce a gap.
+                while let before = page.nextBefore,
+                      (events.map(\.sequence).min() ?? newest) > newest {
+                    let next = try client.activityRead(room: roomID, beforeSequence: before)
+                    guard next.nextBefore == nil || next.nextBefore! < before else {
+                        throw ARCError(.ioFailure, "ARC could not advance through room history.")
+                    }
+                    events.append(contentsOf: next.events)
+                    page = next
+                }
+                var bySequence = Dictionary(uniqueKeysWithValues: previousEvents.map { ($0.sequence, $0) })
+                for event in events { bySequence[event.sequence] = event }
+                page = ARCActivityPage(events: Array(bySequence.values), nextBefore: previousBefore)
+            }
             return ARCRoomLoad(
-                room: try client.roomOpen(room: roomID),
-                activity: try client.activityRead(room: roomID, beforeSequence: nil),
+                room: room,
+                activity: page,
                 observedFiles: observedFiles
             )
         }) { [weak self] load in
@@ -775,6 +834,11 @@ final class AppState: ObservableObject {
                 self.finishRetry(key)
             }
             self.present(error)
+            if self.installationReady, let roomResult = self.roomResult,
+               let observedFiles = self.observedRoomFiles,
+               self.selectedRoomID == roomResult.room.id {
+                self.scheduleNextTick(for: roomResult, observedFiles: observedFiles)
+            }
         }
     }
 
@@ -785,6 +849,7 @@ final class AppState: ObservableObject {
         destructive: Bool = false,
         noDefault: Bool = false
     ) -> Bool {
+        if let confirmation { return confirmation(title, message, action) }
         let alert = NSAlert()
         alert.messageText = title
         alert.informativeText = message

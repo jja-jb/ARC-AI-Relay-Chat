@@ -40,6 +40,10 @@ ARC removes the oldest COMPLETE work record before creating work when the total
 is already 256. It never removes Activity. A next revision that does not fit
 returns LIMIT_EXCEEDED and leaves the prior complete room unchanged.
 
+The ordinary-write limit reserves 1,024 bytes plus 4,096 per non-retired
+participant inside the 8 MiB maximum, as defined in DS-002. Recovery retirement
+and tick updates may consume that reserve without discarding Activity.
+
 REC-003 ROOM
 
 Room has exactly:
@@ -88,6 +92,7 @@ Participant has exactly:
   binding_generation     positive integer
   qualification          Qualification, optional
   last_poll_logical_us   LogicalTime, optional
+  working_until_logical_us LogicalTime, optional
   next_operation         OperationID
   last_operation         LastOperation, optional
 
@@ -99,6 +104,12 @@ ParticipantPhase is exactly one of:
   QUALIFIED
   FAILED
   RETIRED
+
+working_until_logical_us is permitted only for QUALIFIED participants, must be
+a supported LogicalTime strictly later than last_poll_logical_us, and is omitted
+when absent. It can remain stored after expiry; duty is derived at read time.
+Poll, replacement, and retirement clear it. Existing records without the field
+keep their meaning. Older executables cannot read new Working records/events.
 
 Participant IDs and case-insensitive names are unique within the room. Present
 bindings are unique. A non-retired Participant has one binding; a RETIRED
@@ -293,6 +304,9 @@ ARC v1.0 creates only these Event kinds and payloads:
     actor/subject AIID; payload {became_producer}
   AI_RETURNED_ON_DUTY
     actor/subject AIID; payload {}
+  AI_WORKING
+    actor/subject AIID; no recipient; payload {until_logical_us};
+    deadline is a supported LogicalTime strictly later than event.logical_us
   MESSAGE
     actor sender AIID; recipient target AIID; payload {text}
   WORK_ASSIGNED
@@ -323,6 +337,10 @@ grapheme clusters and 512 UTF-8 bytes. Other persisted Text is NFC. Fields that
 permit line breaks accept LF and tab but no other control character; identifiers,
 names, and keys permit none. JSON object keys are nonempty canonical text at
 most 256 UTF-8 bytes.
+MESSAGE payload text preserves surrounding whitespace, blank lines, and final LF
+after NFC normalization; whitespace-only text is invalid and all bytes count
+toward 16,384. This is transport preservation, not Terse syntax validation.
+Existing stored history is not normalized again or translated during upgrade.
 
 Participant check-in time does not exceed the room's last logical time. A
 Qualification start does not exceed it; a first qualifying poll is at or after
@@ -363,7 +381,9 @@ qualification retry, Producer selection, or tick computes:
 and returns CLOCK_UNAVAILABLE without change if no finite, nonnegative,
 representable wall sample exists. Routine QUALIFIED poll updates
 `last_poll_logical_us` and revision but adds no Event unless the AI was Off Duty,
-in which case it also adds AI_RETURNED_ON_DUTY.
+in which case it also adds AI_RETURNED_ON_DUTY. A poll ending Working also
+adds AI_RETURNED_ON_DUTY. A tick commits an advancing clock and revision even
+if no qualification event is due, preserving expiry across clock rollback.
 
 Rename, invite, instruction replacement, and retirement remain available to
 the Administrator when sampling fails. They use `last_clock_logical_us`, set

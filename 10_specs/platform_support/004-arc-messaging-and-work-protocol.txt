@@ -1,5 +1,10 @@
 ARC v1.0 EVENT, MESSAGE, AND WORK CONTRACT
 
+An unexpired Working declaration under QD-006 also satisfies the On Duty
+availability requirements in this contract. Its owner is busy, not absent;
+work is not labeled Waiting for Producer to reassign merely because polling
+is paused. Working does not prevent the Producer from reassigning work.
+
 MW-001 ONE TRUSTED ENVELOPE
 
 Every participant request carries the exact room, participant, and binding
@@ -39,8 +44,14 @@ not append a second event.
 MW-003 MESSAGES ARE INERT NOTICES
 
 A participant may send a bounded UTF-8 message to one QUALIFIED participant,
-whether On Duty or Off Duty. The event records sender, target, text, time, and
+whether On Duty, Working, or Off Duty. The event records sender, target, text, time, and
 sequence. A poll surfaces new targeted messages in stream order.
+
+Message text remains NFC, bounded to 16,384 UTF-8 bytes, nonblank, and free of
+disallowed control characters. Leading/trailing whitespace and final LF are
+preserved so ARC does not damage Terse's line form. Terse-first communication
+and English/German fallback are AI instructions, not message admission rules;
+ARC neither validates Terse grammar nor translates message text.
 
 A message is a notice. It creates no acknowledgement, reply, deadline, or work
 obligation. ARC never treats reading, surfacing, or polling as agreement or

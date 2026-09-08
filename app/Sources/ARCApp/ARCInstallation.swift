@@ -1,4 +1,5 @@
 import CryptoKit
+import ARCCore
 import Darwin
 import Foundation
 
@@ -130,6 +131,11 @@ struct ARCInstallation: ARCInstallationProtocol, Sendable {
         let manifestData = try boundedData(at: manifestURL, maximum: 16 * 1_024 * 1_024)
         let manifest = try decodeCanonicalManifest(manifestData)
         try validate(manifest, appVersionMustMatch: true)
+        let requiredTerse = Set([ARCCommunication.specificationRelativePath, ARCCommunication.digestRelativePath]
+            .map { "current/" + $0 })
+        guard requiredTerse.isSubset(of: Set(manifest.entries.map(\.path))) else {
+            throw ARCInstallationError.bundleIncomplete
+        }
 
         if !force, try installedFilesMatch(
             root: root,
@@ -438,7 +444,9 @@ struct ARCInstallation: ARCInstallationProtocol, Sendable {
             let expectedCurrent = Set(
                 prior.entries.map(\.path)
             ).union([Self.receiptPath])
-            return actualCurrent == expectedCurrent
+            // A missing owned payload needs repair, not a loss of ownership.
+            // Unknown leaves still prevent replacement of this directory.
+            return actualCurrent.isSubset(of: expectedCurrent)
         } catch {
             return false
         }

@@ -19,6 +19,8 @@ ARC.app/Contents/Resources/install/
     ARC_AI.arc-kb
     ARC_AI.sha256
     specifications/*.txt
+    languages/terse/001-terse-language-specification.txt
+    languages/terse/TERSE.sha256
     legal/LICENSE
     legal/NOTICE.md
 ```
@@ -37,12 +39,20 @@ is arm64-only.
     ARC_AI.arc-kb
     ARC_AI.sha256
     specifications/
+    languages/terse/
     legal/
   rooms/
+  operator-language.txt
 ```
 
 The exact manifest bytes become the receipt under `current/`. Installation
 never enumerates or changes `rooms/`.
+It also preserves the app-wide operator-language preference outside `current/`:
+the file contains exactly `en` plus LF or `de` plus LF, defaults to English when
+absent, and is atomically saved with owner-only permissions. The installed
+Terse specification is the complete supplied text, with its SHA-256 sidecar;
+both are covered by the same manifest and atomic replacement as the launcher.
+No peer or network download updates the language file.
 
 ## Transaction
 
@@ -68,7 +78,7 @@ the old root launcher only after proving it belongs to that legacy receipt.
 /usr/bin/codesign --verify --deep --strict --verbose=2 /Applications/ARC.app
 /usr/sbin/spctl --assess --type execute --verbose=2 /Applications/ARC.app
 /usr/bin/xcrun stapler validate /Applications/ARC.app
-/usr/bin/xcrun stapler validate ARC-1.0.7.dmg
+/usr/bin/xcrun stapler validate ARC-1.1.0.dmg
 /usr/bin/lipo -archs /Applications/ARC.app/Contents/MacOS/ARC
 ```
 

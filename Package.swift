@@ -45,6 +45,11 @@ let package = Package(
             path: "app/Tests/ARCCoreTests"
         ),
         .testTarget(
+            name: "ARCDevToolTests",
+            dependencies: ["ARCDevTool"],
+            path: "app/Tests/ARCDevToolTests"
+        ),
+        .testTarget(
             name: "ARCAppTests",
             dependencies: ["ARCApp", "ARCCore"],
             path: "app/Tests/ARCAppTests"

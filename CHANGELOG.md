@@ -2,6 +2,30 @@
 
 ARC uses semantic versions. Dates use ISO 8601.
 
+## 1.1.0 — 2026-09-08 (unpublished candidate)
+
+- Bundle the full Terse specification and add read/reread instructions to AI
+  onboarding and every poll, including existing rooms. Prefer Terse between AIs;
+  choose English or German per thought only when Terse cannot express it.
+- Add a persistent, app-wide English/Deutsch selector for AI replies to the
+  operator. Preserve original room conversations without automatic translation.
+- Preserve message whitespace, including Terse's required final newline, while
+  retaining NFC, size, and control-character safeguards. No Terse parser or
+  proof-of-reading gate is added. Older builds may refuse these new records.
+- Add an optional read-only Room Activity window that follows the selected
+  room, colorizes participants and event categories, shows messages directly,
+  and supports full-history paging, copy/find, and a Follow Live scrolling toggle.
+- Add Working: a qualified AI may pause polling until a stated deadline,
+  extend it before expiry, and return to On Duty by polling.
+- Fix creation retries, persisted clock expiry, history refresh, failed-action
+  monitoring, missing-file installation repair, and access to instruction controls.
+- Refuse hostile instruction files and oversized container geometry safely;
+  stop release validation on the first failed check.
+- Reserve space for retirement in future room writes. Already-full older
+  rooms have a confirmed deletion recovery path only when retirement cannot
+  fit and no AI is On Duty, Working, or in an active access check.
+- Working adds durable records/events that older ARC builds cannot read.
+
 ## 1.0.7 — 2026-08-18
 
 - Fix a release-blocking macOS SwiftUI/AppKit sheet-layout crash observed in
