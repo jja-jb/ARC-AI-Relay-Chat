@@ -9,7 +9,7 @@ download/install and another test before announcing availability.
 The signed/notarized DMG, source archive, literature PDF and candidate manifest
 remain frozen at annotated tag `v2.5.0`, commit
 `32ea066d25382944565de9c40098542bed63bbff`. ARC is 2.5.0 (250), Terse is
-2.1 / wire 3. This documentation-only follow-up does not rebuild the app, move
+2.1 / wire 3. Post-freeze documentation and test-harness follow-ups do not rebuild the app, move
 the tag, or change those four assets. The uploaded source archive corresponds
 to that exact candidate commit, not subsequent documentation on main.
 
@@ -17,6 +17,14 @@ The frozen archive contains older download links referring to the proposed
 `jja-jb/ARC` repository, which does not exist. Current main and the prerelease
 page correct the destination to `jja-jb/ARC-AI-Relay-Chat`. Use the direct
 [candidate page](https://github.com/jja-jb/ARC-AI-Relay-Chat/releases/tag/v2.5.0).
+
+The first GitHub check also exposed a test-only compiler compatibility issue:
+Swift 6.1.2 on macOS 15.7.9 could not type-check a large participant-fixture
+expression in ARCClientTests. Main splits that expression into explicit steps
+without changing coverage or any shipping code. The frozen archive retains the
+original expression; use the separately supplied test-compatibility patch with
+that archive, or current main, when checking with the older compiler. Do not
+represent current-main test results as an unmodified-archive pass on Swift 6.1.
 
 DMG SHA-256:
 `c8533e81fc035a66db6024a4a7845301be39b170cf16b2940d39e4ce494241b7`.

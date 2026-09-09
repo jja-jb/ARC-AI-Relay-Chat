@@ -21,15 +21,22 @@ final class ARCClientTests: XCTestCase {
         state.selectedRoomID = roomID
         func result(_ revision: Int) -> ARCRoomOpenResult {
             let phase: ARCParticipantPhase = [.qualifying, .failed, .qualifying, .qualified][revision % 4]
-            let peers = (0..<(revision == 40 ? ARCConstants.maximumParticipants : 3)).map { index in
-                ARCParticipantView(id: "ai-" + String(format: "%012d", index),
-                    name: index < 3 ? ["Claude", "Grok", "Codex Astra"][index] : "Capacity participant \(index)",
+            // Keep inference bounded for the Swift 6.1 compiler on macOS 15 CI.
+            let participantCount = revision == 40 ? ARCConstants.maximumParticipants : 3
+            let names = ["Claude", "Grok", "Codex Astra"]
+            var peers: [ARCParticipantView] = []
+            for index in 0..<participantCount {
+                let name = index < names.count ? names[index] : "Capacity participant \(index)"
+                let schedule = ARCScheduleView(kind: index == 1 ? .qualification : .duty,
+                    status: .waiting, nextRequestLogicalUs: 60_000_000, deadlineLogicalUs: 180_000_000)
+                let peer = ARCParticipantView(id: "ai-" + String(format: "%012d", index),
+                    name: name,
                     phase: index == 1 ? phase : .qualified,
                     duty: index == 1 && phase != .qualified ? .notApplicable : .on,
                     isProducer: index == 0, binding: nil, bindingGeneration: 1,
-                    schedule: ARCScheduleView(kind: index == 1 ? .qualification : .duty,
-                        status: .waiting, nextRequestLogicalUs: 60_000_000, deadlineLogicalUs: 180_000_000),
+                    schedule: schedule,
                     lastCheckIn: "2026-09-09T12:52:50Z", automaticRecoveryAttempts: index == 1 ? 1 : 0)
+                peers.append(peer)
             }
             return ARCRoomOpenResult(room: testRoom(id: roomID, name: "Recovery layout", revision: Int64(revision)),
                 producer: ARCProducerView(id: peers[0].id, name: peers[0].name, generation: 1, live: true),
