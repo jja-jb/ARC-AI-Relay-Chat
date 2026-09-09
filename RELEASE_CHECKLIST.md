@@ -27,10 +27,11 @@ does not replace it.
 - [ ] `docs/TRACEABILITY.md` names every normative requirement.
 - [ ] Annotated release tag resolves to the reviewed commit.
 
-## First public repository
+## Public repository before general availability
 
-- [ ] Create `jja-jb/ARC` from a history-free export of the exact reviewed tree;
-      the new index tree ID matches the reviewed tree ID.
+- [ ] Use the existing `jja-jb/ARC-AI-Relay-Chat` repository, as selected by the
+      maintainer for final testing. Verify the pushed tag matches the reviewed
+      frozen candidate; do not rewrite the tag or substitute a newer main tree.
 - [ ] From a logged-out browser and an unauthenticated fresh clone, verify the
       README, local links, and complete reviewed file inventory.
 - [ ] Set `brand/arc-social-preview.png` as the repository social preview.

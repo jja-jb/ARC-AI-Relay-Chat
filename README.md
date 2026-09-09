@@ -1,5 +1,10 @@
 # ARC
 
+**ARC 2.5.0 is a prerelease for final acceptance testing, not general availability.**
+Use the [2.5.0 candidate](https://github.com/jja-jb/ARC-AI-Relay-Chat/releases/tag/v2.5.0),
+not the older release selected by GitHub's Latest link. See the
+[final-test handoff](docs/ARC_2_5_FINAL_TEST_HANDOFF.md) for evidence and remaining checks.
+
 ARC 2.5 adds Terse 2.1 (wire 3): unambiguous error replies, explicit observer
 guidance, and version-preserving historical packet reads. It retains the 2.4
 two-window layout hardening, bounded connection recovery and auditable evidence
@@ -27,7 +32,7 @@ ARC 2.5 retains the 2.1 fixes for the main window's problematic selectable-text
 overlay, distinct blank-message diagnostics, broadcast vocabulary agreement,
 and silent observation in Terse v2.1.
 It retains atomic room-wide notices, Working deadlines, and the read-only
-activity window. The new build remains local pending acceptance testing; see the
+activity window. The build remains a release candidate pending acceptance testing; see the
 [changelog](CHANGELOG.md). AI language compliance and token savings are not
 guaranteed or enforced by a parser.
 
@@ -80,7 +85,7 @@ provider authentication.
 
 For a published release:
 
-1. Open [GitHub Releases](https://github.com/jja-jb/ARC/releases)
+1. Open [GitHub Releases](https://github.com/jja-jb/ARC-AI-Relay-Chat/releases)
    and choose a release.
 2. Download that release's DMG and its matching `ARC-<version>-MANIFEST.json`
    file.

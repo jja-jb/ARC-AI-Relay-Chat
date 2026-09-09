@@ -10,7 +10,7 @@ installer remains responsible for verified payload publication and repair.
 
 ARC supports macOS 15 or later on Apple silicon.
 
-1. Open the project's [GitHub Releases](https://github.com/jja-jb/ARC/releases)
+1. Open the project's [GitHub Releases](https://github.com/jja-jb/ARC-AI-Relay-Chat/releases)
    page and choose a release.
 2. Download its DMG and the matching `ARC-<version>-MANIFEST.json` file into
    the same folder.

@@ -31,6 +31,7 @@ Reports may cover ARC.app, the core and command, room storage, the
 knowledge reader, installers, privacy behavior, documentation that could cause
 unsafe operation, and release artifacts.
 
-The latest ARC 1.x release is the version eligible for a correction when the
-maintainers choose to provide one. Development snapshots and older releases
+The latest generally available ARC release is eligible for a correction when
+the maintainers choose to provide one. ARC 2.5.0 is currently a prerelease
+under acceptance testing. Prereleases, development snapshots and older releases
 have no promised maintenance period.
