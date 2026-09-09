@@ -1,4 +1,4 @@
-# ARC 1.0 security model
+# ARC 2.1 security model
 
 ## ARC protects against
 
@@ -50,6 +50,10 @@ Cross-room observation and automatic lane bridges do not exist.
 The ARC-owned C reader validates one immutable bounded container and exposes
 only fixed typed text members through copied bytes. It has no path, generic
 lookup, code loading, plug-in, or network interface.
+The governing Terse specification is a separate bounded, verified UTF-8 file
+in the signed payload. Neither its vocabulary nor its syntax is a security
+boundary. ARC does not enforce AI compliance or interpret a Terse directive
+as permission to execute a typed operation.
 
 ## Reporting
 

@@ -368,7 +368,7 @@ enum ARCRoomCodec {
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         let document: ARCRoomDocument
         do { document = try decoder.decode(ARCRoomDocument.self, from: data) }
-        catch { throw ARCError(.roomCorrupt, "The room file does not match ARC 1.0.") }
+        catch { throw ARCError(.roomCorrupt, "The room file does not match ARC's supported room format.") }
         guard document.room.id == expectedID else {
             throw ARCError(.roomCorrupt, "The room file name and Room ID do not match.")
         }
@@ -391,7 +391,7 @@ enum ARCRoomCodec {
 
     static func validate(_ document: ARCRoomDocument) throws {
         guard document.format == ARCConstants.roomFormat else {
-            throw ARCError(.roomIncompatible, "This is not an ARC 1.0 room.")
+            throw ARCError(.roomIncompatible, "This is not a supported ARC room format.")
         }
         let room = document.room
         guard ARCText.isSafeID(room.id, prefix: "room-") else {

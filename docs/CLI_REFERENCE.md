@@ -29,7 +29,7 @@ arc [--root ROOT] act --room ROOM --id ID --binding UUID \
 arc [--root ROOT] doctor --room ROOM [--json]
 ```
 
-There are no other ARC 1.0 commands, help topics, aliases, or abbreviated
+There are no other ARC 2.1 commands, help topics, aliases, or abbreviated
 options. Specification IDs are the three-digit strings `000` through `013`.
 
 ## Human-readable commands

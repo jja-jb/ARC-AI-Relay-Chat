@@ -1,7 +1,7 @@
 # ARC brand and public copy
 
 This directory contains the complete editable and generated visual material for
-ARC v1.0. It is source material, not a second product specification. The
+ARC v2.1. It is source material, not a second product specification. The
 README and determining specifications remain the source of product claims.
 
 ## Position
@@ -23,8 +23,8 @@ Required boundary:
 ## Assets
 
 - `ASSET-MANIFEST.json` — dimensions, media types, and reviewed SHA-256 values
-- `arc-product-brief.html` — editable, self-contained print layout for the
-  two-page product literature released with ARC
+- `arc-product-brief.html` — editable, self-contained two-page product overview;
+  the release literature also records candidate changes and testing boundaries
 - `arc-mark.svg` — reviewed public mirror of the canonical editable mark in
   `app/Assets/arc-mark.svg`
 - `arc-app-icon.svg` — reviewed public mirror of the canonical editable app
@@ -36,6 +36,8 @@ Required boundary:
 The bitmap artwork contains no embedded words, provider marks, people, robots,
 cloud symbol, or claim. It may illustrate ARC documentation and release notes.
 Do not use it as evidence of product behavior.
+The artwork provenance retains its original creation label; the unchanged
+version-neutral images are reused in ARC 2.1, not regenerated release claims.
 
 ## Color
 

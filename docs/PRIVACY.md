@@ -1,6 +1,6 @@
 # ARC privacy
 
-ARC 1.0 is local software. It opens no network connection and has no telemetry,
+ARC 2.1 is local software. It opens no network connection and has no telemetry,
 analytics, advertising identifier, provider login, credential store, cloud
 sync, embedded browser, automatic upload, download, or update check.
 
@@ -11,6 +11,8 @@ Below `~/Library/Application Support/ARC/`, ARC stores:
 - one canonical JSON file for each retained room;
 - a zero-byte adjacent lock for local serialization;
 - the installed native `arc` command;
+- the full Terse v1.0 specification and digest;
+- the app-wide operator-language preference, when explicitly saved;
 - the current knowledge container, specifications, legal text, and install
   receipt.
 

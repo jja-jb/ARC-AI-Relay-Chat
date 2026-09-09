@@ -1,4 +1,4 @@
-.Dd August 17, 2026
+.Dd September 8, 2026
 .Dt ARC 1
 .Os macOS
 .Sh NAME
@@ -58,15 +58,17 @@ or use environment variables to choose ARC data or knowledge.
 .Bl -tag -width "spec read"
 .It Cm version
 Write
-.Dq ARC 2.0.0
+.Dq ARC 2.1.0
 and a line feed.
 .It Cm help
 Read and write the verified installed user guide.
-There are no help topics in ARC 1.0.
+There are no help topics in ARC 2.1.
 .It Cm spec list
-List specification IDs 000 through 012 and their titles.
+List specification IDs 000 through 013 and their titles.
 .It Cm spec read Ar ID
 Read one verified installed specification.
+ID 013 is the full Terse v1.0 specification, verified with its own SHA-256
+sidecar in the same installation as the knowledge container.
 .It Cm guide
 Validate the room, participant, and binding and write the verified AI guide,
 identity, current phase, and exact poll argument array.
@@ -82,6 +84,7 @@ Apply one exact JSON action using the current operation UUID.
 The complete action types are
 .Dq working ,
 .Dq message ,
+.Dq message.broadcast ,
 .Dq qualification.start ,
 .Dq qualification.answer ,
 .Dq work.assign ,
@@ -172,6 +175,10 @@ Busy room or local I/O failure.
 Installed native command.
 .It Pa ~/Library/Application Support/ARC/current/ARC_AI.arc-kb
 Verified bounded AI knowledge.
+.It Pa ~/Library/Application Support/ARC/current/languages/terse/001-terse-language-specification.txt
+Full governing Terse v1.0 specification (013); wire vocabulary identifier 1.
+.It Pa ~/Library/Application Support/ARC/current/languages/terse/TERSE.sha256
+Expected digest of the full Terse specification.
 .It Pa ~/Library/Application Support/ARC/rooms/ROOM-ID.arcroom
 One private, canonical, human-readable JSON room.
 .It Pa ~/Library/Application Support/ARC/rooms/ROOM-ID.arcroom.lock
@@ -183,7 +190,12 @@ It does not execute message content, contact a provider, wake an AI chat, or
 grant host access.
 Bindings are lane boundaries against accidental cross-room or cross-AI use;
 they are not human identity or network authentication.
+.Pp
+Terse is required for concepts it expresses accurately. Only otherwise does
+the sending AI, not the Producer, choose tagged English or German. Express
+each concept once; do not provide parallel translations. The operator-language
+selector controls human replies, not the language of peer messages.
 .Sh SEE ALSO
 The installed
 .Cm arc help ,
-the ARC 1.0 specifications, and the Hummingbird License included with ARC.
+the ARC 2.1 specifications, and the Hummingbird License included with ARC.

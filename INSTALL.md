@@ -1,4 +1,4 @@
-# Install ARC 1.0
+# Install ARC 2.1
 
 ## Published Mac application
 
@@ -60,9 +60,11 @@ make check
 make app-development-check
 ```
 
-The development app is written under `build/`. A source build does not install
-anything into Application Support unless you launch that app and approve its
-ordinary first-launch installation.
+The development app is written under `/private/tmp/arc-build-2.1.0/development/`.
+It uses a fresh temporary root unless `ARC_DEVELOPMENT_ROOT` explicitly names
+an absolute test root. Building alone installs nothing. A development launch
+installs support files only in that chosen test root; release builds ignore
+the override and install their signed support files in Application Support.
 
 ## Remove ARC
 

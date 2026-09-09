@@ -22,7 +22,7 @@ Failure is:
 |---|---|
 | `INVALID_ARGUMENT` | command, option, ID, sequence, or JSON is invalid |
 | `NOT_FOUND` | requested room, participant, work item, or spec is absent |
-| `ROOM_INCOMPATIBLE` | room is not the ARC 1.0 format |
+| `ROOM_INCOMPATIBLE` | room is not the supported arc.room/1 format |
 | `ROOM_CORRUPT` | room JSON or a durable invariant failed |
 | `KNOWLEDGE_UNAVAILABLE` | installed knowledge is missing or invalid |
 | `BINDING_INVALID` | room, participant, or binding does not match |

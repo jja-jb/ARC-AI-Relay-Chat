@@ -1,4 +1,4 @@
-# ARC 2.0 release checklist
+# ARC 2.1 release checklist
 
 The release procedure is [docs/RELEASING.md](docs/RELEASING.md). This checklist
 does not replace it.

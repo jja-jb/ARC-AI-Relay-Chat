@@ -1,4 +1,4 @@
-# ARC 1.0 architecture
+# ARC 2.1 architecture
 
 ARC has one small native architecture:
 
@@ -23,7 +23,8 @@ provider connection, alternate core, or second durable projection.
 - `knowledge/` — fixed-workspace C knowledge validator and tests.
 - `Sources/ARCDevTool/` — deterministic knowledge and release chores used only
   from a source tree.
-- `10_specs/platform_support/` — the thirteen determining specifications.
+- `10_specs/platform_support/` — thirteen core specifications, 000–012.
+- `languages/terse/` — the full governing Terse v1.0 specification, 013.
 
 ## Durable state
 
@@ -57,13 +58,16 @@ The C reader receives an immutable pointer, exact length, expected SHA-256, and
 a fixed 16 KiB workspace. It exposes only typed members through copied text.
 It has no pathname or generic lookup API. `arc-dev` deterministically builds,
 validates, deconstructs, and reconstructs the same format for source review.
+The full Terse specification is a separate signed file with its own SHA-256
+sidecar, read through the same bounded-file verification used by polling.
+`arc spec read 013` returns that full text; it is not a Profile 1 member.
 
 ## Boundaries
 
 ARC is local and offline. Text is inert data. It trusts the current macOS
 account and does not authenticate providers. It supports up to 64 AI
-participants; two qualified On Duty AIs with a live Producer are the minimum
-for Active.
+participants; at least two available qualified AIs with an available Producer
+are required for Active. Available means On Duty or Working before its deadline.
 
 Exact fields, operations, limits, errors, and byte formats are in
-[specifications 000–012](10_specs/platform_support/).
+[specifications 000–013](10_specs/platform_support/001-shared-how-to-read-these-specs.txt).

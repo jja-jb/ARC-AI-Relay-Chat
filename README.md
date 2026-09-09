@@ -128,7 +128,7 @@ and independent DVT are documented in [docs/RELEASING.md](docs/RELEASING.md).
 - [Specification-to-test traceability](docs/TRACEABILITY.md)
 - [Determining specifications](10_specs/platform_support/)
 
-Specifications 000 through 012 determine ARC's behavior. Summaries defer to them.
+Specifications 000 through 013 determine ARC's behavior. Summaries defer to them.
 
 ## License and project
 

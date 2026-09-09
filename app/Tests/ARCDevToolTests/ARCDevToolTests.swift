@@ -3,6 +3,26 @@ import XCTest
 @testable import ARCDevTool
 
 final class ARCDevToolTests: XCTestCase {
+    func testCurrentArtifactVersionsAndTerseIndexStayAligned() throws {
+        let source = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let checks: [(String, String)] = [
+            ("10_specs/platform_support/000-shared-constitution.txt", "Specifications 000 through 013"),
+            ("README.md", "Specifications 000 through 013"),
+            ("ARCHITECTURE.md", "full governing Terse v1.0 specification, 013"),
+            ("man/arc.1", "ARC 2.1.0"),
+            ("man/arc.1", "IDs 000 through 013"),
+            ("man/arc.1", "message.broadcast"),
+            ("INSTALL.md", "# Install ARC 2.1"),
+            ("RELEASE_CHECKLIST.md", "# ARC 2.1 release checklist"),
+            ("brand/arc-product-brief.html", "Terse v1.0 is governing specification 013")
+        ]
+        for (path, expected) in checks {
+            let text = try String(contentsOf: source.appendingPathComponent(path), encoding: .utf8)
+            XCTAssertTrue(text.contains(expected), path + ": " + expected)
+        }
+    }
+
     func testBundledTerseIsTheCompleteReviewedVersionOneAndDigestIsChecked() throws {
         let source = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()

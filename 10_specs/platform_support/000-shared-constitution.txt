@@ -113,7 +113,7 @@ it is complete, readable, reproducible, maintained, and honest.
 
 C-010 DETERMINING RULE
 
-Specifications 000 through 012 together determine ARC v2.1.0. When a proposed
+Specifications 000 through 013 together determine ARC v2.1.0. When a proposed
 feature or implementation adds a second way to express an existing fact, the
 simpler conforming design wins. When simplicity and correctness appear to
 conflict, ARC keeps the smallest established mechanism that preserves visible
