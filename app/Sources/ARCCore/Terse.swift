@@ -4,8 +4,8 @@ import Foundation
 /// Terse is data. These helpers never execute it, fetch a file, change work,
 /// infer authority, or claim that syntax proves comprehension or truth.
 public enum ARCTerse {
-    public static let version = 2
-    public static let prefix = "@terse/2 "
+    public static let version = 3
+    public static let prefix = "@terse/3 "
     public static let profiles = ["batch/1", "context/1", "dependency/1", "results/1"]
     static let maximumBytes = 16_384
 
@@ -49,6 +49,22 @@ public enum ARCTerse {
         try validatePacket(packet)
         return prefix + (try canonical(packet)) + "\n"
     }
+    /// Historical events retain their original wire grammar and display prefix.
+    /// This is deliberately separate from current send/build validation.
+    public static func buildStoredPacket(_ payload: ARCJSONValue) throws -> String {
+        let p = try object(payload)
+        let wire: Int
+        if Set(p.keys) == ["packet", "binding_generation", "target_binding_generation", "specification_sha256"] {
+            wire = 2
+        } else {
+            try exact(p, ["packet", "binding_generation", "target_binding_generation", "specification_sha256", "wire_version"])
+            guard p["wire_version"]?.integerValue == Int64(version) else { throw fail("unsupported stored wire version.") }
+            wire = version
+        }
+        let packet = p["packet"]!
+        try validatePacket(packet, wire: wire)
+        return "@terse/\(wire) " + (try canonical(packet)) + "\n"
+    }
     static func fields(_ value: ARCJSONValue) throws -> [String: ARCJSONValue] {
         let values = try object(value)
         guard !values.isEmpty, values.count <= 64 else { throw fail("context needs 1–64 fields.") }
@@ -78,6 +94,9 @@ public enum ARCTerse {
     }
 
     public static func validatePacket(_ packet: ARCJSONValue) throws {
+        try validatePacket(packet, wire: version)
+    }
+    private static func validatePacket(_ packet: ARCJSONValue, wire: Int) throws {
         guard try canonical(packet).utf8.count <= maximumBytes - prefix.utf8.count - 1 else {
             throw fail("packet exceeds the message size limit.")
         }
@@ -85,8 +104,8 @@ public enum ARCTerse {
         switch try string(p["kind"]) {
         case "declare":
             try exact(p, ["kind", "version", "specification_sha256", "profiles"])
-            guard p["version"]?.integerValue == 2, ARCText.isSHA256(try string(p["specification_sha256"])) else {
-                throw fail("declaration requires version 2 and the full specification digest.")
+            guard p["version"]?.integerValue == Int64(wire), ARCText.isSHA256(try string(p["specification_sha256"])) else {
+                throw fail("declaration requires version \(wire) and the full specification digest.")
             }
             guard case .array(let values) = p["profiles"], values.count <= profiles.count else { throw fail("invalid profiles.") }
             let names = try values.map { try string($0) }
@@ -119,7 +138,7 @@ public enum ARCTerse {
                 guard names.insert(try name(v["id"])).inserted else { throw fail("duplicate batch item ID.") }
                 let text = try string(v["text"])
                 guard text.hasSuffix("\n"), text.filter({ $0 == "\n" }).count == 1 else { throw fail("a batch item is one complete line.") }
-                try validateText(text)
+                try validateText(text, wire: wire)
                 guard text.hasPrefix("ASK ") || text.hasPrefix("TELL ") || text.hasPrefix("SEE TELL ") || text.hasPrefix("THINK TELL ") else {
                     throw fail("batches carry independent questions and reports, not directives or commitments.")
                 }
@@ -158,7 +177,7 @@ public enum ARCTerse {
             }
         case "lines":
             try exact(p, ["kind", "text"])
-            try validateText(try string(p["text"]))
+            try validateText(try string(p["text"]), wire: wire)
         default: throw fail("unknown packet kind; extensions cannot be invented at runtime.")
         }
     }
@@ -176,6 +195,9 @@ public enum ARCTerse {
     /// Appendix C syntax plus locally decidable constraints. References, role,
     /// binding, evidence, variables and meaning still need their own checks.
     public static func validateText(_ text: String) throws {
+        try validateText(text, wire: version)
+    }
+    private static func validateText(_ text: String, wire: Int) throws {
         guard !text.isEmpty, text.utf8.count <= maximumBytes, text.hasSuffix("\n") else {
             throw fail("sec 5.10: use a final LF and at most 16384 bytes.")
         }
@@ -189,7 +211,7 @@ public enum ARCTerse {
                 }
                 continue
             }
-            var parser = try TerseLineParser(line)
+            var parser = try TerseLineParser(line, wire: wire)
             try parser.parse()
             let tokens = parser.tokens
             if tokens.contains("THIS"), focus.count != 1 { throw fail("sec 4.14: THIS needs one explicit prior target in this message.") }
@@ -204,11 +226,13 @@ public enum ARCTerse {
 
 private struct TerseLineParser {
     let tokens: [String]
+    let wire: Int
     var offset = 0
     let acts: Set<String> = ["MAKE", "GIVE", "TAKE", "ASK", "TELL", "DO"]
     let referents: Set<String> = ["ME", "YOU", "THIS", "WORK", "WORD", "FILE"]
     let arguments: Set<String> = ["ME", "YOU", "THIS", "WORK", "WORD", "FILE", "GOOD", "BAD", "DONE", "STOP", "HEAR", "NOT", "WHEN", "SAME", "MORE", "LESS", "AND", "OR", "ALL", "SOME", "SEE", "THINK"]
-    init(_ line: String) throws {
+    init(_ line: String, wire: Int) throws {
+        self.wire = wire
         guard line.unicodeScalars.allSatisfy({ (0x20...0x7e).contains($0.value) }) else { throw ARCTerse.fail("Appendix C: classic lines are ASCII.") }
         let regex = try NSRegularExpression(pattern: "\"[^\"]*\"|[()]|[^ ()\"]+")
         tokens = regex.matches(in: line, range: NSRange(line.startIndex..., in: line)).map { String(line[Range($0.range, in: line)!]) }
@@ -253,8 +277,16 @@ private struct TerseLineParser {
         if offset < tokens.count, referents.contains(tokens[offset]) { offset += 1 }
         guard offset < tokens.count, acts.contains(tokens[offset]) else { throw ARCTerse.fail("Appendix C: expected one act after ordered markers.") }
         if tokens[offset] == "DO", hasEvidence { throw ARCTerse.fail("sec 15.17: DO cannot carry fronted evidence.") }
+        let actOffset = offset
         offset += 1
         while offset < tokens.count && tokens[offset] != ")" { try argument(depth: depth) }
+        if wire >= 3, Array(tokens[actOffset..<min(actOffset + 3, offset)]) == ["TELL", "NOT", "HEAR"] {
+            let arguments = Array(tokens[(actOffset + 3)..<offset])
+            guard arguments.count == 1, arguments[0].hasPrefix("\""), arguments[0].count > 2,
+                  arguments[0].range(of: "^\"[0-9]+\\.[0-9]+\"$", options: .regularExpression) == nil else {
+                throw ARCTerse.fail("sec 10.4: name the failed token or a section such as \"sec 4.11\"; a numeric utterance reference is not a failure label.")
+            }
+        }
     }
     mutating func argument(depth: Int) throws {
         if take("(") {

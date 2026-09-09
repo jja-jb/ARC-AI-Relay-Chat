@@ -42,8 +42,11 @@ Exit status is 0, 2, 3, or 4 as described in
 
 ## Request rules
 
-ARC 2.4 supports terse.send with exactly type, to, packet; specification 013
-sections 20–26 govern packet and helper output shapes. It retains work.correct
+ARC 2.5 supports terse.send with exactly type, to, packet; specification 013
+sections 20–26 govern packet and helper output shapes. `terse read` includes
+wire_version for the historical event (2 or 3); current `terse status` reports
+version:3. New TERSE_MESSAGE payloads include wire_version:3. Existing four-field
+events remain wire 2 and cannot establish current declarations. It retains work.correct
 with exactly type, work, revision, reason, evidence;
 see CLI_REFERENCE.md for authority, timestamp and audit rules. Participant views
 include automatic_recovery_attempts (0–2); older views omit it and decode as 0.

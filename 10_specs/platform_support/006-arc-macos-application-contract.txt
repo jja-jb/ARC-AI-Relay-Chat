@@ -1,4 +1,4 @@
-ARC v2.4.0 MACOS APPLICATION CONTRACT
+ARC v2.5.0 MACOS APPLICATION CONTRACT
 
 Terse Cost Comparison is a sidebar control opening a local, read-only report
 sheet. It imports only user-selected regular JSON files of at most 131072
@@ -126,7 +126,7 @@ saw a request merely because the local display timer advanced.
 
 UI-005 MENUS AND KEYBOARD
 
-ARC uses normal Mac menus. The complete ARC 2.4 application command surface is:
+ARC uses normal Mac menus. The complete ARC 2.5 application command surface is:
 
   File    New Room...
   Edit    Find in Activity... (alongside standard text editing commands)

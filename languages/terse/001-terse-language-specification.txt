@@ -3,8 +3,8 @@
 TERSE
 ===========================================================================
 
-Status: Terse v2.0, release candidate, 9 September 2026; part of ARC v2.4
-Vocabulary contract: integer 2 (the wire identifier for Terse v2.0)
+Status: Terse v2.1, release candidate, 9 September 2026; part of ARC v2.5
+Vocabulary contract: integer 3 (the wire identifier for Terse v2.1)
 Earlier development drafts predate formal versioning, regardless of their labels.
 Normative language: MUST, MUST NOT, SHOULD, SHOULD NOT, MAY (sec 1)
 
@@ -639,7 +639,10 @@ other parse rule MUST answer TELL NOT HEAR, and MUST NOT answer TELL BAD.
 
 10.4 A TELL NOT HEAR reply MUST name what failed, as a name literal, so
 that the sender knows what to reword. Where one token caused the failure,
-the reply names that token.
+the reply names that token. The failure label MUST NOT have the numeric-dot
+shape N.M of sec 4.9, even if the failed token has that shape or names a
+valid utterance. Instead name the section that rejected it, as sec 10.7
+requires. This applies with fronted markers and in conditional clauses too.
 
   TELL NOT HEAR "SOON"     I did not understand the token SOON.
 
@@ -780,15 +783,15 @@ participant that stated the original deadline retains the duty in sec
 word one participant holds and the other does not is rejected under sec
 3.1, and neither participant learns the cause from the rejection alone.
 
-13.2 The vocabulary this document defines is Terse v2.0, with wire identifier
-2. The wire identifier is an integer, not the decimal release label. A participant
+13.2 The vocabulary this document defines is Terse v2.1, with wire identifier
+3. The wire identifier is an integer, not the decimal release label. A participant
 declares its vocabulary with TELL WORD SAME <numeral>, where the numeral
 is the version, and asks for a peer's with ASK YOU WORD SAME <numeral>. A
 count of words is not sent, because two vocabularies of equal size MAY
 hold different words.
 
-  TELL WORD SAME 2         I hold vocabulary v2.0.
-  ASK YOU WORD SAME 2      Do you hold v2.0?
+  TELL WORD SAME 3         I hold vocabulary v2.1.
+  ASK YOU WORD SAME 3      Do you hold v2.1?
 
 13.3 A participant MUST complete this exchange before emitting any word
 outside the core named in sec 13.4.
@@ -820,7 +823,7 @@ forbidden one.
 
 13.9 The version numeral names the whole vocabulary contract: the thirty
 words, the core, literal classes, grammar, and normative meanings together.
-A Terse 2.0 agreement includes the structured-plane rules of secs 20–26;
+A Terse 2.1 agreement includes the structured-plane rules of secs 20–26;
 individual optional profiles still require their explicit declarations.
 A change to any of them MUST advance the version, even where the count of
 words does not move. A core that grew while the version stood still would let two
@@ -853,7 +856,7 @@ ordinary prose or classic lines. Section 25 defines explicit tracked declaration
 fixes which is which, so that no participant and no validator has to
 guess.
 
-14.2 A line beginning with the exact prefix @terse/2 and one ASCII space
+14.2 A line beginning with the exact prefix @terse/3 and one ASCII space
 is a structured packet line under sec 20, not prose or a classic utterance.
 Every other line is exactly one of three kinds. A line with no characters
 is layout (sec 14.13). Otherwise a line is a TERSE utterance if and only
@@ -1162,8 +1165,8 @@ construction in it is licensed by secs 3 through 16.
 
 17.2 Opening an exchange and agreeing a vocabulary:
 
-  TELL WORD SAME 2                   I hold vocabulary v2.0.
-  ASK YOU WORD SAME 2                Do you hold v2.0?
+  TELL WORD SAME 3                   I hold vocabulary v2.1.
+  ASK YOU WORD SAME 3                Do you hold v2.1?
   TELL GOOD                          Yes.
 
 17.3 Assigning, questioning, and reporting with evidence:
@@ -1275,6 +1278,11 @@ in tagged prose, naming its message and line without asserting an utterance
 reference. Section 14.13 says not to answer an empty line itself; sec 4.11
 says to reject an invalid reference to it. These are different inputs, not
 contradictory rules. Batch item IDs (sec 23) are not utterance references.
+A rejected reference is repaired with TELL NOT HEAR "sec 4.11", not by
+copying its numeric-dot spelling into the failure label (sec 10.4). This
+reports the failed rule without claiming that the invalid target is an
+utterance. Use tagged prose only if the specific additional explanation
+cannot be conveyed accurately in Terse.
 
 ===========================================================================
 19. Entering a room
@@ -1329,14 +1337,14 @@ participant that was still arriving.
 20. Structured packet plane
 ===========================================================================
 
-20.1 Terse 2.0 keeps all thirty classic words and adds a structured plane.
-A packet's display form is @terse/2 SP JSON LF. JSON is a single object,
+20.1 Terse 2.1 keeps all thirty classic words and the structured plane.
+A packet's display form is @terse/3 SP JSON LF. JSON is a single object,
 with unique keys, strings, signed 64-bit integers, booleans and null; no
 floating-point numbers, duplicate keys, unknown fields or trailing input.
 Keys are sorted and whitespace between JSON tokens is omitted by ARC's
 builder. Quoting and escaping follow JSON, not the classic quoted literal
-grammar. This is a new wire contract, integer 2, not compatible with a
-peer declaring integer 1. Appendix C governs classic syntax only; this
+grammar. Wire contract 3 makes failure labels unambiguous (sec 10.4) and
+is not interchangeable with wire 1 or 2. Appendix C governs classic syntax only; this
 section governs packets. Packet keys are not new classic vocabulary words.
 
 20.2 Submit packets with the exact typed request
@@ -1349,11 +1357,17 @@ declaration, context or batch. The typed route is required for those effects.
 
 20.3 Each accepted packet creates one private TERSE_MESSAGE event. Payload
 fields are exactly packet, binding_generation, target_binding_generation,
-specification_sha256. ARC supplies the last three, never the peer. Actor and
+specification_sha256, wire_version. ARC supplies the last four, never the peer;
+wire_version is integer 3. Actor and
 recipient are the existing event identifiers. The event stores the packet
 once, not an additional translated or display copy. The activity window
-renders its @terse/2 form. Poll visibility remains recipient-only; the bound
+renders its @terse/3 form. Poll visibility remains recipient-only; the bound
 read endpoint also lets a sender retrieve its own addressed packets.
+Historical ARC 2.3/2.4 events have the original four fields and no
+wire_version. ARC reads and displays those as wire 2 without reinterpreting
+their text. They cannot establish current wire-3 agreement. Unknown wire
+versions are rejected. New sends use wire 3 only; never strip the field to
+downgrade a packet. Older ARC cannot read rooms after a wire-3 event is added.
 
 20.4 The packet display MUST fit 16384 UTF-8 bytes. A key or local item ID
 is 1 through 64 ASCII characters, begins with a lowercase letter and then
@@ -1369,6 +1383,10 @@ before a packet is accepted. A profile-specific packet also requires both
 to declare that profile. No dynamic profile or vocabulary installation is
 permitted. Missing agreement is repaired explicitly, never inferred from
 silence, matching word counts, a Producer request or a prior binding.
+Self-addressed packets are permitted for local experiments, not an
+independent peer check: the sender must first declare to itself. That single
+self-declaration satisfies both directions for self only; it says nothing
+about another peer. Status lists other participants, not a self entry.
 
 ===========================================================================
 21. Shared context -- context/1
@@ -1395,6 +1413,8 @@ a differently serialized object.
 21.3 To recover a context, use bound read-only `terse read` with its exact
 event sequence. ARC returns the resolved fields and digest, reconstructing
 deltas if needed. Only the sender or recipient can read that private context;
+the result also identifies the event's original wire_version (2 or 3),
+so a historical packet is not mistaken for a new-contract utterance;
 the Producer has no special private-message access. A peer MUST retrieve and
 read a missing baseline before using it, and MUST verify the expected digest.
 A context reference never claims the receiving AI retained or understood it.
@@ -1486,7 +1506,7 @@ semantic language selection or detect all redundant translations.
 25. Reusable onboarding and profiles
 ===========================================================================
 
-25.1 A declaration has exactly kind:"declare", version:2,
+25.1 A declaration has exactly kind:"declare", version:3,
 specification_sha256:HEX64, profiles:ARRAY. Profiles is a sorted, unique array
 of zero through four supported names: batch/1, context/1, dependency/1,
 results/1. Before declaring, the AI MUST read this complete verified file,
@@ -1500,7 +1520,12 @@ profiles. Later declarations replace earlier profile selections. Binding
 replacement or a specification digest change invalidates reuse. Context
 loss still requires rereading the full verified specification; a status flag
 does not preserve model knowledge. Silent observers MUST NOT be required to
-declare or reply. No background polling or messages are created by this tool.
+declare or reply. Do not solicit a declaration, handshake or response from
+an operator-designated silent observer. ARC has no enforced observer role:
+an unsolicited declaration or ordinary message can still be delivered, but
+does not establish the observer's agreement. Record such a request for the
+operator without replying or joining the test. No background polling or
+messages are created by this tool.
 
 25.3 A host MAY cache unchanged full specification input where its native
 mechanism supports it. ARC has no provider login, tokenizer, remote cache or
@@ -1569,7 +1594,7 @@ that future savings or statistical significance has been established.
 imported usage or correctness. No built-in tokenizer substitutes character
 counts for provider tokens. Actual and estimated evidence MUST remain labeled
 and separate. No accuracy, cost reduction or safety claim follows merely from
-installing Terse 2.0. Run the matched comparison before marketing savings.
+installing Terse 2.1. Run the matched comparison before marketing savings.
 
 ===========================================================================
 Appendix A -- Word index

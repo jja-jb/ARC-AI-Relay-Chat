@@ -1,4 +1,4 @@
-# Releasing ARC 2.4
+# Releasing ARC 2.5
 
 This procedure freezes and records an already complete product. It uploads
 the app and DMG to Apple for notarization, but does not publish a release,
@@ -7,7 +7,7 @@ push repository changes, or create a tag.
 ## Requirements
 
 Use macOS 15 or later with Xcode Command Line Tools. Start from a clean checkout
-whose `HEAD` is the reviewed annotated `v2.4.0` tag. The source build has no remote
+whose `HEAD` is the reviewed annotated `v2.5.0` tag. The source build has no remote
 package dependency and performs no network access. Signing and notarization are
 the only steps that contact Apple.
 
@@ -37,8 +37,8 @@ manifest, knowledge digest, specifications, and legal payload.
 
 Run build targets sequentially. Concurrent make processes must use separate
 BUILD and OUTPUT directories; Swift's build lock does not protect shared app
-staging folders. Defaults are `/private/tmp/arc-build-2.4.0` and
-`/private/tmp/arc-output-2.4.0`, outside cloud-synchronized checkouts.
+staging folders. Defaults are `/private/tmp/arc-build-2.5.0` and
+`/private/tmp/arc-output-2.5.0`, outside cloud-synchronized checkouts.
 
 ## Freeze the candidate
 
@@ -58,10 +58,10 @@ staples the app, creates and signs the DMG, notarizes and staples the DMG, makes
 an archive from the exact tag, and writes:
 
 ```text
-/private/tmp/arc-output-2.4.0/candidate/ARC-2.4.0/ARC-2.4.0.dmg
-/private/tmp/arc-output-2.4.0/candidate/ARC-2.4.0/ARC-2.4.0-source.tar.gz
-/private/tmp/arc-output-2.4.0/candidate/ARC-2.4.0/ARC_AI_Relay_Chat_Literature.pdf
-/private/tmp/arc-output-2.4.0/candidate/ARC-2.4.0/ARC-2.4.0-MANIFEST.json
+/private/tmp/arc-output-2.5.0/candidate/ARC-2.5.0/ARC-2.5.0.dmg
+/private/tmp/arc-output-2.5.0/candidate/ARC-2.5.0/ARC-2.5.0-source.tar.gz
+/private/tmp/arc-output-2.5.0/candidate/ARC-2.5.0/ARC_AI_Relay_Chat_Literature.pdf
+/private/tmp/arc-output-2.5.0/candidate/ARC-2.5.0/ARC-2.5.0-MANIFEST.json
 ```
 
 The candidate manifest records the immutable DMG, source, and literature names,
@@ -78,7 +78,7 @@ the checkout, complete every field and evidence row, and run:
 
 ```sh
 make release-dvt \
-  DVT_REPORT=/absolute/path/ARC-2.4.0-DVT-REPORT.txt
+  DVT_REPORT=/absolute/path/ARC-2.5.0-DVT-REPORT.txt
 ```
 
 A changed candidate, mismatched commit, unfinished evidence, non-PASS row,
@@ -97,19 +97,19 @@ make release-seal \
   SIGNING_IDENTITY="Developer ID Application: REVIEWED IDENTITY" \
   NOTARY_PROFILE="reviewed-keychain-profile" \
   LITERATURE_PDF=/absolute/path/ARC_AI_Relay_Chat_Literature.pdf \
-  DVT_REPORT=/absolute/path/ARC-2.4.0-DVT-REPORT.txt
+  DVT_REPORT=/absolute/path/ARC-2.5.0-DVT-REPORT.txt
 ```
 
 This repeats the clean-tag and DVT binding checks and writes exactly seven public
-assets under `/private/tmp/arc-output-2.4.0/release/ARC-2.4.0/`
+assets under `/private/tmp/arc-output-2.5.0/release/ARC-2.5.0/`
 (or the explicitly overridden OUTPUT directory):
 
 ```text
-ARC-2.4.0.dmg
-ARC-2.4.0-source.tar.gz
+ARC-2.5.0.dmg
+ARC-2.5.0-source.tar.gz
 ARC_AI_Relay_Chat_Literature.pdf
-ARC-2.4.0-MANIFEST.json
-ARC-2.4.0-DVT-REPORT.txt
+ARC-2.5.0-MANIFEST.json
+ARC-2.5.0-DVT-REPORT.txt
 RELEASE-METADATA.json
 SHA256SUMS
 ```

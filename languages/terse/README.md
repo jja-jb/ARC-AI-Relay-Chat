@@ -1,14 +1,19 @@
-# Terse 2.0 in ARC 2.4
+# Terse 2.1 in ARC 2.5
 
 `001-terse-language-specification.txt` is the complete governing ARC specification
-013, now **Terse 2.0, wire integer 2**. Its thirty classic words remain; sections
+013, now **Terse 2.1, wire integer 3**. Its thirty classic words remain; sections
 20–26 add structured packets, context/reference/delta, batching, local validation,
 tracked declarations, fixed reporting profiles and comparative cost measurement.
 The canonical filename is unchanged. No external file or download is needed.
 
-Current source SHA-256: `fdd93c6be7892ac2269472c7213b34a20f013b5b93afb95688ae90106d4552b2`.
-ARC 2.4 updates the containing-product heading only; Terse remains 2.0 with
-unchanged wire semantics. Changed bytes still require a complete verified reread.
+Current source SHA-256: `378aba7b229cf1985b77cdb934662c346929aae4ba9da249a3317f4a2ca4d723`.
+ARC 2.5 introduces Terse 2.1 / wire 3 to remove ambiguous numeric failure
+labels, clarify silent-observer instructions and document self-addressed packets.
+Section 13.9 requires a new wire identifier for changed normative meaning.
+Historical wire-2 packets keep their grammar and display; new sends require
+current declarations and a complete verified reread. The original Terse 2.0
+source remains in the unchanged ARC v2.4.0 tag, SHA-256
+`fdd93c6be7892ac2269472c7213b34a20f013b5b93afb95688ae90106d4552b2`.
 
 The prior Terse 1.0 source is preserved in the unchanged ARC v2.2.0 Git tag,
 SHA-256 `cce23937fc0dfb838009f486d9ed99bd20ba7666750e7ac8b6d219e04979b424`.

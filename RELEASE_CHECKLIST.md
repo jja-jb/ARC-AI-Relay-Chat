@@ -1,14 +1,16 @@
-# ARC 2.4 release checklist
+# ARC 2.5 release checklist
 
 - [ ] Complete the two-window recovery/resize/scroll/focus and history-page
-  acceptance plan in `docs/ARC_2_4_TEST_REVIEW.md` on the frozen candidate.
+  acceptance plan in `docs/ARC_2_5_TEST_REVIEW.md` on the frozen candidate.
   No repeated-constraint warnings or unresponsive window are acceptable.
 
 - Verify bounded returning-poll recovery and the explicit reconnect/copy control.
 - Verify completed evidence correction, immutable history, reopening capacity,
   timestamp plausibility, stale revisions and exact replay.
 - Reconcile docs/ARC_2_2_TEST_REVIEW.md and distinguish local checks from pending
-  independent acceptance. Confirm Terse v2.0 semantics are unchanged.
+  independent acceptance. Verify Terse 2.1 / wire 3 repair semantics, wire-2
+  history preservation and fresh declarations after upgrade. Do not label
+  instructions for silent observers as enforced transport restrictions.
 
 The release procedure is [docs/RELEASING.md](docs/RELEASING.md). This checklist
 does not replace it.
@@ -41,7 +43,7 @@ does not replace it.
 ## Mac candidate
 
 - [ ] App and `arc` are arm64-only.
-- [ ] Bundle identifier is `org.jonnybass.arc`; version is `2.4.0`.
+- [ ] Bundle identifier is `org.jonnybass.arc`; version is `2.5.0`.
 - [ ] Privacy manifest declares no collection/tracking and the exact approved
       file-metadata and elapsed-time reasons.
 - [ ] Install manifest contains only regular native command, knowledge,

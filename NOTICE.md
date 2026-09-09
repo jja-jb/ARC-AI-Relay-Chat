@@ -11,7 +11,7 @@ The three organizations above jointly own ARC. Their ownership does not make
 ARC a support service, managed service, or warranty-backed product. Project
 governance and release authority are described in `GOVERNANCE.md`.
 
-ARC 2.4 contains ARC-owned source and links only system macOS frameworks and
+ARC 2.5 contains ARC-owned source and links only system macOS frameworks and
 libraries. Developer and release utilities supplied with macOS retain their own
 terms and are not redistributed by ARC.
 

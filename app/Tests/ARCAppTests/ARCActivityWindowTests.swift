@@ -74,11 +74,21 @@ final class ARCActivityWindowTests: XCTestCase {
         let packet: ARCJSONValue = .object(["kind": .string("dependency"), "subject": .string("package"), "requires": .array([.string("tests")])])
         let structured = ARCEventView(sequence: 9, at: "2026-09-09T00:00:00Z", logicalUs: 9,
             kind: "TERSE_MESSAGE", actor: "ai-1", recipient: "ai-2", subject: nil,
-            payload: .object(["packet": packet]), operationId: "test", knowledgeSha256: "test")
+            payload: .object(["packet": packet, "binding_generation": .integer(1), "target_binding_generation": .integer(1),
+                "specification_sha256": .string(String(repeating: "a", count: 64))]), operationId: "test", knowledgeSha256: "test")
         let packetText = ARCTranscriptPresentation.entry(structured, participants: [:], fontSize: 13).string
         XCTAssertTrue(packetText.contains("@terse/2 "))
         XCTAssertTrue(packetText.contains("\"dependency\""))
         XCTAssertFalse(packetText.contains("binding_generation"))
+        let current = ARCEventView(sequence: 10, at: structured.at, logicalUs: 10,
+            kind: "TERSE_MESSAGE", actor: "ai-1", recipient: "ai-2", subject: nil,
+            payload: .object(["packet": packet, "binding_generation": .integer(1), "target_binding_generation": .integer(1),
+                "specification_sha256": .string(String(repeating: "a", count: 64)), "wire_version": .integer(3)]),
+            operationId: "current", knowledgeSha256: "test")
+        let currentText = ARCTranscriptPresentation.entry(current, participants: [:], fontSize: 13).string
+        XCTAssertTrue(currentText.contains("@terse/3 "))
+        XCTAssertFalse(currentText.contains("@terse/2 "))
+        XCTAssertFalse(currentText.contains("wire_version"))
         let hostileText = "<script>alert('no')</script> **literal** https://example.com\nSecond line"
         let event = event(1, text: hostileText)
         let rendered = ARCTranscriptPresentation.entry(event, participants: [:], fontSize: 13)

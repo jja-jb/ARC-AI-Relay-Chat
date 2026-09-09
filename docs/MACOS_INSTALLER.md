@@ -1,4 +1,4 @@
-# ARC 2.4.0 Mac installation design
+# ARC 2.5.0 Mac installation design
 
 ## Release form
 
@@ -50,7 +50,7 @@ never enumerates or changes `rooms/`.
 It also preserves the app-wide operator-language preference outside `current/`:
 the file contains exactly `en` plus LF or `de` plus LF, defaults to English when
 absent, and is atomically saved with owner-only permissions. The installed
-Terse specification is the complete repository v2.0 text, with its SHA-256 sidecar;
+Terse specification is the complete repository v2.1 text, with its SHA-256 sidecar;
 both are covered by the same manifest and atomic replacement as the launcher.
 No peer or network download updates the language file.
 
@@ -78,7 +78,7 @@ the old root launcher only after proving it belongs to that legacy receipt.
 /usr/bin/codesign --verify --deep --strict --verbose=2 /Applications/ARC.app
 /usr/sbin/spctl --assess --type execute --verbose=2 /Applications/ARC.app
 /usr/bin/xcrun stapler validate /Applications/ARC.app
-/usr/bin/xcrun stapler validate ARC-2.4.0.dmg
+/usr/bin/xcrun stapler validate ARC-2.5.0.dmg
 /usr/bin/lipo -archs /Applications/ARC.app/Contents/MacOS/ARC
 ```
 

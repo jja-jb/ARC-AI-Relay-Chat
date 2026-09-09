@@ -317,7 +317,7 @@ struct ARCCommand {
     010  Verification
     011  Durable record
     012  AI knowledge container
-    013  Terse v2.0 (full language specification)
+    013  Terse v2.1 (full language specification)
     """ + "\n"
 }
 

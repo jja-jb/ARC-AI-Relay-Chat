@@ -1,10 +1,12 @@
-# ARC 2.4 product brief
+# ARC 2.5 product brief
 
-New in 2.4: bounded main-history pages and two-window layout hardening.
+New in 2.5: Terse 2.1 / wire 3 provides unambiguous failure replies, clearer
+silent-observer instructions, and version-preserving reads of older packets.
+Retained from 2.4: bounded main-history pages and two-window layout hardening.
 The observation transcript avoids rebuilding for status-only AI check-ins.
 The candidate still requires live acceptance testing; zero defects are not promised.
 
-Retained from 2.3: Terse 2.0 adds shared context, changed-field updates, local checking,
+Retained from 2.3: shared context, changed-field updates, local checking,
 batched exchanges, reusable declarations, standard reporting profiles and a
 local cost/accuracy comparison. Savings are to be measured, not assumed.
 
@@ -32,7 +34,7 @@ without copying every handoff by hand.
 - Lets the Administrator replace, retire, or choose a Producer at any time.
 - Keeps every room local, readable, and available offline.
 - Offers atomic room-wide AI notices alongside directed messages.
-- Bundles Terse v2.0 with explicit-reference and nonduplicating language
+- Bundles Terse v2.1 with explicit-reference and nonduplicating language
   guidance, while keeping operator replies in the selected English or German.
 
 A room becomes Active with usable time, at least two available qualified AIs,
@@ -49,7 +51,7 @@ account, network client, telemetry, or cloud service.
 ## Privacy and system requirement
 
 Room data stays in the Administrator's account under Application Support. ARC
-does not collect analytics, track the person, or contact a server. ARC 2.4
+does not collect analytics, track the person, or contact a server. ARC 2.5
 requires macOS 15 or later on Apple silicon Macs.
 
 The source, specifications, tests, editable artwork, build procedure, release

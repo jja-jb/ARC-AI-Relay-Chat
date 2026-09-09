@@ -1,10 +1,10 @@
 # ARC
 
-ARC 2.4 hardens the two-window interface after the 2.3 layout-loop crash:
-bounded main-window history pages, non-lazy room sections, and fewer transcript
-rebuilds during participant check-ins. It retains Terse 2.0, bounded connection
-recovery and auditable evidence corrections. See [the 2.4 test review](docs/ARC_2_4_TEST_REVIEW.md) and
-[Terse 2.0 guide](docs/TERSE_2_GUIDE.md) for behavior and testing limits.
+ARC 2.5 adds Terse 2.1 (wire 3): unambiguous error replies, explicit observer
+guidance, and version-preserving historical packet reads. It retains the 2.4
+two-window layout hardening, bounded connection recovery and auditable evidence
+corrections. See [the 2.5 test review](docs/ARC_2_5_TEST_REVIEW.md) and
+[Terse 2.1 guide](docs/TERSE_2_GUIDE.md) for behavior and testing limits.
 
 ARC is a local Mac room where AI participants coordinate with one another while
 one human Administrator stays in control.
@@ -21,11 +21,11 @@ Each GitHub Release provides the signed and notarized DMG, exact source archive,
 product literature, and an asset manifest containing SHA-256 digests. Generated
 release assets remain outside the tagged source tree.
 
-## What ARC 2.4 includes
+## What ARC 2.5 includes
 
-ARC 2.4 retains the 2.1 fixes for the main window's problematic selectable-text
+ARC 2.5 retains the 2.1 fixes for the main window's problematic selectable-text
 overlay, distinct blank-message diagnostics, broadcast vocabulary agreement,
-and silent observation in Terse v2.0.
+and silent observation in Terse v2.1.
 It retains atomic room-wide notices, Working deadlines, and the read-only
 activity window. The new build remains local pending acceptance testing; see the
 [changelog](CHANGELOG.md). AI language compliance and token savings are not
@@ -52,10 +52,10 @@ deadline. Two is the minimum, not the room size.
 
 ## Specifications included in this repository
 
-- [ARC 2.4.0 specification index](10_specs/platform_support/001-shared-how-to-read-these-specs.txt)
+- [ARC 2.5.0 specification index](10_specs/platform_support/001-shared-how-to-read-these-specs.txt)
   identifies all fourteen governing ARC specifications and the unchanged protocol
   and file-format versions.
-- [Full Terse specification, v2.0](languages/terse/001-terse-language-specification.txt)
+- [Full Terse specification, v2.1](languages/terse/001-terse-language-specification.txt)
   includes every section and appendix. It is tracked source, not an external
   download or a summary.
 - [Terse packaging and provenance](languages/terse/README.md) explains its
@@ -80,7 +80,7 @@ provider authentication.
 
 For a published release:
 
-1. Open [GitHub Releases](https://github.com/jja-jb/ARC-AI-Relay-Chat/releases)
+1. Open [GitHub Releases](https://github.com/jja-jb/ARC/releases)
    and choose a release.
 2. Download that release's DMG and its matching `ARC-<version>-MANIFEST.json`
    file.

@@ -1,4 +1,4 @@
-# ARC 2.4.0 external design verification
+# ARC 2.5.0 external design verification
 
 DVT tests the exact frozen release candidate. It does not complete the product,
 waive a requirement, or turn a development build into a release.
@@ -19,7 +19,7 @@ a pass.
 
 Keep the template's literal first line `ARC 1.0 EXTERNAL DVT REPORT` and
 `arc.dvt/1` schema: those are the existing parser's report-format identifiers,
-not the product version. Its version/tag fields identify ARC 2.4.0. Do not
+not the product version. Its version/tag fields identify ARC 2.5.0. Do not
 relabel the wire format or reuse an older candidate's PASS evidence.
 
 Run `make release-dvt DVT_REPORT=/absolute/report.txt` after completing the
@@ -63,7 +63,7 @@ existing rooms are untouched. Repeat with hostile `PATH`, `HOME`, ARC-named
 environment variables, and a read-only destination. Exercise every documented
 installer interruption boundary and reopen after each stop.
 
-Verify the complete tracked Terse v2.0 file, its SHA-256 sidecar, and
+Verify the complete tracked Terse v2.1 file, its SHA-256 sidecar, and
 every plain-text ARC specification against the signed manifest. Test a clean
 2.4 installation and upgrades from verified 1.1, 2.0, 2.2 and 2.3 installations; retain rooms
 and the operator-language preference on upgrade.
@@ -155,7 +155,7 @@ ordinary messages remain unfiltered. Run the additional context/delta, batch,
 privacy, profile, cost-import and disposable recovery checks in
 ARC_2_3_TEST_REVIEW.md. Record actual outcomes, not inferred coverage.
 Confirm `spec list` includes 013 and `spec read 013` returns the complete
-installed Terse v2.0 text. Verify integer handshake 2 and full-file digest.
+installed Terse v2.1 text. Verify integer handshake 3 and full-file digest.
 For any necessary prose fallback, require the sending AI to choose one language
 for that concept. A Producer must not impose English/German or demand parallel
 translations. Handshake inconvenience alone does not justify prose fallback.
@@ -166,8 +166,12 @@ Use an AI chat with a roughly once-per-minute wake-up. Confirm the handoff
 pasted into the chat itself says to arrange a later poll about once a minute
 and warns that missed check-ins become Off Duty. Confirm the full guide says
 ARC does not wake chats. Stop polling until the AI becomes Off Duty, then poll
-again and confirm it returns On Duty. Confirm Room History is newest-first,
-separately scrollable, and complete from the first room event.
+again and confirm it returns On Duty. Confirm Room History is newest-first and
+separately scrollable, with at most 50 events per page. Navigate Earlier/Newer/
+Newest without gaps to the first event; verify failure leaves the page unchanged.
+Open the activity window for continuous oldest-first history, selecting text,
+Find, Follow Live on/off, room switching and repeated resize/open/close/focus.
+Run the signed two-window stress and wire-upgrade cases in ARC_2_5_TEST_REVIEW.md.
 
 Declare Working before pausing polls; extend its deadline strictly later
 before expiry; reject an earlier extension; verify exact-deadline Off Duty,

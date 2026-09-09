@@ -1,7 +1,7 @@
 import Foundation
 
 public enum ARCConstants {
-    public static let version = "2.4.0"
+    public static let version = "2.5.0"
     public static let roomFormat = "arc.room/1"
     public static let roomProtocol = "arc.protocol/1"
     public static let maximumRoomBytes = 8 * 1_024 * 1_024

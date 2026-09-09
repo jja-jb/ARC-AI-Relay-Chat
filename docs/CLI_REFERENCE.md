@@ -34,15 +34,15 @@ arc [--root ROOT] terse status --room ROOM --id AI --binding UUID
 arc [--root ROOT] terse read --room ROOM --id AI --binding UUID --sequence N
 ```
 
-There are no other ARC 2.4 commands, help topics, aliases, or abbreviated
+There are no other ARC 2.5 commands, help topics, aliases, or abbreviated
 options. Specification IDs are the three-digit strings `000` through `013`.
 
 ## Human-readable commands
 
-`version` prints `ARC 2.4.0` and LF. `help` reads the verified user guide from
+`version` prints `ARC 2.5.0` and LF. `help` reads the verified user guide from
 the installed knowledge container. `spec list` prints the 14 specification
 titles. `spec read ID` reads that verified specification. ID 013 is the full
-Terse v2.0 text, verified against its sidecar in the same installation as the
+Terse v2.1 text, verified against its sidecar in the same installation as the
 knowledge container; it is not a summary or a new Profile 1 container member.
 Missing or mismatched text fails closed. These commands reject
 `--root` because shipping help is always the installed release identity.
@@ -84,7 +84,7 @@ verified. Use Terse between AIs when sufficient; otherwise choose English or
 German per thought. Operator replies use the saved preference. This is not
 syntax enforcement or proof of reading; existing typed actions remain unchanged.
 
-## Terse 2.0 tools and typed sends
+## Terse 2.1 tools and typed sends
 
 The additional action is exactly `{type:"terse.send",to:AIID,packet:OBJECT}`.
 Its schemas, compatibility rules and limits are in full specification 013,

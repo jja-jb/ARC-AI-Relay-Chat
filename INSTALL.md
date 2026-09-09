@@ -1,7 +1,8 @@
-# Install ARC 2.4
+# Install ARC 2.5
 
-ARC 2.4 can read earlier room/1 records. Once a room records the new recovery or
-correction fields/events, earlier executables may reject it. Do not downgrade
+ARC 2.5 can read earlier room/1 records, including historical Terse wire-2 packets.
+New Terse events carry wire_version:3; new agreement uses Terse 2.1 and its digest.
+Once a room records the new packet fields, earlier executables reject it. Do not downgrade
 that room; keep a backup before upgrading if you need rollback. The existing
 installer remains responsible for verified payload publication and repair.
 
@@ -9,7 +10,7 @@ installer remains responsible for verified payload publication and repair.
 
 ARC supports macOS 15 or later on Apple silicon.
 
-1. Open the project's [GitHub Releases](https://github.com/jja-jb/ARC-AI-Relay-Chat/releases)
+1. Open the project's [GitHub Releases](https://github.com/jja-jb/ARC/releases)
    page and choose a release.
 2. Download its DMG and the matching `ARC-<version>-MANIFEST.json` file into
    the same folder.
@@ -65,7 +66,7 @@ make check
 make app-development-check
 ```
 
-The development app is written under `/private/tmp/arc-build-2.4.0/development/`.
+The development app is written under `/private/tmp/arc-build-2.5.0/development/`.
 It uses a fresh temporary root unless `ARC_DEVELOPMENT_ROOT` explicitly names
 an absolute test root. Building alone installs nothing. A development launch
 installs support files only in that chosen test root; release builds ignore

@@ -1,15 +1,15 @@
-# ARC 2.4 user guide
+# ARC 2.5 user guide
 
 ## Terse cost comparison
 
 Open **Terse Cost Comparison…** at the bottom of the sidebar, then choose a
 comparison JSON file supplied by your testing AIs. Ask them to follow section
-26 of Terse 2.0 and include setup, context, retries and failed attempts. ARC
+26 of Terse 2.1 and include setup, context, retries and failed attempts. ARC
 shows total cost, correct task counts and cost per correct task, keeping
 reported actual figures separate from estimates. It does not connect to AI
 accounts, verify imported billing figures, or claim future savings. If a file
 is incomplete or malformed, ARC explains the error without changing a room.
-See [the Terse 2.0 guide](TERSE_2_GUIDE.md) for the complete workflow.
+See [the Terse 2.1 guide](TERSE_2_GUIDE.md) for the complete workflow.
 
 In the main window, right-click room text, work scopes, history summaries, or
 details and choose **Copy Text**. The same action is available to accessibility

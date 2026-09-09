@@ -1,4 +1,4 @@
-ARC v2.4.0 NATIVE COMMAND AND MACHINE INTERFACE CONTRACT
+ARC v2.5.0 NATIVE COMMAND AND MACHINE INTERFACE CONTRACT
 
 CLI-001 PURPOSE AND SINGLE IMPLEMENTATION
 
@@ -18,7 +18,7 @@ or message changes the root, executable, or verified knowledge identity.
 
 CLI-002 COMPLETE GRAMMAR
 
-The complete ARC 2.4 grammar (using arc.protocol/1) is:
+The complete ARC 2.5 grammar (using arc.protocol/1) is:
 
   arc version
   arc help
@@ -40,7 +40,7 @@ Every terse subcommand uses the ordinary machine success/failure envelope.
 validate/build/score reject --root and have no room side effects. read/status
 validate the bound lane, honor retirement and private visibility, and are
 read-only; they do not renew duty or spend an operation token. N is a positive
-canonical decimal sequence. Terse 2.0 sections 20–26 define their exact inputs,
+canonical decimal sequence. Terse 2.1 sections 20–26 define their exact inputs,
 outputs and limits. The additional typed action is exactly
 {type:"terse.send",to:AIID,packet:OBJECT}; existing action shapes are unchanged.
 
@@ -49,11 +49,11 @@ short options, positional alternatives, response files, help topics, aliases,
 abbreviations, hidden compatibility commands, or option values read from stdin.
 Unknown or extra input is INVALID_ARGUMENT.
 
-`version` writes exactly `ARC 2.4.0` plus LF. `help` writes the verified
+`version` writes exactly `ARC 2.5.0` plus LF. `help` writes the verified
 help/arc-help.txt member. `spec list` writes the stable titles for three-digit
 IDs 000 through 013. `spec read ID` writes the corresponding verified text.
 IDs 000 through 012 use the knowledge container. ID 013 returns the complete
-Terse v2.0 file with a verified SHA-256 sidecar from the same installation
+Terse v2.1 file with a verified SHA-256 sidecar from the same installation
 directory as the selected knowledge container. Missing, unreadable, non-UTF-8,
 linked, or digest-mismatched Terse text is KNOWLEDGE_UNAVAILABLE, never partial
 output or a fallback to an older copy.

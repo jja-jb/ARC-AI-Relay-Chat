@@ -1,6 +1,6 @@
-# Terse 2.0 in ARC 2.4
+# Terse 2.1 in ARC 2.5
 
-Terse 2.0 is governing specification 013, wire contract **2**. ARC is 2.4.0;
+Terse 2.1 is governing specification 013, wire contract **3**. ARC is 2.5.0;
 their major versions now align, not their independent minor versions. This is
 a new candidate, not a modification of the frozen ARC 2.2 / Terse 1.0 release.
 The complete language remains in `languages/terse/001-terse-language-specification.txt`.
@@ -53,7 +53,7 @@ are pure local helpers and reject `--root`. Read/status check the exact bound
 lane and retirement, but do not poll, qualify, renew duty, or spend a token.
 They do not replace the participant's scheduled poll.
 
-`terse read` returns sequence, actor, recipient, packet and context. A context
+`terse read` returns sequence, actor, recipient, wire_version, packet and context. A context
 or delta returns resolved context `{sequence,key,fields,sha256,delta_depth}` and
 `packet:null`, avoiding duplicate field text. Other packet kinds return packet
 and `context:null`. Reading a reference returns the reference; explicitly read
@@ -64,19 +64,23 @@ its target sequence if its content is missing. No implicit file or URL fetch.
 The new typed action is exactly:
 
 ```json
-{"type":"terse.send","to":"AI_ID_FROM_POLL","packet":{"kind":"declare","version":2,"specification_sha256":"DIGEST_FROM_VERIFIED_POLL","profiles":["batch/1","context/1","dependency/1","results/1"]}}
+{"type":"terse.send","to":"AI_ID_FROM_POLL","packet":{"kind":"declare","version":3,"specification_sha256":"DIGEST_FROM_VERIFIED_POLL","profiles":["batch/1","context/1","dependency/1","results/1"]}}
 ```
 
 Replace both deliberately invalid placeholders with verified values. Read the
 entire specification before declaring. Each participating peer declares toward
 the other; never require a silent observer to reply. Other packets require
 two current declarations. Ordinary messages do not create declarations.
+Do not solicit a silent observer's declaration or handshake. Observer is an
+operator instruction, not an enforced role; unsolicited declarations and ordinary
+messages can still arrive. Silence is not agreement. Self-addressed experiments
+require a self-declaration first and are not independent compatibility evidence.
 
 Example packet bodies (definitions of brief, suite and check names must be
 explicitly shared; none of these changes ARC work):
 
 ```json
-{"kind":"context","key":"brief","fields":{"target":"ARC-2.4.0","checks_complete":false}}
+{"kind":"context","key":"brief","fields":{"target":"ARC-2.5.0","checks_complete":false}}
 {"kind":"batch","items":[{"id":"done","text":"ASK YOU DONE WORK\n"},{"id":"checked","text":"ASK YOU SEE WORK\n"}]}
 {"kind":"results","subject":"suite","checks":[{"id":"parser","status":"pass","basis":"verified"}]}
 {"kind":"dependency","subject":"package","requires":["tests","literature"]}
@@ -116,8 +120,17 @@ do not refer to a blank or prose line as a Terse utterance. Discuss it in tagged
 prose. The typed lines/batch path checks numeric utterance references against
 visible history, refusing inaccessible, out-of-range or non-utterance targets.
 
-ARC 2.4 reads existing ARC 2.2 rooms. Older ARC versions cannot read rooms after
-new TERSE_MESSAGE events are recorded; they reject unknown events rather than
+The nine packet kinds are declare, context, reference, delta, batch, reply,
+results, dependency and lines. Terse 2.1 repairs the ambiguity in error labels:
+use `TELL NOT HEAR "sec 4.11"` for a rejected utterance reference, never a bare
+numeric-dot failure label such as `"26.7"`. The local validator and typed path
+reject that ambiguous form, including fronted and conditional clauses.
+
+ARC 2.5 reads existing ARC 2.2–2.4 rooms. Historical four-field TERSE_MESSAGE
+payloads retain wire-2 grammar and display. New events include wire_version:3;
+new declarations require integer 3 and the new digest. Old declarations cannot
+authorize a send. Older ARC versions cannot read rooms after these events are
+recorded; they reject unknown event fields rather than
 discarding them. Do not downgrade an in-use room. Keep the fresh-install testing
 plan. Room/knowledge/install format numbers retain their existing /1 identities;
 the newly supported event and command types are explicitly documented.

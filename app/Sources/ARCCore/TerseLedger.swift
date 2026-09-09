@@ -22,12 +22,14 @@ enum ARCTerseLedger {
                   payload["binding_generation"]?.integerValue == sender.bindingGeneration,
                   payload["target_binding_generation"]?.integerValue == target.bindingGeneration,
                   payload["specification_sha256"]?.stringValue == digest else { return false }
-            return packet($0)?.objectValue?["kind"]?.stringValue == "declare"
+            return payload["wire_version"]?.integerValue == Int64(ARCTerse.version)
+                && packet($0)?.objectValue?["kind"]?.stringValue == "declare"
+                && packet($0)?.objectValue?["version"]?.integerValue == Int64(ARCTerse.version)
         }.flatMap(packet)
     }
     static func status(_ document: ARCRoomDocument, caller: ARCParticipantRecord, digest: String) -> ARCJSONValue {
         .object([
-            "version": .integer(2), "specification_sha256": .string(digest),
+            "version": .integer(Int64(ARCTerse.version)), "specification_sha256": .string(digest),
             "meaning": .string("Declarations are participant claims, not proof of reading or understanding. Lost context requires rereading before reuse."),
             "peers": .array(document.participants.filter { $0.id != caller.id && $0.phase != .retired }.map { peer in
                 let sent = declaration(document, sender: caller, target: peer, digest: digest)

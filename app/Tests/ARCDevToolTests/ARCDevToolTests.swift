@@ -9,13 +9,13 @@ final class ARCDevToolTests: XCTestCase {
         let checks: [(String, String)] = [
             ("10_specs/platform_support/000-shared-constitution.txt", "Specifications 000 through 013"),
             ("README.md", "Specifications 000 through 013"),
-            ("ARCHITECTURE.md", "full governing Terse v2.0 specification, 013"),
-            ("man/arc.1", "ARC 2.4.0"),
+            ("ARCHITECTURE.md", "full governing Terse v2.1 specification, 013"),
+            ("man/arc.1", "ARC 2.5.0"),
             ("man/arc.1", "IDs 000 through 013"),
             ("man/arc.1", "message.broadcast"),
-            ("INSTALL.md", "# Install ARC 2.4"),
-            ("RELEASE_CHECKLIST.md", "# ARC 2.4 release checklist"),
-            ("brand/arc-product-brief.html", "Terse v2.0 is governing specification 013")
+            ("INSTALL.md", "# Install ARC 2.5"),
+            ("RELEASE_CHECKLIST.md", "# ARC 2.5 release checklist"),
+            ("brand/arc-product-brief.html", "Terse v2.1 is governing specification 013")
         ]
         for (path, expected) in checks {
             let text = try String(contentsOf: source.appendingPathComponent(path), encoding: .utf8)
@@ -28,7 +28,7 @@ final class ARCDevToolTests: XCTestCase {
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let bytes = try Data(contentsOf: source.appendingPathComponent(ARCReleaseSupport.terseSpecification))
         XCTAssertEqual(KnowledgeContainer.hex(KnowledgeContainer.sha256(bytes)),
-            "fdd93c6be7892ac2269472c7213b34a20f013b5b93afb95688ae90106d4552b2")
+            "378aba7b229cf1985b77cdb934662c346929aae4ba9da249a3317f4a2ca4d723")
         let provenance = try String(contentsOf: source.appendingPathComponent("languages/terse/README.md"), encoding: .utf8)
         XCTAssertTrue(provenance.contains("`" + KnowledgeContainer.hex(KnowledgeContainer.sha256(bytes)) + "`"),
             "Terse's documented current digest must match the exact packaged source bytes")
@@ -38,7 +38,7 @@ final class ARCDevToolTests: XCTestCase {
             "14.14 One thought", "19. Entering a room", "Appendix A", "Appendix B", "Appendix C"] {
             XCTAssertTrue(specification.contains(section), section)
         }
-        XCTAssertTrue(specification.contains("TELL WORD SAME 2"))
+        XCTAssertTrue(specification.contains("TELL WORD SAME 3"))
         XCTAssertTrue(specification.contains("26. Cost and accuracy scorecard"))
         XCTAssertTrue(specification.contains("18.13 No utterance reference to layout or prose"))
         XCTAssertFalse(specification.contains("TELL WORD SAME 6"))

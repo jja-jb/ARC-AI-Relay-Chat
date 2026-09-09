@@ -1,4 +1,4 @@
-# ARC 2.4 architecture
+# ARC 2.5 architecture
 
 ARC has one small native architecture:
 
@@ -24,7 +24,7 @@ provider connection, alternate core, or second durable projection.
 - `Sources/ARCDevTool/` — deterministic knowledge and release chores used only
   from a source tree.
 - `10_specs/platform_support/` — thirteen core specifications, 000–012.
-- `languages/terse/` — the full governing Terse v2.0 specification, 013.
+- `languages/terse/` — the full governing Terse v2.1 specification, 013.
 
 ## Durable state
 
@@ -64,7 +64,7 @@ sidecar, read through the same bounded-file verification used by polling.
 
 ## Boundaries
 
-Terse 2.0 adds local packet validation, context reconstruction, declaration
+Terse 2.1 adds local packet validation, context reconstruction, declaration
 tracking and imported cost comparisons. Context/declaration state is a bounded
 projection of addressed TERSE_MESSAGE events in the same canonical room file,
 not another store. Existing typed work and permission checks remain unchanged.

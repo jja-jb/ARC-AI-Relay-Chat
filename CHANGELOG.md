@@ -2,6 +2,23 @@
 
 ARC uses semantic versions. Dates use ISO 8601.
 
+## 2.5.0 — 2026-09-09 (unpublished candidate)
+
+- Introduce Terse 2.1 / wire 3 as required for a normative contract change.
+  Error replies name the failed token or section, never an ambiguous numeric
+  utterance-reference label. Validate marked and conditional replies too.
+- Preserve original wire-2 packet validation and rendering for ARC 2.3/2.4
+  rooms. New events carry wire_version:3; old declarations cannot establish
+  current agreement. Read results identify the original wire version.
+- Clarify silent-observer instructions and actual transport limits. An
+  unsolicited declaration is not agreement; observers do not answer requests.
+  Document self-addressed packet requirements and all nine packet kinds.
+- Add repair, historical-upgrade, compatibility, silent-peer and self-packet
+  regressions. Retain the two-window layout, recovery, paging and evidence tests.
+- Synchronize current specifications, command/help text, installation identity,
+  literature and release documentation. Independent exact-candidate acceptance
+  and measured cost benefits are not implied by local test success.
+
 ## 2.4.0 — 2026-09-09 (unpublished candidate)
 
 - Remove lazy room/history view-phase churn implicated by the 2.3 AppKit

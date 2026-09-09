@@ -742,10 +742,9 @@ enum ARCRoomCodec {
                 && text("text", maximum: 16_384, newlines: true, trimWhitespace: false)
         case "TERSE_MESSAGE":
             valid = ai(event.actor) && ai(event.recipient) && event.subject == nil
-                && exact(["packet", "binding_generation", "target_binding_generation", "specification_sha256"])
                 && integer("binding_generation") && integer("target_binding_generation")
                 && payload["specification_sha256"]?.stringValue.map(ARCText.isSHA256) == true
-                && payload["packet"].map { (try? ARCTerse.validatePacket($0)) != nil } == true
+                && (try? ARCTerse.buildStoredPacket(event.payload)) != nil
         case "WORK_ASSIGNED":
             valid = ai(event.actor) && ai(event.recipient) && work(event.subject)
                 && exact(["evidence_mode", "scope"])

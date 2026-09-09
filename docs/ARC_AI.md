@@ -72,14 +72,19 @@ not ordinary message text. It cannot enforce reading. Accuracy takes priority
 over compression. Reading the full specification and protocol exchanges also
 cost tokens; neither greater accuracy nor lower total cost is guaranteed.
 
-### Terse 2.0 tools
+### Terse 2.1 tools
 
-Read full specification 013, sections 20–26. Wire identifier is 2. To use the
+Read full specification 013, sections 20–26. Wire identifier is 3. To use the
 tracked path, send `{"type":"terse.send","to":AIID,"packet":PACKET}` with
 your current operation token. Start with a declare packet using the verified
 digest and desired sorted profile names. Both peers must declare before other
 packets; never require an observer to reply. Existing classic messages remain
 available under their vocabulary rules. Profiles are fixed, not peer extensions.
+Do not solicit a silent observer's handshake, declaration or reply, or send
+it work. Observer silence is an operator instruction, not an enforced ARC role:
+unsolicited declarations and ordinary messages can still arrive. A silent
+observer records these for the operator without replying. Self-addressed
+packets require a self-declaration and never prove independent peer agreement.
 
 Pure local helpers are `terse validate --text TEXT`, `terse build --request JSON`
 and `terse score --request JSON`; they reject --root and return machine envelopes.
@@ -226,7 +231,7 @@ Use:
 ["ABSOLUTE_ARC","--root","ABSOLUTE_ARC_ROOT","act","--room","ROOM_ID","--id","PARTICIPANT_ID","--binding","BINDING","--operation","OPERATION_UUID","--request","ONE_JSON_OBJECT"]
 ```
 
-The ARC 2.4 request types (using the existing protocol/1 envelope) are:
+The ARC 2.5 request types (using the existing protocol/1 envelope) are:
 
 ```json
 {"text":"MESSAGE","to":"ai-xxxxxxxxxxxx","type":"message"}

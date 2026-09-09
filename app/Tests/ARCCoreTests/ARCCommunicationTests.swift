@@ -17,8 +17,8 @@ final class ARCCommunicationTests: XCTestCase {
             ARCCommunication.specificationRelativePath), encoding: .utf8)
         try installSpecification(root: root, text: full)
         XCTAssertEqual(try ARCCommunication.specificationText(installationURL: installation), full)
-        XCTAssertTrue(full.contains("Status: Terse v2.0, release candidate"))
-        XCTAssertTrue(full.contains("TELL WORD SAME 2"))
+        XCTAssertTrue(full.contains("Status: Terse v2.1, release candidate"))
+        XCTAssertTrue(full.contains("TELL WORD SAME 3"))
         try Data((full + "changed\n").utf8).write(to: ARCCommunication.specificationURL(rootURL: root))
         XCTAssertThrowsError(try ARCCommunication.specificationText(installationURL: installation)) { error in
             XCTAssertEqual((error as? ARCError)?.code, .knowledgeUnavailable)
@@ -44,6 +44,10 @@ final class ARCCommunicationTests: XCTestCase {
                 XCTAssertTrue(text.contains("does not by itself justify avoiding Terse"))
                 XCTAssertFalse(text.contains("test may include both"))
                 XCTAssertFalse(text.contains("test may deliberately include both"))
+                if text == setup || text == guide {
+                    XCTAssertTrue(text.contains("Do not solicit a silent observer's handshake"))
+                    XCTAssertTrue(text.contains("not an enforced"))
+                }
             }
         }
         XCTAssertTrue(terse.contains("14.15 In ARC"))

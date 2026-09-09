@@ -481,6 +481,7 @@ public final class ARCStore: @unchecked Sendable {
                 guard let packet = ARCTerseLedger.packet(event) else { throw ARCTerse.fail("not a structured Terse message.") }
                 let kind = packet.objectValue?["kind"]?.stringValue
                 return .object(["sequence": .integer(sequence), "actor": .string(event.actor),
+                    "wire_version": event.payload.objectValue?["wire_version"] ?? .integer(2),
                     "recipient": .string(event.recipient!), "packet": kind == "context" || kind == "delta" ? .null : packet,
                     "context": kind == "context" || kind == "delta" ? try ARCTerseLedger.resolve(sequence, document: document, reader: id) : .null])
             }
@@ -1371,6 +1372,7 @@ extension ARCStore {
             try appendEvent(to: &document, logical: now, kind: "TERSE_MESSAGE", actor: caller.id,
                 recipient: target.id, payload: .object([
                     "packet": packet,
+                    "wire_version": .integer(Int64(ARCTerse.version)),
                     "binding_generation": .integer(caller.bindingGeneration),
                     "target_binding_generation": .integer(target.bindingGeneration),
                     "specification_sha256": .string(digest)

@@ -23,7 +23,7 @@ final class ARCTerseTests: XCTestCase {
 
     func testBuilderStrictJSONBoundsAndUnknownExtensions() throws {
         let value = try json(#"{"kind":"results","subject":"suite","checks":[{"id":"parse","status":"pass","basis":"verified"}]}"#)
-        XCTAssertTrue(try ARCTerse.build(value).hasPrefix("@terse/2 {"))
+        XCTAssertTrue(try ARCTerse.build(value).hasPrefix("@terse/3 {"))
         XCTAssertEqual(try ARCTerse.build(value), try ARCTerse.build(json(ARCTerse.canonical(value))))
         for invalid in [#"{"kind":"lines","kind":"declare"}"#, #"{"n":1.0}"#, #"{"n":9223372036854775808}"#] {
             XCTAssertThrowsError(try json(invalid))
@@ -165,9 +165,70 @@ final class ARCTerseTests: XCTestCase {
         let seq = sent.eventSequences[0]
         for line in [2, 3, 99] {
             XCTAssertThrowsError(try f.send(1, to: 0, .object(["kind": .string("lines"), "text": .string("TELL \"\(seq).\(line)\" GOOD\n")])))
+            XCTAssertThrowsError(try f.send(1, to: 0, .object(["kind": .string("lines"), "text": .string("TELL NOT HEAR \"\(seq).\(line)\"\n")])))
         }
+        _ = try f.send(1, to: 0, .object(["kind": .string("lines"), "text": .string("TELL NOT HEAR \"sec 4.11\"\n")]))
         _ = try f.send(1, to: 0, .object(["kind": .string("lines"), "text": .string("TELL HEAR \"\(seq).1\"\n")]))
         _ = try f.send(1, to: 0, .object(["kind": .string("lines"), "text": .string("[en] The reference \"\(seq).2\" names layout.\n")]))
+    }
+
+    func testFailureLabelsAreUnambiguousIncludingMarkedAndConditionalClauses() throws {
+        for prefix in ["", "SEE ", "THINK WAS ", "WHEN 10 ", "YOU "] {
+            for label in ["26.7", "0.0", "14.3"] {
+                XCTAssertThrowsError(try ARCTerse.validateText(prefix + "TELL NOT HEAR \"\(label)\"\n"))
+            }
+            XCTAssertNoThrow(try ARCTerse.validateText(prefix + "TELL NOT HEAR \"sec 4.11\"\n"))
+            XCTAssertThrowsError(try ARCTerse.validateText(prefix + "TELL NOT HEAR\n"))
+        }
+        XCTAssertThrowsError(try ARCTerse.validateText("WHEN (TELL NOT HEAR \"26.7\") TELL WORK STOP\n"))
+        XCTAssertNoThrow(try ARCTerse.validateText("TELL NOT HEAR \"SOON\"\n"))
+    }
+
+    func testHistoricalWireTwoPacketsRemainReadableButCannotAuthorizeCurrentSend() throws {
+        let f = try Fixture(); defer { f.cleanup() }; try f.handshake()
+        var document = try ARCRoomCodec.decode(Data(contentsOf: f.store.roomFileURL(room: f.room)), expectedID: f.room)
+        for i in document.activity.indices where document.activity[i].kind == "TERSE_MESSAGE" {
+            var payload = document.activity[i].payload.objectValue!
+            payload.removeValue(forKey: "wire_version")
+            var packet = payload["packet"]!.objectValue!
+            packet["version"] = .integer(2)
+            payload["packet"] = .object(packet)
+            document.activity[i].payload = .object(payload)
+        }
+        let legacyBytes = try ARCRoomCodec.encode(document)
+        let reopened = try ARCRoomCodec.decode(legacyBytes, expectedID: f.room)
+        XCTAssertNil(ARCTerseLedger.declaration(reopened, sender: reopened.participants[0], target: reopened.participants[1], digest: f.digest))
+        let payload = try XCTUnwrap(reopened.activity.last(where: { $0.kind == "TERSE_MESSAGE" })?.payload)
+        XCTAssertTrue(try ARCTerse.buildStoredPacket(payload).hasPrefix("@terse/2 "))
+        XCTAssertThrowsError(try ARCTerse.validatePacket(payload.objectValue!["packet"]!))
+        var oldRepair = payload.objectValue!
+        oldRepair["packet"] = try json(#"{"kind":"lines","text":"TELL NOT HEAR \"26.7\"\n"}"#)
+        XCTAssertNoThrow(try ARCTerse.buildStoredPacket(.object(oldRepair)))
+        oldRepair["wire_version"] = .integer(3)
+        XCTAssertThrowsError(try ARCTerse.buildStoredPacket(.object(oldRepair)))
+        oldRepair["wire_version"] = .integer(99)
+        XCTAssertThrowsError(try ARCTerse.buildStoredPacket(.object(oldRepair)))
+        try legacyBytes.write(to: f.store.roomFileURL(room: f.room))
+        let legacySequence = try XCTUnwrap(reopened.activity.last(where: { $0.kind == "TERSE_MESSAGE" })?.sequence)
+        XCTAssertEqual(try f.read(1, sequence: legacySequence).objectValue?["wire_version"], .integer(2))
+        XCTAssertThrowsError(try f.send(0, to: 1, json(#"{"kind":"lines","text":"TELL HEAR\n"}"#)))
+        try f.handshake()
+        let sent = try f.send(0, to: 1, json(#"{"kind":"lines","text":"TELL NOT HEAR \"sec 4.11\"\n"}"#))
+        XCTAssertEqual(try f.read(1, sequence: sent.eventSequences[0]).objectValue?["wire_version"], .integer(3))
+        XCTAssertTrue(try f.store.diagnose(room: f.room).valid)
+    }
+
+    func testSilentPeerNeedsNoDeclarationAndSelfPacketsNeedSelfDeclaration() throws {
+        let f = try Fixture(); defer { f.cleanup() }
+        let lines = try json(#"{"kind":"lines","text":"TELL HEAR\n"}"#)
+        _ = try f.send(0, to: 1, f.declaration())
+        XCTAssertThrowsError(try f.send(0, to: 1, lines), "An unsolicited declaration is not the silent peer's agreement.")
+        XCTAssertThrowsError(try f.send(0, to: 0, lines))
+        _ = try f.send(0, to: 0, f.declaration())
+        _ = try f.send(0, to: 0, lines)
+        let status = try f.read(1).objectValue!
+        guard case .array(let peers) = status["peers"] else { return XCTFail("Missing peer status") }
+        XCTAssertEqual(peers.first?.objectValue?["sent"], .boolean(false))
     }
 
     func testPrivatePacketsDoNotLeakToThirdParticipantOrThroughReferences() throws {
@@ -258,7 +319,7 @@ private final class Fixture {
         XCTAssertEqual(try store.poll(room: room, participant: ids[i], binding: bindings[i]).participant.phase, .qualified)
     }
     func declaration(digest: String? = nil, profiles: [String] = ARCTerse.profiles) -> ARCJSONValue {
-        .object(["kind": .string("declare"), "version": .integer(2), "specification_sha256": .string(digest ?? self.digest), "profiles": .array(profiles.map(ARCJSONValue.string))])
+        .object(["kind": .string("declare"), "version": .integer(Int64(ARCTerse.version)), "specification_sha256": .string(digest ?? self.digest), "profiles": .array(profiles.map(ARCJSONValue.string))])
     }
     func handshake() throws { _ = try send(0, to: 1, declaration()); _ = try send(1, to: 0, declaration()) }
     func act(_ i: Int, _ request: ARCActionRequest) throws -> ARCActResult {

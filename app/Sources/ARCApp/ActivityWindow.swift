@@ -152,7 +152,7 @@ enum ARCTranscriptPresentation {
                 .foregroundColor: NSColor.secondaryLabelColor]))
         let payload = event.payload.objectValue ?? [:]
         var body: String
-        if event.kind == "TERSE_MESSAGE", let packet = payload["packet"], let text = try? ARCTerse.build(packet) {
+        if event.kind == "TERSE_MESSAGE", let text = try? ARCTerse.buildStoredPacket(event.payload) {
             body = text
         } else if event.kind == "MESSAGE", let text = payload["text"]?.stringValue {
             body = text
