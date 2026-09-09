@@ -12,6 +12,11 @@ public enum ARCActionJSON {
         }
 
         switch type {
+        case "terse.send":
+            try exact(object, keys: ["type", "to", "packet"])
+            let packet = object["packet"]!
+            try ARCTerse.validatePacket(packet)
+            return .terseSend(to: try id(object["to"], prefix: "ai-", label: "Terse target"), packet: packet)
         case "working":
             try exact(object, keys: ["type", "until_logical_us"])
             return .working(untilLogicalUs: try positive(object["until_logical_us"], label: "Working deadline"))
@@ -104,6 +109,8 @@ public enum ARCActionJSON {
     public static func encode(_ request: ARCActionRequest) throws -> Data {
         let value: ARCJSONValue
         switch request {
+        case .terseSend(let to, let packet):
+            value = .object(["type": .string("terse.send"), "to": .string(to), "packet": packet])
         case .working(let deadline):
             value = .object(["type": .string("working"), "until_logical_us": .integer(deadline)])
         case .message(let to, let text):
@@ -194,7 +201,7 @@ public enum ARCActionJSON {
     }
 }
 
-private struct ARCStrictJSONParser {
+struct ARCStrictJSONParser {
     private let bytes: [UInt8]
     private var index = 0
     private var valueCount = 0

@@ -118,7 +118,7 @@ enum ARCTranscriptPresentation {
     }
 
     static func category(for kind: String) -> String {
-        if kind == "MESSAGE" { return "Message" }
+        if kind == "MESSAGE" || kind == "TERSE_MESSAGE" { return "Message" }
         if kind.hasPrefix("WORK_") { return "Work" }
         if kind.hasPrefix("QUALIFICATION_") || kind == "AI_QUALIFIED" { return "Access check" }
         if kind == "AI_WORKING" || kind == "AI_RETURNED_ON_DUTY" { return "Duty" }
@@ -152,7 +152,9 @@ enum ARCTranscriptPresentation {
                 .foregroundColor: NSColor.secondaryLabelColor]))
         let payload = event.payload.objectValue ?? [:]
         var body: String
-        if event.kind == "MESSAGE", let text = payload["text"]?.stringValue {
+        if event.kind == "TERSE_MESSAGE", let packet = payload["packet"], let text = try? ARCTerse.build(packet) {
+            body = text
+        } else if event.kind == "MESSAGE", let text = payload["text"]?.stringValue {
             body = text
         } else {
             body = ARCActivityPresentation.summary(event, participants: participants)

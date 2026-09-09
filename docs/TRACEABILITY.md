@@ -1,4 +1,11 @@
-# ARC 2.2.0 traceability
+# ARC 2.3.0 traceability
+
+Terse 2.0 specification 013 sections 20–26 map to ARCTerseTests and the
+Terse/ledger/score helpers in ARCCore. TERSE_MESSAGE uses the existing durable
+codec and operation-token tests. ARCActivityWindowTests cover literal packet
+rendering. The sidebar cost import is checked visually; it performs bounded
+local file reading and computation off the UI thread. See TERSE_2_GUIDE.md and
+ARC_2_3_TEST_REVIEW.md for the exact feature and next-test mapping.
 
 Every determining requirement has one explicit implementation owner and one
 verification route below. `make check` proves local evidence. DVT proves the
@@ -8,7 +15,7 @@ public behavior fails `source-check`.
 
 ## Local regression additions — September 2026
 
-ARC 2.2: QD-005/QD-008 and UI-003 are covered by
+ARC 2.3: QD-005/QD-008 and UI-003 are covered by
 testAutomaticRecoveryIsBoundedFreshAndRestartsOnlyOnOwnPoll and
 testConnectionRecoveryGuidanceIsExplicitAndRendersBothAppearances. MW-005/MW-007,
 CLI-008 and REC-010 are covered by
@@ -29,17 +36,17 @@ stacks, not a claim that every possible interface stall has been excluded.
 `testBlankMessageErrorsAndByteBoundsPreserveStateAndToken` and
 `testDirectSelfMessageIsDeliberateAndRetryDoesNotDuplicate` cover MW-003's
 diagnostics, Unicode boundary, refusal/retry, and self-note privacy. Terse's
-full v1.0 bytes and per-recipient broadcast rule are pinned in packaging
+full v2.0 bytes and per-recipient broadcast rule are pinned in packaging
 tests. Live AI conformance and independent acceptance remain separate gates.
 Development-root isolation is covered by
 `testDevelopmentBuildDefaultsToAnIsolatedRoot`; release builds retain the
 standard root and ignore development overrides. The bounded manual interface
 smoke check is recorded in ARC_2_1_TEST_REVIEW.md.
 
-The source specification set is synchronized to ARC 2.2.0 behavior. Room,
+The source specification set is synchronized to ARC 2.3.0 behavior. Room,
 protocol, qualification, knowledge Profile 1, and report schema identifiers
-retain their own versions; they do not become /2 because the product is 2.2.
-The complete Terse v1.0 source remains in languages/terse/ as governing ARC
+retain their own versions; they do not become /2 because the product is 2.3.
+The complete Terse v2.0 source remains in languages/terse/ as governing ARC
 specification 013, mapped through QD-001 / IR-003 and CLI-002. Its separate
 signed file preserves the Profile 1 format. The full verified text is exposed
 by `arc spec read 013`; `testGoverningTerseSpecificationReturnsOnlyCompleteVerifiedBytes`
@@ -59,7 +66,7 @@ filtering, eligibility, and replay. The full-room retirement test now also
 proves broadcast refusal leaves bytes unchanged. Communication tests enforce
 the shared nonduplicating language policy in onboarding and every poll.
 At 2.0, dev-tool tests pinned development draft 7; the current tests pin the
-formal Terse v1.0 bytes. Retained checks cover explicit focus/repair,
+formal Terse v2.0 bytes. Retained checks cover explicit focus/repair,
 version contract, corrected FILE example, and packaged digest. These textual
 checks are not a claim of semantic understanding by any AI.
 Installation regression `testVersionTwoFreshInstallUpgradeAndInvalidVersions`

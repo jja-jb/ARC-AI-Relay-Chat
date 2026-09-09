@@ -139,6 +139,34 @@ struct ARCCommand {
             )
             writeSuccess(result)
 
+        case "terse":
+            guard let subcommand = arguments.first else { throw usage() }
+            let rest = Array(arguments.dropFirst())
+            switch subcommand {
+            case "validate":
+                guard !hasExplicitRoot else { throw usage() }
+                let options = try parseOptions(rest, required: ["--text"])
+                try ARCTerse.validateText(options["--text"]!)
+                writeSuccess(ARCJSONValue.object(["syntax_valid": .boolean(true),
+                    "context_checks": .string("not performed: peer compatibility, references, variables, truth and authority require separate checks")]))
+            case "build", "score":
+                guard !hasExplicitRoot else { throw usage() }
+                let options = try parseOptions(rest, required: ["--request"])
+                let value = try ARCTerse.decode(Data(options["--request"]!.utf8))
+                if subcommand == "build" { writeSuccess(ARCJSONValue.object(["text": .string(try ARCTerse.build(value))])) }
+                else { writeSuccess(try ARCTerse.score(value)) }
+            case "read", "status":
+                let required: Set<String> = subcommand == "read" ? ["--room", "--id", "--binding", "--sequence"] : ["--room", "--id", "--binding"]
+                let options = try parseOptions(rest, required: required)
+                var sequence: Int64?
+                if let raw = options["--sequence"] {
+                    guard let n = Int64(raw), n > 0, String(n) == raw else { throw usage() }
+                    sequence = n
+                }
+                writeSuccess(try ARCStore(rootURL: root).terseRead(room: options["--room"]!, participant: options["--id"]!, binding: options["--binding"]!, sequence: sequence))
+            default: throw usage()
+            }
+
         case "doctor":
             var doctorArguments = arguments
             let jsonIndex = doctorArguments.firstIndex(of: "--json")
@@ -234,7 +262,7 @@ struct ARCCommand {
         var values = raw
         if values.first == "--root", values.count >= 3 { values.removeFirst(2) }
         guard let command = values.first else { return false }
-        return command == "poll" || command == "act"
+        return command == "poll" || command == "act" || command == "terse"
             || (command == "doctor" && values.contains("--json"))
     }
 
@@ -271,7 +299,7 @@ struct ARCCommand {
     private static func usage() -> ARCError {
         ARCError(
             .invalidArgument,
-            "Usage: arc version | help | spec list | spec read ID | guide | poll | act | doctor"
+            "Usage: arc version | help | spec list | spec read ID | guide | poll | act | terse | doctor"
         )
     }
 
@@ -289,7 +317,7 @@ struct ARCCommand {
     010  Verification
     011  Durable record
     012  AI knowledge container
-    013  Terse v1.0 (full language specification)
+    013  Terse v2.0 (full language specification)
     """ + "\n"
 }
 

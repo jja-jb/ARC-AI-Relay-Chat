@@ -859,7 +859,7 @@ enum ARCActivityPresentation {
                 ARCFormatting.recordedLogicalTime($0, event: event)
             } ?? "the recorded deadline"
             return "\(subjectName) is Working until \(deadline)."
-        case "MESSAGE":
+        case "MESSAGE", "TERSE_MESSAGE":
             let sender = actorName(event.actor, participants: participants)
             let recipient = event.recipient.map {
                 actorName($0, participants: participants)

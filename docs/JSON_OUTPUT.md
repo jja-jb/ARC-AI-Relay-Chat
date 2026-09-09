@@ -1,6 +1,6 @@
 # ARC machine JSON
 
-`poll`, `act`, and `doctor --json` return one compact UTF-8 JSON object followed
+`poll`, `act`, `terse` subcommands and `doctor --json` return one compact UTF-8 JSON object followed
 by LF. Keys are sorted. No machine response contains color, a stack trace,
 provider or model assumptions, another AI's binding, or an absolute host path.
 
@@ -42,7 +42,9 @@ Exit status is 0, 2, 3, or 4 as described in
 
 ## Request rules
 
-ARC 2.2 adds work.correct with exactly type, work, revision, reason, evidence;
+ARC 2.3 adds terse.send with exactly type, to, packet; specification 013
+sections 20–26 govern packet and helper output shapes. It retains work.correct
+with exactly type, work, revision, reason, evidence;
 see CLI_REFERENCE.md for authority, timestamp and audit rules. Participant views
 include automatic_recovery_attempts (0–2); older views omit it and decode as 0.
 After a qualification timeout the next bound poll starts a new challenge at most
@@ -64,7 +66,9 @@ members. Text is trimmed, NFC-normalized, bounded, and free of disallowed
 control characters before use. Message text is the whitespace exception: its
 leading/trailing whitespace, blank lines, and final LF are retained after NFC
 normalization. All-whitespace messages remain invalid; the full retained text
-counts against the 16,384-byte message bound. ARC does not validate Terse syntax.
+counts against the 16,384-byte message bound. Ordinary text is not syntax-filtered.
+Structured Terse packets are validated separately without Unicode normalization
+of their content: their exact UTF-8 JSON fields determine context digests.
 
 An accepted act returns `event_sequences`, `room_revision`, nullable affected
 `participant` and `work` views, and `next_operation`. The exact retry of the

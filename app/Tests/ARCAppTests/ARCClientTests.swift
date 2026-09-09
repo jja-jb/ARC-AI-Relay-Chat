@@ -1068,7 +1068,7 @@ final class ARCInstallationTests: XCTestCase {
         try writeBundle(bundle, specificationText: "version two\n", launcherText: "launcher", releaseVersion: "2.0.0")
         try installation.ensureInstalled(rootURL: root)
         XCTAssertEqual(try String(contentsOf: ARCCommunication.specificationURL(rootURL: root), encoding: .utf8), "version two\n")
-        for version in ["2.1.0", "2.2.0"] {
+        for version in ["2.1.0", "2.2.0", "2.3.0"] {
             try writeBundle(bundle, specificationText: "version two\n", launcherText: "launcher", releaseVersion: version)
             try installation.ensureInstalled(rootURL: root)
             XCTAssertEqual(try String(contentsOf: ARCCommunication.specificationURL(rootURL: root), encoding: .utf8), "version two\n")

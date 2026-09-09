@@ -1,10 +1,10 @@
-# ARC 2.2 release checklist
+# ARC 2.3 release checklist
 
 - Verify bounded returning-poll recovery and the explicit reconnect/copy control.
 - Verify completed evidence correction, immutable history, reopening capacity,
   timestamp plausibility, stale revisions and exact replay.
 - Reconcile docs/ARC_2_2_TEST_REVIEW.md and distinguish local checks from pending
-  independent acceptance. Confirm Terse v1.0 semantics are unchanged.
+  independent acceptance. Confirm Terse v2.0 semantics are unchanged.
 
 The release procedure is [docs/RELEASING.md](docs/RELEASING.md). This checklist
 does not replace it.
@@ -37,7 +37,7 @@ does not replace it.
 ## Mac candidate
 
 - [ ] App and `arc` are arm64-only.
-- [ ] Bundle identifier is `org.jonnybass.arc`; version is `2.2.0`.
+- [ ] Bundle identifier is `org.jonnybass.arc`; version is `2.3.0`.
 - [ ] Privacy manifest declares no collection/tracking and the exact approved
       file-metadata and elapsed-time reasons.
 - [ ] Install manifest contains only regular native command, knowledge,

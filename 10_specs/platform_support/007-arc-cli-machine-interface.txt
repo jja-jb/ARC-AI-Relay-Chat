@@ -1,4 +1,4 @@
-ARC v2.2.0 NATIVE COMMAND AND MACHINE INTERFACE CONTRACT
+ARC v2.3.0 NATIVE COMMAND AND MACHINE INTERFACE CONTRACT
 
 CLI-001 PURPOSE AND SINGLE IMPLEMENTATION
 
@@ -18,7 +18,7 @@ or message changes the root, executable, or verified knowledge identity.
 
 CLI-002 COMPLETE GRAMMAR
 
-The complete ARC 2.2 grammar (using arc.protocol/1) is:
+The complete ARC 2.3 grammar (using arc.protocol/1) is:
 
   arc version
   arc help
@@ -30,17 +30,30 @@ The complete ARC 2.2 grammar (using arc.protocol/1) is:
   arc [--root ROOT] act --room ROOM --id AI --binding UUID
       --operation UUID --request JSON
   arc [--root ROOT] doctor --room ROOM [--json]
+  arc terse validate --text TEXT
+  arc terse build --request JSON
+  arc terse score --request JSON
+  arc [--root ROOT] terse status --room ROOM --id AI --binding UUID
+  arc [--root ROOT] terse read --room ROOM --id AI --binding UUID --sequence N
+
+Every terse subcommand uses the ordinary machine success/failure envelope.
+validate/build/score reject --root and have no room side effects. read/status
+validate the bound lane, honor retirement and private visibility, and are
+read-only; they do not renew duty or spend an operation token. N is a positive
+canonical decimal sequence. Terse 2.0 sections 20–26 define their exact inputs,
+outputs and limits. The additional typed action is exactly
+{type:"terse.send",to:AIID,packet:OBJECT}; existing action shapes are unchanged.
 
 Each option occurs at most once. Required options are present. There are no
 short options, positional alternatives, response files, help topics, aliases,
 abbreviations, hidden compatibility commands, or option values read from stdin.
 Unknown or extra input is INVALID_ARGUMENT.
 
-`version` writes exactly `ARC 2.2.0` plus LF. `help` writes the verified
+`version` writes exactly `ARC 2.3.0` plus LF. `help` writes the verified
 help/arc-help.txt member. `spec list` writes the stable titles for three-digit
 IDs 000 through 013. `spec read ID` writes the corresponding verified text.
 IDs 000 through 012 use the knowledge container. ID 013 returns the complete
-Terse v1.0 file with a verified SHA-256 sidecar from the same installation
+Terse v2.0 file with a verified SHA-256 sidecar from the same installation
 directory as the selected knowledge container. Missing, unreadable, non-UTF-8,
 linked, or digest-mismatched Terse text is KNOWLEDGE_UNAVAILABLE, never partial
 output or a fallback to an older copy.
@@ -88,7 +101,7 @@ duty, rotate an operation, or write the room.
 
 CLI-005 MACHINE FRAMING
 
-Poll, act, and doctor --json write exactly one compact sorted-key UTF-8 JSON
+Poll, act, terse subcommands, and doctor --json write exactly one compact sorted-key UTF-8 JSON
 object followed by LF. Success is:
 
   {"ok":true,"result":VALUE}
@@ -196,7 +209,7 @@ EventView is exactly:
 
 CLI-007 POLL
 
-Poll is the only AI read and check-in. The command validates ROOM, AI, binding,
+Poll is the only AI check-in. The command validates ROOM, AI, binding,
 and after; opens and validates the bounded room; obtains a usable mutation time;
 applies due qualification failures; applies the caller lifecycle/check-in rule;
 commits only when those steps changed state; and returns one consistent result.
@@ -258,6 +271,19 @@ older --after may repeat retained visible events.
 CLI-008 ACTION OBJECTS
 
 Each action object has exactly the named keys.
+
+Structured Terse send:
+
+  {"type":"terse.send","to":AI,"packet":OBJECT}
+
+The caller is available and the recipient qualified. Specification 013,
+sections 20–26 define the exact packet schemas and bounds. Both current
+digest/binding-scoped declarations and any required profile must be agreed,
+except while declaring. Revision/reference checks are within the same room
+transaction. One TERSE_MESSAGE event is appended; work remains unchanged.
+Private context reads are restricted to sender/recipient; the Producer gains
+no extra access. Existing operation-token, full-room refusal and replay rules
+apply unchanged. Packet content is inert; parsing never grants authority.
 
 Declare or extend Working:
 

@@ -9,13 +9,13 @@ final class ARCDevToolTests: XCTestCase {
         let checks: [(String, String)] = [
             ("10_specs/platform_support/000-shared-constitution.txt", "Specifications 000 through 013"),
             ("README.md", "Specifications 000 through 013"),
-            ("ARCHITECTURE.md", "full governing Terse v1.0 specification, 013"),
-            ("man/arc.1", "ARC 2.2.0"),
+            ("ARCHITECTURE.md", "full governing Terse v2.0 specification, 013"),
+            ("man/arc.1", "ARC 2.3.0"),
             ("man/arc.1", "IDs 000 through 013"),
             ("man/arc.1", "message.broadcast"),
-            ("INSTALL.md", "# Install ARC 2.2"),
-            ("RELEASE_CHECKLIST.md", "# ARC 2.2 release checklist"),
-            ("brand/arc-product-brief.html", "Terse v1.0 is governing specification 013")
+            ("INSTALL.md", "# Install ARC 2.3"),
+            ("RELEASE_CHECKLIST.md", "# ARC 2.3 release checklist"),
+            ("brand/arc-product-brief.html", "Terse v2.0 is governing specification 013")
         ]
         for (path, expected) in checks {
             let text = try String(contentsOf: source.appendingPathComponent(path), encoding: .utf8)
@@ -23,25 +23,24 @@ final class ARCDevToolTests: XCTestCase {
         }
     }
 
-    func testBundledTerseIsTheCompleteReviewedVersionOneAndDigestIsChecked() throws {
+    func testBundledTerseIsTheCompleteVersionTwoAndDigestIsChecked() throws {
         let source = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let bytes = try Data(contentsOf: source.appendingPathComponent(ARCReleaseSupport.terseSpecification))
         XCTAssertEqual(KnowledgeContainer.hex(KnowledgeContainer.sha256(bytes)),
-            "cce23937fc0dfb838009f486d9ed99bd20ba7666750e7ac8b6d219e04979b424")
+            "0a260c87e34a9318513d6049c4e297e695205b89cc58a5640adf73b492d29235")
         let provenance = try String(contentsOf: source.appendingPathComponent("languages/terse/README.md"), encoding: .utf8)
         XCTAssertTrue(provenance.contains("`" + KnowledgeContainer.hex(KnowledgeContainer.sha256(bytes)) + "`"),
             "Terse's documented current digest must match the exact packaged source bytes")
         let specification = String(decoding: bytes, as: UTF8.self)
-        // The ARC association changes, never the released Terse v1.0 contract.
-        let priorAssociation = specification.replacingOccurrences(of: "part of ARC v2.2", with: "part of ARC v2.1")
-        XCTAssertEqual(KnowledgeContainer.hex(KnowledgeContainer.sha256(Data(priorAssociation.utf8))),
-            "64215c61f0b05599f7be03188b704def594b60df054ed269b813367d32db6aea")
+        XCTAssertTrue(provenance.contains("cce23937fc0dfb838009f486d9ed99bd20ba7666750e7ac8b6d219e04979b424"), "Keep the released v1.0 provenance, not a relabeled wire contract")
         for section in ["4.14 Explicit focus", "4.15 A receiver", "13.10 Enumerating",
             "14.14 One thought", "19. Entering a room", "Appendix A", "Appendix B", "Appendix C"] {
             XCTAssertTrue(specification.contains(section), section)
         }
-        XCTAssertTrue(specification.contains("TELL WORD SAME 1"))
+        XCTAssertTrue(specification.contains("TELL WORD SAME 2"))
+        XCTAssertTrue(specification.contains("26. Cost and accuracy scorecard"))
+        XCTAssertTrue(specification.contains("18.13 No utterance reference to layout or prose"))
         XCTAssertFalse(specification.contains("TELL WORD SAME 6"))
         XCTAssertFalse(specification.contains("SEE TELL FILE GOOD"))
         XCTAssertFalse(specification.contains("two participants that state the same claim therefore produce identical bytes"))

@@ -1,4 +1,4 @@
-ARC v2.2.0 AI KNOWLEDGE CONTAINER CONTRACT
+ARC v2.3.0 AI KNOWLEDGE CONTAINER CONTRACT
 
 AKC-001 PURPOSE AND BOUNDARY
 
@@ -27,7 +27,7 @@ multiply, comparison, conversion to `size_t`, and range end before use. It never
 forms `offset + length` until it has proved the addition fits both `uint64_t`
 and `size_t`.
 
-The exact knowledge-format version-1 bounds (unchanged in ARC 2.2) are:
+The exact knowledge-format version-1 bounds (unchanged in ARC 2.3) are:
 
   container bytes          1 through 8,388,608
   directory members        18 or 19 for Profile 1; never more than 32

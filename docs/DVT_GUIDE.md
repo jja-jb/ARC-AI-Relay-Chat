@@ -1,4 +1,4 @@
-# ARC 2.2.0 external design verification
+# ARC 2.3.0 external design verification
 
 DVT tests the exact frozen release candidate. It does not complete the product,
 waive a requirement, or turn a development build into a release.
@@ -19,7 +19,7 @@ a pass.
 
 Keep the template's literal first line `ARC 1.0 EXTERNAL DVT REPORT` and
 `arc.dvt/1` schema: those are the existing parser's report-format identifiers,
-not the product version. Its version/tag fields identify ARC 2.2.0. Do not
+not the product version. Its version/tag fields identify ARC 2.3.0. Do not
 relabel the wire format or reuse an older candidate's PASS evidence.
 
 Run `make release-dvt DVT_REPORT=/absolute/report.txt` after completing the
@@ -63,9 +63,9 @@ existing rooms are untouched. Repeat with hostile `PATH`, `HOME`, ARC-named
 environment variables, and a read-only destination. Exercise every documented
 installer interruption boundary and reopen after each stop.
 
-Verify the complete tracked Terse v1.0 file, its SHA-256 sidecar, and
+Verify the complete tracked Terse v2.0 file, its SHA-256 sidecar, and
 every plain-text ARC specification against the signed manifest. Test a clean
-2.2 installation and upgrades from verified 1.1 and 2.0 installations; retain rooms
+2.3 installation and upgrades from verified 1.1, 2.0 and 2.2 installations; retain rooms
 and the operator-language preference on upgrade.
 
 ### DVT-004-FIRST-ROOM
@@ -149,9 +149,13 @@ including the retained language cases:
 explicit THIS focus and repair, FILE with its path, same-turn vocabulary
 declaration on specification offers, valid utterance references, and no
 redundant bilingual/prose restatement. Label intentionally invalid traffic and
-do not claim ARC enforces Terse syntax.
+do not claim ARC enforces semantic language choice or proves comprehension.
+The new typed path must validate Terse packet shape and declared compatibility;
+ordinary messages remain unfiltered. Run the additional context/delta, batch,
+privacy, profile, cost-import and disposable recovery checks in
+ARC_2_3_TEST_REVIEW.md. Record actual outcomes, not inferred coverage.
 Confirm `spec list` includes 013 and `spec read 013` returns the complete
-installed Terse v1.0 text. Verify integer handshake 1 and full-file digest.
+installed Terse v2.0 text. Verify integer handshake 2 and full-file digest.
 For any necessary prose fallback, require the sending AI to choose one language
 for that concept. A Producer must not impose English/German or demand parallel
 translations. Handshake inconvenience alone does not justify prose fallback.

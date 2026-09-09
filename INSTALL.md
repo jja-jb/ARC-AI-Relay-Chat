@@ -1,6 +1,6 @@
-# Install ARC 2.2
+# Install ARC 2.3
 
-ARC 2.2 can read earlier room/1 records. Once a room records the new recovery or
+ARC 2.3 can read earlier room/1 records. Once a room records the new recovery or
 correction fields/events, earlier executables may reject it. Do not downgrade
 that room; keep a backup before upgrading if you need rollback. The existing
 installer remains responsible for verified payload publication and repair.
@@ -65,7 +65,7 @@ make check
 make app-development-check
 ```
 
-The development app is written under `/private/tmp/arc-build-2.2.0/development/`.
+The development app is written under `/private/tmp/arc-build-2.3.0/development/`.
 It uses a fresh temporary root unless `ARC_DEVELOPMENT_ROOT` explicitly names
 an absolute test root. Building alone installs nothing. A development launch
 installs support files only in that chosen test root; release builds ignore

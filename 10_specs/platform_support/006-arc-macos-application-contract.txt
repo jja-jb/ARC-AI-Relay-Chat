@@ -1,4 +1,12 @@
-ARC v2.2.0 MACOS APPLICATION CONTRACT
+ARC v2.3.0 MACOS APPLICATION CONTRACT
+
+Terse Cost Comparison is a sidebar control opening a local, read-only report
+sheet. It imports only user-selected regular JSON files of at most 131072
+bytes, computes off the UI thread, and clearly separates reported actual
+usage from estimates. Errors are visible; ARC never guesses unavailable
+usage, contacts billing providers, or stores comparison data in room history.
+Its schema and calculations are specification 013 section 26. Activity renders
+TERSE_MESSAGE packets as inert canonical text, retaining participant colors.
 
 UI-001 ONE ORDINARY PRODUCT
 
@@ -109,7 +117,7 @@ saw a request merely because the local display timer advanced.
 
 UI-005 MENUS AND KEYBOARD
 
-ARC uses normal Mac menus. The complete ARC 2.2 application command surface is:
+ARC uses normal Mac menus. The complete ARC 2.3 application command surface is:
 
   File    New Room...
   Edit    Find in Activity... (alongside standard text editing commands)
@@ -146,7 +154,7 @@ ARC Help is concise, version-matched text embedded in the signed product. It
 explains Room versus Room ID, copying AI instructions, qualification, Producer, On
 Duty, Working deadlines, Off Duty, Work, complete Room History, the separate
 read-only activity window and Follow Live, operator-language selection,
-Terse's instruction-based limits, the timer's limit, replacement,
+Terse's structured checks and semantic limits, cost comparison, the timer's limit, replacement,
 retirement, permanent deletion, and diagnosis. Privacy states the local trust
 boundary and the absence
 of network activity, telemetry, encryption, and provider credentials.

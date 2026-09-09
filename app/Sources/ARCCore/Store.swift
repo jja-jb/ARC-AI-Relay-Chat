@@ -465,6 +465,29 @@ public final class ARCStore: @unchecked Sendable {
         }
     }
 
+    /// Read-only, bound lane access. Does not qualify, renew duty or consume an
+    /// operation token. Sender access supports recovering its own shared context.
+    public func terseRead(room: String, participant id: String, binding: String,
+                          sequence: Int64? = nil) throws -> ARCJSONValue {
+        try requireParticipantID(id)
+        guard ARCText.isLowerUUID(binding) else { throw ARCError(.invalidArgument, "Invalid binding.") }
+        return try files().read(room) { document in
+            guard let caller = document.participants.first(where: { $0.id == id }) else { throw ARCError(.notFound, "AI not found.") }
+            try self.validateBinding(caller, binding: binding)
+            let notice = ARCCommunication.snapshot(rootURL: self.rootURL)
+            guard notice.status == "ready", let digest = notice.specificationSha256 else { throw ARCError(.knowledgeUnavailable, "Terse specification unavailable; pause and notify the operator.") }
+            if let sequence {
+                let event = try ARCTerseLedger.event(sequence, in: document, reader: id)
+                guard let packet = ARCTerseLedger.packet(event) else { throw ARCTerse.fail("not a structured Terse message.") }
+                let kind = packet.objectValue?["kind"]?.stringValue
+                return .object(["sequence": .integer(sequence), "actor": .string(event.actor),
+                    "recipient": .string(event.recipient!), "packet": kind == "context" || kind == "delta" ? .null : packet,
+                    "context": kind == "context" || kind == "delta" ? try ARCTerseLedger.resolve(sequence, document: document, reader: id) : .null])
+            }
+            return ARCTerseLedger.status(document, caller: caller, digest: digest)
+        }
+    }
+
     public func diagnose(room: String) throws -> ARCDiagnosticResult {
         var context = [ARCDiagnosticFact(label: "Room ID", value: room)]
         do {
@@ -1335,6 +1358,24 @@ extension ARCStore {
     ) throws -> (participant: String?, work: String?) {
         let caller = document.participants[callerIndex]
         switch request {
+        case .terseSend(let targetID, let packet):
+            try requireAvailable(caller, now: now)
+            guard let target = document.participants.first(where: { $0.id == targetID }), target.phase == .qualified else {
+                throw ARCError(.wrongState, "Terse needs a qualified recipient in this room.")
+            }
+            let notice = ARCCommunication.snapshot(rootURL: rootURL)
+            guard notice.status == "ready", let digest = notice.specificationSha256 else {
+                throw ARCError(.knowledgeUnavailable, "Read the verified Terse specification before sending.")
+            }
+            try ARCTerseLedger.validateSend(packet, document: document, caller: caller, target: target, digest: digest)
+            try appendEvent(to: &document, logical: now, kind: "TERSE_MESSAGE", actor: caller.id,
+                recipient: target.id, payload: .object([
+                    "packet": packet,
+                    "binding_generation": .integer(caller.bindingGeneration),
+                    "target_binding_generation": .integer(target.bindingGeneration),
+                    "specification_sha256": .string(digest)
+                ]), operation: operation, knowledge: knowledge)
+            return (nil, nil)
         case .working(let deadline):
             try requireAvailable(caller, now: now)
             guard ARCTime.isLogical(deadline), deadline > now,

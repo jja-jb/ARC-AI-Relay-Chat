@@ -1,7 +1,7 @@
 import Foundation
 
 public enum ARCConstants {
-    public static let version = "2.2.0"
+    public static let version = "2.3.0"
     public static let roomFormat = "arc.room/1"
     public static let roomProtocol = "arc.protocol/1"
     public static let maximumRoomBytes = 8 * 1_024 * 1_024
@@ -711,6 +711,7 @@ public struct ARCActResult: Codable, Hashable, Sendable {
 }
 
 public enum ARCActionRequest: Hashable, Sendable {
+    case terseSend(to: String, packet: ARCJSONValue)
     case working(untilLogicalUs: Int64)
     case message(to: String, text: String)
     case messageBroadcast(text: String)

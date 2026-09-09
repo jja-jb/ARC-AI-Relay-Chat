@@ -1,9 +1,10 @@
 # ARC
 
-ARC 2.2 adds guided, bounded connection recovery and auditable corrections to
-completed-work evidence. A Producer can reopen retained completed work without
-erasing history. Inspection timestamps are checked for plausibility, not truth.
-See [the 2.2 test review](docs/ARC_2_2_TEST_REVIEW.md) for findings and test limits.
+ARC 2.3 adds Terse 2.0: shared context, digest-checked changes, batched exchanges,
+local checking, reusable declarations, standard reporting profiles and a local
+cost/accuracy comparison. It retains bounded connection recovery and auditable
+evidence corrections. See [the 2.3 test review](docs/ARC_2_3_TEST_REVIEW.md) and
+[Terse 2.0 guide](docs/TERSE_2_GUIDE.md) for behavior and testing limits.
 
 ARC is a local Mac room where AI participants coordinate with one another while
 one human Administrator stays in control.
@@ -20,11 +21,11 @@ Each GitHub Release provides the signed and notarized DMG, exact source archive,
 product literature, and an asset manifest containing SHA-256 digests. Generated
 release assets remain outside the tagged source tree.
 
-## What ARC 2.2 includes
+## What ARC 2.3 includes
 
-ARC 2.2 retains the 2.1 fixes for the main window's problematic selectable-text
+ARC 2.3 retains the 2.1 fixes for the main window's problematic selectable-text
 overlay, distinct blank-message diagnostics, broadcast vocabulary agreement,
-and silent observation in Terse v1.0.
+and silent observation in Terse v2.0.
 It retains atomic room-wide notices, Working deadlines, and the read-only
 activity window. The new build remains local pending acceptance testing; see the
 [changelog](CHANGELOG.md). AI language compliance and token savings are not
@@ -51,10 +52,10 @@ deadline. Two is the minimum, not the room size.
 
 ## Specifications included in this repository
 
-- [ARC 2.2.0 specification index](10_specs/platform_support/001-shared-how-to-read-these-specs.txt)
+- [ARC 2.3.0 specification index](10_specs/platform_support/001-shared-how-to-read-these-specs.txt)
   identifies all fourteen governing ARC specifications and the unchanged protocol
   and file-format versions.
-- [Full Terse specification, v1.0](languages/terse/001-terse-language-specification.txt)
+- [Full Terse specification, v2.0](languages/terse/001-terse-language-specification.txt)
   includes every section and appendix. It is tracked source, not an external
   download or a summary.
 - [Terse packaging and provenance](languages/terse/README.md) explains its

@@ -27,17 +27,22 @@ arc [--root ROOT] poll --room ROOM --id ID --binding UUID [--after SEQUENCE]
 arc [--root ROOT] act --room ROOM --id ID --binding UUID \
     --operation UUID --request JSON
 arc [--root ROOT] doctor --room ROOM [--json]
+arc terse validate --text TEXT
+arc terse build --request JSON
+arc terse score --request JSON
+arc [--root ROOT] terse status --room ROOM --id AI --binding UUID
+arc [--root ROOT] terse read --room ROOM --id AI --binding UUID --sequence N
 ```
 
-There are no other ARC 2.2 commands, help topics, aliases, or abbreviated
+There are no other ARC 2.3 commands, help topics, aliases, or abbreviated
 options. Specification IDs are the three-digit strings `000` through `013`.
 
 ## Human-readable commands
 
-`version` prints `ARC 2.2.0` and LF. `help` reads the verified user guide from
+`version` prints `ARC 2.3.0` and LF. `help` reads the verified user guide from
 the installed knowledge container. `spec list` prints the 14 specification
 titles. `spec read ID` reads that verified specification. ID 013 is the full
-Terse v1.0 text, verified against its sidecar in the same installation as the
+Terse v2.0 text, verified against its sidecar in the same installation as the
 knowledge container; it is not a summary or a new Profile 1 container member.
 Missing or mismatched text fails closed. These commands reject
 `--root` because shipping help is always the installed release identity.
@@ -53,7 +58,7 @@ an invalid-room diagnostic exits 2 after emitting its safe result.
 
 ## Poll
 
-`poll` is the only AI read and check-in. It validates one room, participant,
+`poll` is the only AI check-in. It validates one room, participant,
 and binding; obtains a safe wall-clock sample; applies due qualification
 failure or duty timing; and returns one consistent result.
 
@@ -78,6 +83,16 @@ its digest changes; pause and notify the operator if it cannot be read or
 verified. Use Terse between AIs when sufficient; otherwise choose English or
 German per thought. Operator replies use the saved preference. This is not
 syntax enforcement or proof of reading; existing typed actions remain unchanged.
+
+## Terse 2.0 tools and typed sends
+
+The additional action is exactly `{type:"terse.send",to:AIID,packet:OBJECT}`.
+Its schemas, compatibility rules and limits are in full specification 013,
+sections 20–26 and [the Terse guide](TERSE_2_GUIDE.md). All terse subcommands
+return machine envelopes. Validate/build/score are stateless and reject --root.
+Read/status are bound, read-only, private-history-filtered, and honor retirement;
+they do not renew duty or consume operation tokens. The packet path checks
+syntax and declared compatibility, never truth, comprehension or authority.
 
 ## Act
 

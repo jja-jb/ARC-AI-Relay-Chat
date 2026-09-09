@@ -33,6 +33,7 @@ struct OperatorLanguageSelector: View {
 }
 
 struct MainView: View {
+    @State private var showingTerseCost = false
     @EnvironmentObject private var state: AppState
     @Environment(\.scenePhase) private var scenePhase
 
@@ -88,13 +89,18 @@ struct MainView: View {
             }
             .navigationTitle("Rooms")
             .safeAreaInset(edge: .bottom) {
-                OperatorLanguageSelector()
+                VStack(spacing: 0) {
+                    Button("Terse Cost Comparison…") { showingTerseCost = true }
+                        .padding(.top, 10)
+                    OperatorLanguageSelector()
+                }
             }
             .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 340)
         } detail: {
             detail
         }
         .dynamicTypeSize(state.textSize)
+        .sheet(isPresented: $showingTerseCost) { TerseCostView() }
         .sheet(isPresented: $state.showingCreateRoom) {
             CreateRoomSheet()
                 .environmentObject(state)
@@ -508,7 +514,16 @@ enum ARCHelpContent {
                 + "AI replies to you. The choice is remembered for every room and reaches existing "
                 + "AIs on their next poll. It does not translate room history or change ARC's menus. "
                 + "The activity window may therefore show AI-to-AI text in either language. "
-                + "ARC does not validate Terse syntax or guarantee accuracy or token savings."
+                + "ARC checks structured Terse packets and offers local syntax validation. "
+                + "It does not filter ordinary messages or guarantee accuracy or token savings."
+        ),
+        Section(
+            title: "Terse cost comparison",
+            text: "Choose Terse Cost Comparison below the room list and open a comparison "
+                + "file prepared by your testing AIs. Compare the same tasks and include "
+                + "setup, repairs and failed attempts. ARC shows cost and correct results "
+                + "together, separating reported actual figures from estimates. It does "
+                + "not connect to AI accounts or verify the imported figures."
         ),
         Section(
             title: "Separate activity window",

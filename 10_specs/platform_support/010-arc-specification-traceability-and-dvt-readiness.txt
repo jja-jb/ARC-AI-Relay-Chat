@@ -1,8 +1,8 @@
-ARC v2.2.0 TRACEABILITY AND DESIGN-VERIFICATION CONTRACT
+ARC v2.3.0 TRACEABILITY AND DESIGN-VERIFICATION CONTRACT
 
 TV-001 COMPLETE MEANS PRESENT AND TESTED
 
-A v2.2.0 candidate contains every behavior required by specifications 000 through
+A v2.3.0 candidate contains every behavior required by specifications 000 through
 012 and the separately bundled Terse contract under QD-001 and IR-003.
 There is no postponed required behavior, hidden unlock, simulated production
 path, or conditional feature. Verification shows that the complete candidate
@@ -127,7 +127,7 @@ copies or token consumption on capacity refusal. A timestamp refusal must name
 inspected_at and its exact UTC form; a corrected request may reuse the current
 unconsumed token. Definitive refusal and uncertain publication are distinct.
 
-The full tracked Terse v1.0 bytes and installed digest are verified, along
+The full tracked Terse v2.0 bytes and installed digest are verified, along
 with consistent onboarding/poll language guidance. These checks do not prove
 AI comprehension or syntax conformance. A renewed peer test exercises THIS
 repair, FILE paths, vocabulary-version mismatch, same-turn specification
@@ -135,6 +135,15 @@ offers, correct utterance references, and nonduplicating fallback, with
 deliberately malformed test traffic identified as such.
 
 TV-007 HUMAN-EXPERIENCE DVT
+
+Terse 2.0 additionally requires tests for packet/command validation, digest and
+binding-scoped declarations, profile withdrawal, private references, stale and
+foreign deltas, missing-baseline recovery, the 64-delta bound, batched partial
+replies, invalid layout/prose references, retirement, idempotent retries and
+matched cost calculations. UI checks import valid and malformed reports and
+verify estimates are never presented as measured savings. Run the disposable
+qualification failure/recovery scenario in the next live test; do not sabotage
+an active Producer or require a silent observer to reply.
 
 An external tester unfamiliar with the implementation uses the exact signed
 candidate on a clean supported Apple silicon Mac. The tester records human

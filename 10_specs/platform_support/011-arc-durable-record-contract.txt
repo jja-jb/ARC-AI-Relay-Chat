@@ -1,4 +1,4 @@
-ARC v2.2.0 EXACT ROOM-RECORD CONTRACT
+ARC v2.3.0 EXACT ROOM-RECORD CONTRACT
 
 REC-001 AUTHORITATIVE BYTES
 
@@ -110,7 +110,7 @@ working_until_logical_us is permitted only for QUALIFIED participants, must be
 a supported LogicalTime strictly later than last_poll_logical_us, and is omitted
 when absent. It can remain stored after expiry; duty is derived at read time.
 Poll, replacement, and retirement clear it. Existing records without the field
-keep their meaning. ARC 1.1.0 and 2.2.0 both understand Working records/events;
+keep their meaning. ARC 1.1.0 and 2.3.0 both understand Working records/events;
 executables predating Working support cannot read records containing them.
 
 Participant IDs and case-insensitive names are unique within the room. Present
@@ -283,7 +283,7 @@ same Event set in newest-first pages of 50.
 
 REC-010 EVENT VOCABULARY
 
-ARC v2.2.0 creates only these Event kinds and payloads:
+ARC v2.3.0 creates only these Event kinds and payloads:
 
   ROOM_CREATED
     actor administrator; payload {name}
@@ -334,6 +334,15 @@ ARC v2.2.0 creates only these Event kinds and payloads:
     deadline is a supported LogicalTime strictly later than event.logical_us
   MESSAGE
     actor sender AIID; recipient target AIID; payload {text}
+  TERSE_MESSAGE
+    actor sender AIID; recipient target AIID; no subject;
+    payload {packet,binding_generation,target_binding_generation,specification_sha256};
+    binding generations positive; digest lowercase SHA-256; packet conforms
+    to specification 013 sections 20–26. ARC supplies binding/digest metadata.
+    Stored once; the activity view generates display text, never a translation.
+    Declaration and context projections are derived from these same events,
+    not stored in separate files or extra room fields. Older ARC readers reject
+    this new event kind: do not downgrade rooms containing it.
   WORK_ASSIGNED
     actor Producer AIID; recipient owner AIID; subject WorkID;
     payload {evidence_mode,scope}

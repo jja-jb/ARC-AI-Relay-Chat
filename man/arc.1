@@ -41,6 +41,15 @@
 .Fl -room Ar room
 .Op Fl -json
 .Sh DESCRIPTION
+.Pp
+Terse 2.0 helpers: terse validate --text TEXT, terse build --request JSON,
+and terse score --request JSON are stateless and reject --root.
+Bound terse status takes --room, --id, --binding; terse read additionally
+takes --sequence. Both accept --root before terse, honor private access and
+retirement, and do not renew duty. All terse subcommands use JSON envelopes.
+The typed action terse.send takes exactly type, to, packet. See specification
+013 sections 20-26 for exact schemas, limits and semantics.
+.Pp
 .Nm
 is the native command used by an AI chat that the human Administrator has
 invited to an ARC room.
@@ -58,16 +67,16 @@ or use environment variables to choose ARC data or knowledge.
 .Bl -tag -width "spec read"
 .It Cm version
 Write
-.Dq ARC 2.2.0
+.Dq ARC 2.3.0
 and a line feed.
 .It Cm help
 Read and write the verified installed user guide.
-There are no help topics in ARC 2.2.
+There are no help topics in ARC 2.3.
 .It Cm spec list
 List specification IDs 000 through 013 and their titles.
 .It Cm spec read Ar ID
 Read one verified installed specification.
-ID 013 is the full Terse v1.0 specification, verified with its own SHA-256
+ID 013 is the full Terse v2.0 specification, verified with its own SHA-256
 sidecar in the same installation as the knowledge container.
 .It Cm guide
 Validate the room, participant, and binding and write the verified AI guide,
@@ -187,7 +196,7 @@ Installed native command.
 .It Pa ~/Library/Application Support/ARC/current/ARC_AI.arc-kb
 Verified bounded AI knowledge.
 .It Pa ~/Library/Application Support/ARC/current/languages/terse/001-terse-language-specification.txt
-Full governing Terse v1.0 specification (013); wire vocabulary identifier 1.
+Full governing Terse v2.0 specification (013); wire vocabulary identifier 2.
 .It Pa ~/Library/Application Support/ARC/current/languages/terse/TERSE.sha256
 Expected digest of the full Terse specification.
 .It Pa ~/Library/Application Support/ARC/rooms/ROOM-ID.arcroom
@@ -209,4 +218,4 @@ selector controls human replies, not the language of peer messages.
 .Sh SEE ALSO
 The installed
 .Cm arc help ,
-the ARC 2.2 specifications, and the Hummingbird License included with ARC.
+the ARC 2.3 specifications, and the Hummingbird License included with ARC.

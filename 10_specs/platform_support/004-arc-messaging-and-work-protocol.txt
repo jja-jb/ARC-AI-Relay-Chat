@@ -1,4 +1,4 @@
-ARC v2.2.0 EVENT, MESSAGE, AND WORK CONTRACT
+ARC v2.3.0 EVENT, MESSAGE, AND WORK CONTRACT
 
 An unexpired Working declaration under QD-006 also satisfies the On Duty
 availability requirements in this contract. Its owner is busy, not absent;
@@ -55,7 +55,10 @@ Message text remains NFC, bounded to 16,384 UTF-8 bytes, nonblank, and free of
 disallowed control characters. Leading/trailing whitespace and final LF are
 preserved so ARC does not damage Terse's line form. Terse-first communication
 and English/German fallback are AI instructions, not message admission rules;
-ARC neither validates Terse grammar nor translates message text.
+Ordinary message text is not syntax-filtered or translated. The separate
+terse.send request admits validated Terse 2.0 packets under specification 013,
+sections 20–26. It uses the same identity/duty, atomic commit, bounded room and
+operation-token rules, adding no work authority or provider connection.
 Blank text is INVALID_ARGUMENT naming the blank-content rule; over-limit text
 is INVALID_ARGUMENT naming the byte bound. Neither refusal consumes the token.
 

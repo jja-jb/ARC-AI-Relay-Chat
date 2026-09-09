@@ -11,6 +11,7 @@ final class ARCActivityWindowTests: XCTestCase {
             ARCTranscriptPresentation.colorIndex(for: "ai-\($0)")
         }).count, 6)
         XCTAssertEqual(ARCTranscriptPresentation.category(for: "MESSAGE"), "Message")
+        XCTAssertEqual(ARCTranscriptPresentation.category(for: "TERSE_MESSAGE"), "Message")
         XCTAssertEqual(ARCTranscriptPresentation.category(for: "WORK_UPDATED"), "Work")
         XCTAssertEqual(ARCTranscriptPresentation.category(for: "AI_WORKING"), "Duty")
         XCTAssertEqual(ARCTranscriptPresentation.category(for: "QUALIFICATION_FAILED"), "Access check")
@@ -19,6 +20,14 @@ final class ARCActivityWindowTests: XCTestCase {
 
     @MainActor
     func testMessagesAreReadableLiteralTextAndOtherEventsKeepTheirPayloads() {
+        let packet: ARCJSONValue = .object(["kind": .string("dependency"), "subject": .string("package"), "requires": .array([.string("tests")])])
+        let structured = ARCEventView(sequence: 9, at: "2026-09-09T00:00:00Z", logicalUs: 9,
+            kind: "TERSE_MESSAGE", actor: "ai-1", recipient: "ai-2", subject: nil,
+            payload: .object(["packet": packet]), operationId: "test", knowledgeSha256: "test")
+        let packetText = ARCTranscriptPresentation.entry(structured, participants: [:], fontSize: 13).string
+        XCTAssertTrue(packetText.contains("@terse/2 "))
+        XCTAssertTrue(packetText.contains("\"dependency\""))
+        XCTAssertFalse(packetText.contains("binding_generation"))
         let hostileText = "<script>alert('no')</script> **literal** https://example.com\nSecond line"
         let event = event(1, text: hostileText)
         let rendered = ARCTranscriptPresentation.entry(event, participants: [:], fontSize: 13)

@@ -1,4 +1,4 @@
-# ARC 2.2 architecture
+# ARC 2.3 architecture
 
 ARC has one small native architecture:
 
@@ -24,7 +24,7 @@ provider connection, alternate core, or second durable projection.
 - `Sources/ARCDevTool/` — deterministic knowledge and release chores used only
   from a source tree.
 - `10_specs/platform_support/` — thirteen core specifications, 000–012.
-- `languages/terse/` — the full governing Terse v1.0 specification, 013.
+- `languages/terse/` — the full governing Terse v2.0 specification, 013.
 
 ## Durable state
 
@@ -63,6 +63,14 @@ sidecar, read through the same bounded-file verification used by polling.
 `arc spec read 013` returns that full text; it is not a Profile 1 member.
 
 ## Boundaries
+
+Terse 2.0 adds local packet validation, context reconstruction, declaration
+tracking and imported cost comparisons. Context/declaration state is a bounded
+projection of addressed TERSE_MESSAGE events in the same canonical room file,
+not another store. Existing typed work and permission checks remain unchanged.
+The cost comparison reads only an explicitly selected local file, computes off
+the UI thread and contacts no provider. Reported actual usage is not independently
+verified; it is never combined with estimates as measured savings.
 
 ARC is local and offline. Text is inert data. It trusts the current macOS
 account and does not authenticate providers. It supports up to 64 AI

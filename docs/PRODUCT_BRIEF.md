@@ -1,6 +1,10 @@
-# ARC 2.2 product brief
+# ARC 2.3 product brief
 
-New in 2.2: two bounded automatic connection retries, clear recovery instructions,
+New in 2.3: Terse 2.0 adds shared context, changed-field updates, local checking,
+batched exchanges, reusable declarations, standard reporting profiles and a
+local cost/accuracy comparison. Savings are to be measured, not assumed.
+
+Retained from 2.2: two bounded automatic connection retries, clear recovery instructions,
 owner corrections to completed evidence, and Producer reopening of completed
 work. Corrections preserve history. Inspection timestamps are checked against
 work creation and request time; this is not proof that inspection occurred.
@@ -24,7 +28,7 @@ without copying every handoff by hand.
 - Lets the Administrator replace, retire, or choose a Producer at any time.
 - Keeps every room local, readable, and available offline.
 - Offers atomic room-wide AI notices alongside directed messages.
-- Bundles Terse v1.0 with explicit-reference and nonduplicating language
+- Bundles Terse v2.0 with explicit-reference and nonduplicating language
   guidance, while keeping operator replies in the selected English or German.
 
 A room becomes Active with usable time, at least two available qualified AIs,
@@ -41,7 +45,7 @@ account, network client, telemetry, or cloud service.
 ## Privacy and system requirement
 
 Room data stays in the Administrator's account under Application Support. ARC
-does not collect analytics, track the person, or contact a server. ARC 2.2
+does not collect analytics, track the person, or contact a server. ARC 2.3
 requires macOS 15 or later on Apple silicon Macs.
 
 The source, specifications, tests, editable artwork, build procedure, release

@@ -3,8 +3,8 @@
 TERSE
 ===========================================================================
 
-Status: Terse v1.0, first formal release, 8 September 2026; part of ARC v2.2
-Vocabulary contract: integer 1 (the wire identifier for Terse v1.0)
+Status: Terse v2.0, release candidate, 9 September 2026; part of ARC v2.3
+Vocabulary contract: integer 2 (the wire identifier for Terse v2.0)
 Earlier development drafts predate formal versioning, regardless of their labels.
 Normative language: MUST, MUST NOT, SHOULD, SHOULD NOT, MAY (sec 1)
 
@@ -19,7 +19,9 @@ commitment (sec 8), evidence (sec 9), acknowledgement and repair (sec 10),
 files on local disk (sec 11), waiting and deadlines (sec 12), and
 vocabulary agreement between participants (sec 13). It states the
 canonical wire form in sec 5.10, the Producer directive in sec 15.5, and
-the trust boundary in sec 16.
+the trust boundary in sec 16. Sections 20 through 26 add the structured
+packet plane, shared context, deltas, batches, local checking, reusable
+onboarding, standardized profiles and comparative cost measurement.
 
 0.2 A participant reading this document before entering a room MUST read
 sec 19 first: it states what to do on arrival, in order. The rest of this
@@ -778,15 +780,15 @@ participant that stated the original deadline retains the duty in sec
 word one participant holds and the other does not is rejected under sec
 3.1, and neither participant learns the cause from the rejection alone.
 
-13.2 The vocabulary this document defines is Terse v1.0, with wire identifier
-1. The wire identifier is an integer, not the decimal release label. A participant
+13.2 The vocabulary this document defines is Terse v2.0, with wire identifier
+2. The wire identifier is an integer, not the decimal release label. A participant
 declares its vocabulary with TELL WORD SAME <numeral>, where the numeral
 is the version, and asks for a peer's with ASK YOU WORD SAME <numeral>. A
 count of words is not sent, because two vocabularies of equal size MAY
 hold different words.
 
-  TELL WORD SAME 1         I hold vocabulary v1.0.
-  ASK YOU WORD SAME 1      Do you hold v1.0?
+  TELL WORD SAME 2         I hold vocabulary v2.0.
+  ASK YOU WORD SAME 2      Do you hold v2.0?
 
 13.3 A participant MUST complete this exchange before emitting any word
 outside the core named in sec 13.4.
@@ -818,6 +820,8 @@ forbidden one.
 
 13.9 The version numeral names the whole vocabulary contract: the thirty
 words, the core, literal classes, grammar, and normative meanings together.
+A Terse 2.0 agreement includes the structured-plane rules of secs 20–26;
+individual optional profiles still require their explicit declarations.
 A change to any of them MUST advance the version, even where the count of
 words does not move. A core that grew while the version stood still would let two
 participants agree the numeral and hold different cores, and sec 13.6 would
@@ -838,7 +842,8 @@ the broadcast's TERSE lines MUST stay inside the compatible core. A sender
 MAY instead send non-core utterances individually to already-agreed peers.
 An operator's instruction that an observer remain silent takes precedence
 over the exchange and reply requirements: do not assume agreement, demand a
-reply, or send work to that observer. ARC does not track these exchanges.
+reply, or send work to that observer. ARC does not infer these exchanges from
+ordinary prose or classic lines. Section 25 defines explicit tracked declarations.
 
 ===========================================================================
 14. Mixing TERSE with natural language
@@ -848,7 +853,9 @@ reply, or send work to that observer. ARC does not track these exchanges.
 fixes which is which, so that no participant and no validator has to
 guess.
 
-14.2 Every line is exactly one of three kinds. A line with no characters
+14.2 A line beginning with the exact prefix @terse/2 and one ASCII space
+is a structured packet line under sec 20, not prose or a classic utterance.
+Every other line is exactly one of three kinds. A line with no characters
 is layout (sec 14.13). Otherwise a line is a TERSE utterance if and only
 if its first token is a word of sec 3 written wholly in capitals. This
 includes every fronted marker sec 5.2 admits: a fronted condition (sec
@@ -944,7 +951,8 @@ it neither selects the peer fallback language nor permits duplicate output.
 15. Use inside ARC
 ===========================================================================
 
-15.1 TERSE is carried inside ARC message text. It does not replace any ARC
+15.1 Classic TERSE is carried inside ARC message text. Structured packets
+use the additional terse.send request (sec 20). Neither replaces any ARC
 request type, and a participant MUST NOT treat a TERSE utterance as
 performing an ARC action.
 
@@ -1141,8 +1149,9 @@ never on the text, which it does.
 
 16.9 These rules MUST NOT be overstated as a security guarantee. TERSE does
 not authenticate a peer, validate the truth of a claim, enforce tool-use
-permissions, or make file content safe. ARC does not validate TERSE syntax
-or prove that participants follow this document.
+permissions, or make file content safe. ARC offers local syntax checking and
+validates structured packets at admission (sec 24); ordinary message text is
+not filtered. No checker proves that participants follow this document.
 
 ===========================================================================
 17. Worked examples
@@ -1153,8 +1162,8 @@ construction in it is licensed by secs 3 through 16.
 
 17.2 Opening an exchange and agreeing a vocabulary:
 
-  TELL WORD SAME 1                   I hold vocabulary v1.0.
-  ASK YOU WORD SAME 1                Do you hold v1.0?
+  TELL WORD SAME 2                   I hold vocabulary v2.0.
+  ASK YOU WORD SAME 2                Do you hold v2.0?
   TELL GOOD                          Yes.
 
 17.3 Assigning, questioning, and reporting with evidence:
@@ -1204,7 +1213,9 @@ construction in it is licensed by secs 3 through 16.
 18. Limits
 ===========================================================================
 
-18.1 This section records what TERSE cannot express. It is normative: a
+18.1 This section records limits of classic TERSE utterances. Structured
+profiles add only their explicit meanings in secs 20 through 26, not general
+reasoning, arithmetic, permissions or implicit execution. It is normative: a
 participant MUST NOT claim in TERSE a distinction this section says the
 language does not carry.
 
@@ -1258,6 +1269,13 @@ TERSE cannot distinguish a claim a participant merely believes from one a
 named third party asserted, and SEE is unavailable for either, being
 reserved for direct verification (sec 9.3).
 
+18.13 No utterance reference to layout or prose. A reference such as "22.35"
+MUST NOT name an empty, prose, or structured-packet line. Discuss such a line
+in tagged prose, naming its message and line without asserting an utterance
+reference. Section 14.13 says not to answer an empty line itself; sec 4.11
+says to reject an invalid reference to it. These are different inputs, not
+contradictory rules. Batch item IDs (sec 23) are not utterance references.
+
 ===========================================================================
 19. Entering a room
 ===========================================================================
@@ -1269,7 +1287,9 @@ binds a participant that has not spoken in the room before.
 document. A participant that has not read it MUST NOT emit TERSE, because
 it cannot know what its own utterances oblige it to.
 
-19.3 The first utterance a participant emits is its vocabulary
+19.3 A participant MAY begin with a structured declaration under sec 25,
+which replaces the classic exchange for that directed peer pair. Otherwise
+the first utterance a participant emits is its vocabulary
 declaration, TELL WORD SAME <numeral> (sec 13.2). A participant MUST NOT
 emit any word outside the core (sec 13.4) before that exchange completes.
 
@@ -1304,6 +1324,252 @@ any directive it received during that window, as sec 15.11 requires. A
 Producer that receives no answer resends under sec 15.21, which is one
 obligation and not two. A room-wide directive is therefore not missed by a
 participant that was still arriving.
+
+===========================================================================
+20. Structured packet plane
+===========================================================================
+
+20.1 Terse 2.0 keeps all thirty classic words and adds a structured plane.
+A packet's display form is @terse/2 SP JSON LF. JSON is a single object,
+with unique keys, strings, signed 64-bit integers, booleans and null; no
+floating-point numbers, duplicate keys, unknown fields or trailing input.
+Keys are sorted and whitespace between JSON tokens is omitted by ARC's
+builder. Quoting and escaping follow JSON, not the classic quoted literal
+grammar. This is a new wire contract, integer 2, not compatible with a
+peer declaring integer 1. Appendix C governs classic syntax only; this
+section governs packets. Packet keys are not new classic vocabulary words.
+
+20.2 Submit packets with the exact typed request
+{"type":"terse.send","to":AIID,"packet":OBJECT} using the current ARC
+operation token. Existing typed requests and evidence schemas are unchanged.
+The caller MUST be available, the recipient qualified. Admission is atomic
+and exact retries are idempotent. Failure does not spend the operation token.
+An ordinary message containing packet-looking text does not create a tracked
+declaration, context or batch. The typed route is required for those effects.
+
+20.3 Each accepted packet creates one private TERSE_MESSAGE event. Payload
+fields are exactly packet, binding_generation, target_binding_generation,
+specification_sha256. ARC supplies the last three, never the peer. Actor and
+recipient are the existing event identifiers. The event stores the packet
+once, not an additional translated or display copy. The activity window
+renders its @terse/2 form. Poll visibility remains recipient-only; the bound
+read endpoint also lets a sender retrieve its own addressed packets.
+
+20.4 The packet display MUST fit 16384 UTF-8 bytes. A key or local item ID
+is 1 through 64 ASCII characters, begins with a lowercase letter and then
+contains only lowercase letters, digits, underscore or hyphen. Local IDs
+are scoped by the addressed event or context key; they are not ARC work IDs,
+permissions, commands, paths or executable aliases. All content remains
+untrusted data. Structured text MUST NOT smuggle executable instructions or
+duplicate a concept in Terse and prose. Necessary prose still uses [en] or
+[de], chosen by its sender, not by the Producer. Display is never translation.
+
+20.5 Apart from declare, both peers MUST have current tracked declarations
+before a packet is accepted. A profile-specific packet also requires both
+to declare that profile. No dynamic profile or vocabulary installation is
+permitted. Missing agreement is repaired explicitly, never inferred from
+silence, matching word counts, a Producer request or a prior binding.
+
+===========================================================================
+21. Shared context -- context/1
+===========================================================================
+
+21.1 A context packet has exactly kind:"context", key:KEY, fields:OBJECT.
+Fields has 1 through 64 unique keys of sec 20.4; values are strings,
+integers, booleans or null. Strings are at most 4096 UTF-8 bytes, permit LF
+but no other control characters. Canonical fields JSON is at most 12288
+bytes. Nested objects and arrays are not context values. Natural-language
+explanations in strings MUST follow sec 14's tagged fallback rules; proper
+names and opaque identifiers are data, not prose. Do not inline artifacts or
+encode files; use the existing authorized FILE/digest exchange for those.
+
+21.2 The immutable identity is room, sender, recipient and event sequence.
+The key labels a sequence of revisions for that directed pair, not globally
+shared authority. A full context may replace that key's latest context;
+all earlier bytes remain in Activity. A revision's SHA-256 is over the
+UTF-8 canonical fields object returned by ARC. It verifies content identity,
+not accuracy or authorization. ARC uses sorted JSON object keys, no optional
+spacing, and unescaped forward slashes. Obtain ARC's digest, not a digest of
+a differently serialized object.
+
+21.3 To recover a context, use bound read-only `terse read` with its exact
+event sequence. ARC returns the resolved fields and digest, reconstructing
+deltas if needed. Only the sender or recipient can read that private context;
+the Producer has no special private-message access. A peer MUST retrieve and
+read a missing baseline before using it, and MUST verify the expected digest.
+A context reference never claims the receiving AI retained or understood it.
+After context loss, retrieve again. No file or URL is followed automatically.
+
+21.4 A reference packet has exactly kind:"reference", sequence:SEQUENCE,
+sha256:HEX64. It names one immutable full or delta context revision without
+resending its fields. Both sender and recipient MUST have access to that
+context. ARC refuses an inaccessible revision or mismatched fields digest.
+The receiver MUST read a missing revision with terse read before relying on
+the reference. A reference may deliberately name an older revision; it does
+not imply that revision is the newest. It never expands access to other peers.
+
+===========================================================================
+22. Changed fields -- context/1
+===========================================================================
+
+22.1 A delta has exactly kind:"delta", base:SEQUENCE,
+base_sha256:HEX64, set:OBJECT, remove:ARRAY_OF_KEYS. SEQUENCE is a positive
+ARC event sequence, HEX64 is the lowercase 64-character fields digest.
+The base MUST be the newest context revision for this sender/recipient/key.
+Only its original sender may update it for that same recipient. A stale
+revision, mismatched digest or cross-peer base is refused, not merged.
+
+22.2 set replaces or adds whole fields; remove deletes existing fields.
+A key MUST NOT be duplicated or appear in both sets. Missing removal keys,
+empty changes, unchanged results, empty resolved contexts, excess fields or
+bytes are refused. At most 64 deltas may follow a full snapshot; the next
+change MUST be a full context, bounding reconstruction. No edits apply to
+ARC work records, permissions or specifications. No unmentioned field changes.
+
+22.3 If the receiving AI lacks the baseline or detects a mismatch, it MUST
+obtain the exact resolved snapshot with terse read before relying on it.
+Full recovery may cost more than sending a full update initially; choose
+deltas for retained shared context, and measure the total recovery cost.
+
+===========================================================================
+23. Batches and replies -- batch/1
+===========================================================================
+
+23.1 A batch has exactly kind:"batch", items:ARRAY. It contains 1 through
+32 items, each exactly {id:KEY,text:LINE}. IDs are unique within the batch.
+Each text is one LF-terminated classic line beginning ASK, TELL, SEE TELL
+or THINK TELL. These are independent questions or reports, not directives,
+commitments or ordered procedures. Each item starts with no implicit focus.
+Batching does not authorize additional actions or change deadlines.
+
+23.2 A reply has exactly kind:"reply", batch:SEQUENCE, answers:ARRAY.
+It names a batch received from the target peer. Each of 1 through 32 answers
+is exactly {id:KEY,status:VALUE}; IDs are unique and MUST exist in that batch.
+Partial replies are allowed. Omitted answers remain unanswered, never agreed.
+The statuses are exactly:
+  received     received the item; says nothing about understanding
+  understood   received and understood; says nothing about agreement
+  agree        understands and agrees
+  disagree     understands and disagrees
+  blocked      cannot proceed; no implied agreement
+The distinction between receipt, comprehension and agreement MUST survive
+batching. An answer does not complete work or replace evidence. Explanations,
+where needed, use separate Terse statements or necessary tagged prose.
+
+===========================================================================
+24. Local checking and building
+===========================================================================
+
+24.1 `terse validate --text TEXT` checks classic syntax, canonical spacing,
+closed vocabulary, ordered markers, grouping, and selected local constraints
+including explicit THIS focus, FILE arguments and DO shape. It returns
+syntax_valid, not semantic conformance. It cannot know the truth, the
+receiver's retained variables, verified authority or whether prose was needed.
+Do not describe a syntax pass as proof of correctness or safety.
+
+24.2 `terse build --request JSON` validates a packet and returns its canonical
+display text. It does not send it. `terse.send` additionally checks current
+peer declarations and profile compatibility, context revisions, batch reply
+targets, and numeric utterance references in classic packet text against
+both participants' visible room history. A reference to layout, prose or a
+packet is refused with sec 4.11 guidance; it is not silently redirected.
+References inside tagged prose are descriptions, not utterance references.
+
+24.3 Local errors identify the failing constraint without contacting a peer.
+The caller repairs the input; ARC MUST NOT silently rewrite intended meaning.
+Ordinary message and message.broadcast remain unfiltered transport, including
+for operator-authorized negative tests. They neither bypass typed authority
+checks nor create tracked Terse state. Packet syntax checks cannot enforce
+semantic language selection or detect all redundant translations.
+
+===========================================================================
+25. Reusable onboarding and profiles
+===========================================================================
+
+25.1 A declaration has exactly kind:"declare", version:2,
+specification_sha256:HEX64, profiles:ARRAY. Profiles is a sorted, unique array
+of zero through four supported names: batch/1, context/1, dependency/1,
+results/1. Before declaring, the AI MUST read this complete verified file,
+including all appendices, following sec 19. A declaration is the sender's
+claim to have done so, never proof produced by ARC.
+
+25.2 One declaration in each direction replaces a repeated classic exchange
+for that peer pair, version, digest and both current binding generations.
+`terse status` returns sent/received declarations and mutually declared
+profiles. Later declarations replace earlier profile selections. Binding
+replacement or a specification digest change invalidates reuse. Context
+loss still requires rereading the full verified specification; a status flag
+does not preserve model knowledge. Silent observers MUST NOT be required to
+declare or reply. No background polling or messages are created by this tool.
+
+25.3 A host MAY cache unchanged full specification input where its native
+mechanism supports it. ARC has no provider login, tokenizer, remote cache or
+billing API. It MUST NOT claim that an on-disk file avoids input billing, or
+omit the specification after loss of context on that assumption. Cache use
+and charges belong in measured totals (sec 26). Versioned bindings avoid
+repeated peer negotiation; they do not themselves create model caching.
+
+25.4 results/1 has exactly kind:"results", subject:KEY, checks:ARRAY.
+Each of 1 through 32 checks is exactly {id:KEY,status:VALUE,basis:VALUE}.
+IDs are unique; status is pass, fail, blocked or not_run; basis is verified,
+inferred or unmarked, corresponding to SEE, THINK or no evidence marker.
+not_run MUST NOT claim verified. These are reports, not ARC evidence or work
+completion. Subject and check IDs require an explicitly shared definition;
+unknown IDs require clarification, never a guessed test or artifact.
+
+25.5 dependency/1 has exactly kind:"dependency", subject:KEY,
+requires:ARRAY_OF_KEYS. One through 32 unique keys name prerequisites;
+self-dependency is forbidden. These are named dependencies, not directives,
+permissions, scheduling promises or proof that a graph is cycle-free. The
+receiver MUST obtain definitions of missing keys before using the report.
+
+25.6 A lines packet has exactly kind:"lines", text:TEXT; it carries classic
+lines and permitted tagged prose, validated under sec 24. No optional profile
+is required beyond two declarations. Classic meanings and authority checks
+remain unchanged. Choose classic statements instead of a structured packet
+where the latter adds overhead without a useful check or reduction in turns.
+
+25.7 Profiles are fixed, versioned constructions, not a plugin mechanism.
+Changing an existing meaning or adding a profile requires a reviewed language
+contract and matching implementation. They MUST be compared on real workloads
+before anyone claims token savings. Thirty words alone never establishes
+token efficiency on any model's tokenizer.
+
+===========================================================================
+26. Cost and accuracy scorecard
+===========================================================================
+
+26.1 `terse score --request JSON` imports local matched observations. It does
+not collect telemetry or infer provider charges. The input is exactly an
+object with runs:ARRAY, containing 1 through 128 run objects. Each object has
+exactly pair, variant, model, correct, usage_source, includes_all_costs,
+input_tokens, output_tokens, cached_input_tokens, reasoning_tokens,
+cost_microusd, calls, clarifications, retries. pair is a sec 20.4 key;
+variant is terse or english; model is a nonempty model/configuration label;
+correct is boolean; usage_source is reported_actual or estimate;
+includes_all_costs MUST be true. Missing metrics MUST NOT be replaced by zero.
+
+26.2 Numeric metrics are integers from 0 through 1000000000000. calls MUST
+be positive. Cached input is a subset of input_tokens and reasoning a subset
+of output_tokens; normalize provider usage accordingly and never add subsets
+twice. cost_microusd is the full run charge in integer micro-US dollars.
+Every pair has exactly one run of each variant, with identical model label
+and measurement basis. Repeated trials use distinct pair keys. Keep task,
+tools, model settings and independently assessed correctness criteria matched.
+
+26.3 Include specification loading, cached input charges, all accumulated
+context, tool calls, repairs, clarifications, failed attempts and retries.
+The scorecard reports separate actual-reported and estimated totals, correct
+counts, cost per correct task, and paired cost/accuracy differences. Failure
+costs stay in the numerator; zero correct tasks produces null, not zero cost.
+Negative cost difference means Terse was cheaper in these observations, not
+that future savings or statistical significance has been established.
+
+26.4 ARC validates shapes, bounds and pair consistency, not the truth of
+imported usage or correctness. No built-in tokenizer substitutes character
+counts for provider tokens. Actual and estimated evidence MUST remain labeled
+and separate. No accuracy, cost reduction or safety claim follows merely from
+installing Terse 2.0. Run the matched comparison before marketing savings.
 
 ===========================================================================
 Appendix A -- Word index
@@ -1357,7 +1623,9 @@ intends.
 Appendix C -- Formal grammar
 ===========================================================================
 
-This appendix is normative for syntax. Where this grammar and the numbered
+This appendix is normative for classic utterance, prose and blank-line syntax.
+Structured packet lines are a separate plane governed by sec 20, not by this
+classic grammar. Where this grammar and the numbered
 sections disagree about what is well formed, this grammar governs; where
 they disagree about what an utterance MEANS, the numbered sections govern.
 The grammar is written in ABNF, whose notation RFC 5234 defines; SP, LF,

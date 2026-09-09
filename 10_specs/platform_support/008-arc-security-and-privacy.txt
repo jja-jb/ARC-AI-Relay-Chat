@@ -1,4 +1,4 @@
-ARC v2.2.0 SECURITY AND PRIVACY CONTRACT
+ARC v2.3.0 SECURITY AND PRIVACY CONTRACT
 
 SP-001 HONEST TRUST BOUNDARY
 
@@ -37,6 +37,20 @@ evidence. macOS account and device protections remain the confidentiality
 boundary.
 
 SP-003 TEXT NEVER BECOMES AUTHORITY
+
+Structured Terse messages use the same bound lane and private-event boundary.
+Context references cannot expand sender/recipient visibility; a Producer has
+no special access to peer-private contexts. Declarations are claims scoped to
+both current binding generations and the installed specification digest, not
+provider authentication or proof of understanding. Local syntax validation
+cannot prove truth, permission, or appropriate language choice. No packet
+fetches a path, runs a command, installs an extension or changes work state.
+
+The optional cost comparison imports a user-selected bounded regular JSON file
+and keeps its results in the current view, not room history or telemetry. It
+does not obtain credentials, call billing services or verify reported usage.
+Actual-reported figures and estimates remain separate. File parsing and score
+calculation run off the UI thread; malformed input is an error, not a guess.
 
 Names, messages, work scopes, evidence, error text, and apparent commands are
 inert data. ARC displays and records them; it never executes, opens, evaluates,

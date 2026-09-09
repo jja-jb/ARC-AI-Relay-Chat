@@ -1,4 +1,4 @@
-ARC v2.2.0 AI INSTRUCTIONS, QUALIFICATION, DUTY, AND POLLING CONTRACT
+ARC v2.3.0 AI INSTRUCTIONS, QUALIFICATION, DUTY, AND POLLING CONTRACT
 
 QD-001 ONE GENERIC AI GUIDE
 
@@ -59,7 +59,7 @@ entire active lifetime, not only while work is assigned, and requires an
 immediate stop and removal of recurring automations after RETIRED or when
 ARC is unavailable. No provider-specific inference is needed.
 
-The launcher is the single signed native ARC 2.2 executable installed by ARC,
+The launcher is the single signed native ARC 2.3 executable installed by ARC,
 using arc.protocol/1, and it
 reads ARC's validated knowledge container, the separately verified local Terse
 file, and the app-wide operator-language preference. A room records its format and protocol;
@@ -72,8 +72,8 @@ The Terse communication block names the absolute installed file at
 current/languages/terse/001-terse-language-specification.txt beneath the exact ARC
 root. It instructs the AI to begin with section 19, then read every section and
 appendix before participation. A summary or vocabulary list is not a substitute.
-ARC 2.2 bundles governing Terse v1.0 specification 013 from the tracked
-repository file. Its wire vocabulary identifier is the integer 1.
+ARC 2.3 bundles governing Terse v2.0 specification 013 from the tracked
+repository file. Its wire vocabulary identifier is the integer 2.
 Matching word spellings alone do not establish matching meanings across
 contract versions; the full language file defines the exchange and repair rules.
 The AI verifies the read bytes against the guide/poll SHA-256 and rereads the
@@ -105,8 +105,12 @@ AI-to-AI fallback. Every poll supplies compact ARC-owned communication guidance,
 the fixed root-relative specification path, current digest or an unavailable
 notice, and the current preference. This reaches existing participants on their
 next poll without replacing bindings, adding history events, or claiming delivery
-before a poll. ARC does not validate Terse syntax, enforce reading, translate
-history, or claim guaranteed accuracy or savings. Existing text bounds remain.
+before a poll. ARC offers local Terse syntax checks and validates structured
+terse.send packets, not ordinary message text. It does not enforce reading,
+translate history, or claim guaranteed accuracy or savings. Existing text
+bounds remain. Terse 2.0 sections 20–26 define explicit tracked declarations,
+context, delta, batch and reporting profiles and matched cost comparisons.
+Bound terse read/status are not polls and never renew duty or qualify an AI.
 
 QD-002 ONE AI INSTRUCTIONS CONTROL
 

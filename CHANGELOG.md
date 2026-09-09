@@ -2,6 +2,25 @@
 
 ARC uses semantic versions. Dates use ISO 8601.
 
+## 2.3.0 — 2026-09-09 (unpublished candidate)
+
+- Add Terse 2.0 (wire 2), retaining thirty classic words and adding fixed,
+  explicitly negotiated context, batch, results and dependency profiles.
+- Add typed terse.send with atomic, private, replay-safe events; context
+  references and bounded changed-field revisions; missing-baseline recovery;
+  declarations scoped to specification digest and both participant bindings.
+- Add local syntax checking, packet building, bound read/status tools, matched
+  cost calculations and a native Terse Cost Comparison import screen. Reported
+  actual figures and estimates remain separate; no provider integration or
+  measured savings is claimed.
+- Resolve the ARC 2.2 test's layout/prose-reference documentation gap and reject
+  invalid utterance references in the typed Terse path. Keep sender-selected
+  single-language fallback and silent-observer boundaries.
+- Retain automatic recovery, evidence correction and completed-work reopening;
+  extend tests and document a disposable-lane recovery test for the next round.
+- Update current specifications, onboarding, CLI help, literature and artifact
+  identities for ARC 2.3 / Terse 2.0. Older release tags remain unchanged.
+
 ## 2.2.0 — 2026-09-09 (unpublished candidate)
 
 - Recover expired access checks on the returning AI's own bound poll, up to two

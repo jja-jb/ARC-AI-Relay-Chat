@@ -17,8 +17,8 @@ final class ARCCommunicationTests: XCTestCase {
             ARCCommunication.specificationRelativePath), encoding: .utf8)
         try installSpecification(root: root, text: full)
         XCTAssertEqual(try ARCCommunication.specificationText(installationURL: installation), full)
-        XCTAssertTrue(full.contains("Status: Terse v1.0, first formal release"))
-        XCTAssertTrue(full.contains("TELL WORD SAME 1"))
+        XCTAssertTrue(full.contains("Status: Terse v2.0, release candidate"))
+        XCTAssertTrue(full.contains("TELL WORD SAME 2"))
         try Data((full + "changed\n").utf8).write(to: ARCCommunication.specificationURL(rootURL: root))
         XCTAssertThrowsError(try ARCCommunication.specificationText(installationURL: installation)) { error in
             XCTAssertEqual((error as? ARCError)?.code, .knowledgeUnavailable)
@@ -174,7 +174,7 @@ final class ARCCommunicationTests: XCTestCase {
         let text = ARCCommunication.setupText(rootURL: try temporaryRoot(), language: .german)
         for required in ["entire file", "all sections and appendices", "section 19",
             "choose English or German", "specific thought", "tag each prose line [en] or [de]",
-            "operator use Deutsch", "take precedence", "does not validate Terse syntax",
+            "operator use Deutsch", "take precedence", "validates structured packets",
             "not measured guarantees", "reread the whole local specification"] {
             XCTAssertTrue(text.contains(required), required)
         }
