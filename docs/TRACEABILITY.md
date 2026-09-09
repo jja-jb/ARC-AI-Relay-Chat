@@ -8,6 +8,22 @@ public behavior fails `source-check`.
 
 ## Local regression additions — September 2026
 
+ARC 2.0: `testVisualTimestampRefusalNamesFieldPreservesStateAndTokenThenCorrectedRetryWorks`
+and `testEvidenceErrorsIdentifyShapeFieldsAndConsistencyWithoutEchoingContent`
+cover MW-007 / CLI-008 field-level diagnostics, strict UTC form, safe refusal and
+retry. `testRoomWideNoticeUsesOneAtomicOperationAndExactUnicodeTextFor63Peers`
+and `testBroadcastExcludesUnqualifiedRetiredSelfAndRejectsUnavailableSender`
+cover MW-003 / CLI-008 room-wide fan-out, Unicode preservation, private inbox
+filtering, eligibility, and replay. The full-room retirement test now also
+proves broadcast refusal leaves bytes unchanged. Communication tests enforce
+the shared nonduplicating language policy in onboarding and every poll.
+Dev-tool tests pin the reviewed version-7 Terse bytes, explicit focus/repair,
+version contract, corrected FILE example, and packaged digest. These textual
+checks are not a claim of semantic understanding by any AI.
+Installation regression `testVersionTwoFreshInstallUpgradeAndInvalidVersions`
+covers isolated fresh 2.0 payload publication, upgrade from 1.1.0, and unchanged
+installed bytes after rejection of malformed or unsupported release identities.
+
 Core tests cover creation replay after rename, Working admission, deadline
 extension/replay/expiry/return, clock rollback, hostile instruction FIFOs, and
 normal-write capacity reserved for complete retirement and deletion. App tests

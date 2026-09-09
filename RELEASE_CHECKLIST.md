@@ -1,4 +1,4 @@
-# ARC 1.0 release checklist
+# ARC 2.0 release checklist
 
 The release procedure is [docs/RELEASING.md](docs/RELEASING.md). This checklist
 does not replace it.
@@ -31,7 +31,7 @@ does not replace it.
 ## Mac candidate
 
 - [ ] App and `arc` are arm64-only.
-- [ ] Bundle identifier is `org.jonnybass.arc`; version is `1.1.0`.
+- [ ] Bundle identifier is `org.jonnybass.arc`; version is `2.0.0`.
 - [ ] Privacy manifest declares no collection/tracking and the exact approved
       file-metadata and elapsed-time reasons.
 - [ ] Install manifest contains only regular native command, knowledge,

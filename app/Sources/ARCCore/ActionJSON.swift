@@ -22,6 +22,10 @@ public enum ARCActionJSON {
                 text: try text(object["text"], label: "Message", maximum: 16_384,
                                allowNewlines: true, trimWhitespace: false)
             )
+        case "message.broadcast":
+            try exact(object, keys: ["type", "text"])
+            return .messageBroadcast(text: try text(object["text"], label: "Message",
+                maximum: 16_384, allowNewlines: true, trimWhitespace: false))
         case "qualification.start":
             try exact(object, keys: ["type", "participant", "producer_generation"])
             return .qualificationStart(
@@ -83,7 +87,7 @@ public enum ARCActionJSON {
                 )
             )
         default:
-            throw ARCError(.invalidArgument, "The action type is not part of ARC 1.0.")
+            throw ARCError(.invalidArgument, "The action type is not supported by ARC \(ARCConstants.version).")
         }
     }
 
@@ -94,6 +98,8 @@ public enum ARCActionJSON {
             value = .object(["type": .string("working"), "until_logical_us": .integer(deadline)])
         case .message(let to, let text):
             value = .object(["type": .string("message"), "to": .string(to), "text": .string(text)])
+        case .messageBroadcast(let text):
+            value = .object(["type": .string("message.broadcast"), "text": .string(text)])
         case .qualificationStart(let participant, let generation):
             value = .object([
                 "type": .string("qualification.start"),

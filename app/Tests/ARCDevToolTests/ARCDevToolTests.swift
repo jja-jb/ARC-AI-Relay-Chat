@@ -3,12 +3,21 @@ import XCTest
 @testable import ARCDevTool
 
 final class ARCDevToolTests: XCTestCase {
-    func testBundledTerseIsTheCompleteSuppliedSpecificationAndDigestIsChecked() throws {
+    func testBundledTerseIsTheCompleteReviewedVersionSevenAndDigestIsChecked() throws {
         let source = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let bytes = try Data(contentsOf: source.appendingPathComponent(ARCReleaseSupport.terseSpecification))
         XCTAssertEqual(KnowledgeContainer.hex(KnowledgeContainer.sha256(bytes)),
-            "de045eb98ffd9908f44a647d1b894c94013e054d1e7a7d96d42d4fb4aab2eab9")
+            "92f98cfdce3a6fbfbcb37bd93e8d9776bb5db54dbff1079f559c037e7203bb83")
+        let specification = String(decoding: bytes, as: UTF8.self)
+        for section in ["4.14 Explicit focus", "4.15 A receiver", "13.10 Enumerating",
+            "14.14 One thought", "19. Entering a room", "Appendix A", "Appendix B", "Appendix C"] {
+            XCTAssertTrue(specification.contains(section), section)
+        }
+        XCTAssertTrue(specification.contains("TELL WORD SAME 7"))
+        XCTAssertFalse(specification.contains("TELL WORD SAME 6"))
+        XCTAssertFalse(specification.contains("SEE TELL FILE GOOD"))
+        XCTAssertFalse(specification.contains("two participants that state the same claim therefore produce identical bytes"))
         let root = URL(fileURLWithPath: "/private/tmp/arc-terse-bundle-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
         let text = root.appendingPathComponent(ARCReleaseSupport.terseSpecification)

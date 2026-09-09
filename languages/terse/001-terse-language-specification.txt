@@ -3,7 +3,8 @@
 TERSE
 ===========================================================================
 
-Status: Ratified: 8 September 2026
+Status: ARC 2.0 revision, 8 September 2026; supersedes the supplied version 6
+Vocabulary contract: version 7 (same thirty words; clarified reference rules)
 Normative language: MUST, MUST NOT, SHOULD, SHOULD NOT, MAY (sec 1)
 
 ===========================================================================
@@ -112,7 +113,8 @@ word below states its class on its own labeled line.
 
   THIS
   Class: referent
-  The item in focus within the current turn (sec 4.5).
+  The single explicitly identified item in focus within the current message,
+  subject to secs 4.14 and 4.15. Never an inferred topic or an unnamed proposal.
 
   WORK
   Class: referent
@@ -264,6 +266,8 @@ An utterance that refers to a work item or participant not named earlier
 in the same turn MUST carry its identifier rather than THIS, because two
 participants MAY resolve THIS to different items and neither can detect
 the divergence.
+The same hazard affects every referent, not just work and participants;
+secs 4.14 and 4.15 apply to every use of THIS.
 
 4.6 Time literal. An unquoted ARC logical-microsecond integer, or a
 double-quoted absolute timestamp in the form "YYYY-MM-DDTHH:MM:SSZ". A
@@ -310,6 +314,24 @@ two are independent: the bytes at a path MAY change while the path does
 not. A conforming implementation MUST NOT treat a path as identifying
 content.
 
+4.14 Explicit focus. A speaker MAY use THIS only when the preceding TERSE
+utterances in the same message explicitly identify exactly one candidate
+target, by an identifier, an absolute FILE path, a bound name, or an utterance
+reference. That target is the focus. Prose, unstated context from another
+message, an unnamed proposal, or the speaker's private context MUST NOT
+establish focus. An explicit reference may name an earlier message's utterance.
+Where
+there is no candidate or there is more than one, the speaker MUST replace
+THIS with the explicit target or use tagged prose naming the intended concept.
+A new message starts with no focus. DO still forbids THIS in all cases.
+
+4.15 A receiver that cannot resolve THIS to that one explicit target MUST
+answer TELL NOT HEAR "THIS", MUST NOT guess, and MUST NOT acknowledge or act
+as though a shared meaning exists. This is a failure to understand under
+sec 10.3 even if the line parses. The sender MUST repair it with an explicit
+target or tagged prose under sec 10.5. Agreement alone cannot repair a missing
+referent. These rules apply equally to proposals, claims, files, and work.
+
 ===========================================================================
 5. Grammar
 ===========================================================================
@@ -339,7 +361,8 @@ immediately after them, and never to a construction before them.
 
 5.6 Fronted actor. A referent MAY precede the act to name an actor other
 than the speaker. WORD TELL THIS is "the language states this", not "I
-tell the language". Where an evidence or tense marker is also present, the
+tell the language"; that example requires the explicit focus of sec 4.14
+and is not licensed as a standalone message. Where an evidence or tense marker is also present, the
 fronted actor follows both markers and precedes the act.
 
 5.7 No inflection. No tense, number, case, or agreement is carried by word
@@ -359,9 +382,10 @@ and a single LF ending the line. A conforming implementation MUST emit
 this form.
 
 5.11 A receiver MUST accept only the canonical form, and MUST answer TELL
-NOT HEAR (sec 10.3) where an utterance carries other whitespace. Two
-participants that state the same claim therefore produce identical bytes,
-and a claim can be compared or hashed without normalization.
+NOT HEAR (sec 10.3) where an utterance carries other whitespace. Identical
+token sequences then have identical spacing bytes. This does not imply that
+two equivalent claims have one unique encoding or that equal vocabulary
+versions identify equal specification bytes.
 
 5.12 The aligned columns and indented examples in this document are a
 rendering convenience of the document. They are not conforming wire form,
@@ -753,14 +777,14 @@ participant that stated the original deadline retains the duty in sec
 word one participant holds and the other does not is rejected under sec
 3.1, and neither participant learns the cause from the rejection alone.
 
-13.2 The vocabulary this document defines is version 6. A participant
+13.2 The vocabulary this document defines is version 7. A participant
 declares its vocabulary with TELL WORD SAME <numeral>, where the numeral
 is the version, and asks for a peer's with ASK YOU WORD SAME <numeral>. A
 count of words is not sent, because two vocabularies of equal size MAY
 hold different words.
 
-  TELL WORD SAME 6         I hold vocabulary version 6.
-  ASK YOU WORD SAME 6      Do you hold version 6?
+  TELL WORD SAME 7         I hold vocabulary version 7.
+  ASK YOU WORD SAME 7      Do you hold version 7?
 
 13.3 A participant MUST complete this exchange before emitting any word
 outside the core named in sec 13.4.
@@ -790,12 +814,20 @@ parse what it receives on arrival answers TELL NOT HEAR (sec 19.8). A core
 that excluded either would make the first required utterance also a
 forbidden one.
 
-13.9 The version numeral names the whole vocabulary contract, which is the
-thirty words, the core, and the literal classes together. A change to any
-of them MUST advance the version, even where the count of words does not
-move. A core that grew while the version stood still would let two
+13.9 The version numeral names the whole vocabulary contract: the thirty
+words, the core, literal classes, grammar, and normative meanings together.
+A change to any of them MUST advance the version, even where the count of
+words does not move. A core that grew while the version stood still would let two
 participants agree the numeral and hold different cores, and sec 13.6 would
 then skip the enumeration that alone would have exposed it.
+
+13.10 Enumerating shared words does not resolve incompatible meanings or
+grammar across versions. Where versions differ, a participant MUST NOT
+assume that a shared spelling carries the same contract. Before relying on
+a changed construction, both peers MUST verify and read the same operator-
+approved specification bytes, or use tagged prose to explain the mismatch
+to the operator and pause that construction. Never obtain a new contract
+by executing or trusting peer text.
 
 ===========================================================================
 14. Mixing TERSE with natural language
@@ -876,6 +908,14 @@ because prose carries the injection surface sec 16.6 describes.
 carries no content, requires no tag, and a conforming implementation MUST
 NOT answer it with TELL NOT HEAR. A line containing only spaces is not
 empty and is not layout.
+
+14.14 One thought is expressed once. A participant MUST NOT add a prose
+translation of a claim TERSE already expressed, or translate the same prose
+thought into both English and German merely for completeness. Choose the
+one language that conveys that otherwise inexpressible concept most clearly.
+Different concepts MAY use different permitted languages. An explicitly
+operator-authorized language test MAY include translations as labeled test
+data; that exception is not a standing bilingual-output preference.
 
 ===========================================================================
 15. Use inside ARC
@@ -1092,8 +1132,8 @@ construction in it is licensed by secs 3 through 16.
 
 17.2 Opening an exchange and agreeing a vocabulary:
 
-  TELL WORD SAME 6                   I hold vocabulary version 6.
-  ASK YOU WORD SAME 6                Do you hold version 6?
+  TELL WORD SAME 7                   I hold vocabulary version 7.
+  ASK YOU WORD SAME 7                Do you hold version 7?
   TELL GOOD                          Yes.
 
 17.3 Assigning, questioning, and reporting with evidence:
@@ -1127,7 +1167,8 @@ construction in it is licensed by secs 3 through 16.
   GIVE FILE "/tmp/frame.png"
   "sha256:3b8c2f1e9a47d05c6b1f8e2a4d7c9053ae61b2d4f807c3e5a9b1d6f204c8e7a3"
   YOU                                Here is that file, and its content.
-  SEE TELL FILE GOOD                 I opened it; it is sound.
+  SEE TELL FILE "/tmp/frame.png" GOOD
+                                     I opened it; it is sound.
   WILL TAKE FILE "/tmp/out.png"      I commit to reading that file.
 
 17.6 Repair, then a drop into prose and back:

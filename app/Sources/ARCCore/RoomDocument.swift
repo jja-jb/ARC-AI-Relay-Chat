@@ -839,42 +839,63 @@ enum ARCEvidence {
         _ evidence: ARCJSONValue, state: ARCWorkState, mode: ARCEvidenceMode,
         corrupt: Bool = false
     ) throws {
-        let error = ARCError(
-            corrupt ? .roomCorrupt : .invalidArgument,
-            corrupt ? "A work evidence record is invalid." : "The work evidence does not match its state."
-        )
+        func require(_ valid: Bool, _ explanation: String) throws {
+            guard valid else {
+                throw ARCError(corrupt ? .roomCorrupt : .invalidArgument,
+                    "Work evidence: " + explanation)
+            }
+        }
         try ARCJSONBounds.validate(evidence, errorCode: corrupt ? .roomCorrupt : .invalidArgument)
-        guard let object = evidence.objectValue else { throw error }
+        guard let object = evidence.objectValue else {
+            throw ARCError(corrupt ? .roomCorrupt : .invalidArgument, "Work evidence must be a JSON object.")
+        }
+        func fields(_ keys: Set<String>) throws {
+            try require(Set(object.keys) == keys,
+                "\(state.rawValue) \(mode.rawValue) requires exactly these fields: \(keys.sorted().joined(separator: ", ")).")
+        }
+        func text(_ key: String, maximum: Int) throws {
+            try require(validText(object[key], maximum: maximum),
+                "\(key) must be nonblank canonical text of at most \(maximum) UTF-8 bytes, without disallowed control characters.")
+        }
+        func list(_ key: String, range: ClosedRange<Int>) throws {
+            try require(validTextArray(object[key], range: range),
+                "\(key) must contain \(range.lowerBound) through \(range.upperBound) nonblank text entries, each at most 4096 UTF-8 bytes.")
+        }
         switch state {
         case .open:
-            guard object.isEmpty else { throw error }
+            try require(object.isEmpty, "OPEN requires an empty object {}.")
         case .active:
-            guard Set(object.keys) == ["note"], validText(object["note"], maximum: 4_096)
-            else { throw error }
+            try fields(["note"])
+            try text("note", maximum: 4_096)
         case .blocked:
-            guard Set(object.keys) == ["blocker"], validText(object["blocker"], maximum: 4_096)
-            else { throw error }
+            try fields(["blocker"])
+            try text("blocker", maximum: 4_096)
         case .complete where mode == .text:
-            guard Set(object.keys) == ["references", "result"],
-                  validText(object["result"], maximum: 16_384),
-                  validTextArray(object["references"], range: 0...16) else { throw error }
+            try fields(["references", "result"])
+            try text("result", maximum: 16_384)
+            try list("references", range: 0...16)
         case .complete:
-            guard Set(object.keys) == [
+            try fields([
                 "artifact", "defects", "inspected_at", "inspection", "result", "surfaces",
-            ], validText(object["artifact"], maximum: 4_096),
-               validText(object["inspection"], maximum: 4_096),
-               object["inspected_at"]?.stringValue.map(ARCTime.isTimestamp) == true,
-               validTextArray(object["surfaces"], range: 1...64),
-               validTextArray(object["defects"], range: 0...32),
-               let result = object["result"]?.stringValue,
-               ["PASS", "PASS_WITH_DEFECTS"].contains(result) else { throw error }
+            ])
+            try text("artifact", maximum: 4_096)
+            try text("inspection", maximum: 4_096)
+            try require(object["inspected_at"]?.stringValue.map(ARCTime.isTimestamp) == true,
+                "inspected_at must be a valid UTC timestamp in YYYY-MM-DDTHH:MM:SS.ffffffZ form (exactly six fractional digits), for example 2026-09-09T00:20:44.909582Z.")
+            try list("surfaces", range: 1...64)
+            try list("defects", range: 0...32)
+            let result = object["result"]?.stringValue ?? ""
+            try require(["PASS", "PASS_WITH_DEFECTS"].contains(result),
+                "result must be PASS or PASS_WITH_DEFECTS for VISUAL completion.")
             let defects = object["defects"]?.arrayCount ?? -1
-            guard (result == "PASS" && defects == 0)
-                    || (result == "PASS_WITH_DEFECTS" && defects > 0) else { throw error }
+            try require((result == "PASS" && defects == 0)
+                    || (result == "PASS_WITH_DEFECTS" && defects > 0),
+                "defects must be empty for PASS and nonempty for PASS_WITH_DEFECTS.")
         }
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
-        guard let bytes = try? encoder.encode(evidence), bytes.count <= 60_000 else { throw error }
+        try require((try? encoder.encode(evidence).count).map { $0 <= 60_000 } == true,
+            "the complete encoded object must not exceed 60000 bytes.")
     }
 
     private static func validText(_ value: ARCJSONValue?, maximum: Int) -> Bool {

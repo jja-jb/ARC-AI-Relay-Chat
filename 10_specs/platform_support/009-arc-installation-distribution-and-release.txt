@@ -161,13 +161,13 @@ record is made complete.
 
 IR-009 PUBLIC RELEASE ASSETS
 
-The sealed public release contains exactly these assets for VERSION `1.1.0`:
+The sealed public release contains exactly these assets for VERSION `2.0.0`:
 
-  ARC-1.1.0.dmg
-  ARC-1.1.0-source.tar.gz
+  ARC-2.0.0.dmg
+  ARC-2.0.0-source.tar.gz
   ARC_AI_Relay_Chat_Literature.pdf
-  ARC-1.1.0-MANIFEST.json
-  ARC-1.1.0-DVT-REPORT.txt
+  ARC-2.0.0-MANIFEST.json
+  ARC-2.0.0-DVT-REPORT.txt
   RELEASE-METADATA.json
   SHA256SUMS
 

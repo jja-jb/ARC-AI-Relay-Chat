@@ -53,6 +53,16 @@ preserved so ARC does not damage Terse's line form. Terse-first communication
 and English/German fallback are AI instructions, not message admission rules;
 ARC neither validates Terse grammar nor translates message text.
 
+ARC 2.0 adds `message.broadcast`: one token atomically appends an ordinary
+MESSAGE event with identical normalized text for each other QUALIFIED peer,
+in sorted AI-ID order. Recipients may be On Duty, Working, or Off Duty.
+The recipient set is captured under the room lock; no invited, qualifying,
+failed, retired, or future participant receives a copy. An empty recipient
+set is WRONG_STATE. A capacity refusal commits none of the copies. Exact
+retry returns the original event sequences without resending or recapturing
+the roster. Existing directed messages retain their privacy. The stored
+copies are byte-identical text, not proof of receipt, comprehension, or consent.
+
 A message is a notice. It creates no acknowledgement, reply, deadline, or work
 obligation. ARC never treats reading, surfacing, or polling as agreement or
 response. If an answer or result is required, the Producer creates work.
@@ -136,7 +146,11 @@ these canonical JSON objects; no unknown key is allowed:
 
 `inspection` names the visual inspection tool or method. `references` has zero
 through 16 entries; an empty list declares that `result` is self-contained.
-`inspected_at` uses the exact Timestamp form in REC-011.
+`inspected_at` uses the exact Timestamp form in REC-011:
+YYYY-MM-DDTHH:MM:SS.ffffffZ, with exactly six fractional digits and a valid
+UTC calendar date, for example 2026-09-09T00:20:44.909582Z. Evidence refusals
+name the invalid field or exact required keys and their constraints, rather
+than incorrectly attributing a timestamp error to the work state.
 `surfaces` has 1 through 64 entries. `defects` has zero
 through 32 entries: PASS requires zero and PASS_WITH_DEFECTS requires at least
 one. All list entries are Text and retain submitted order. The complete

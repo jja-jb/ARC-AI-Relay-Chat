@@ -931,6 +931,25 @@ final class ARCInstallationTests: XCTestCase {
         if let temporary { try? FileManager.default.removeItem(at: temporary) }
     }
 
+    func testVersionTwoFreshInstallUpgradeAndInvalidVersions() throws {
+        let bundle = temporary.appendingPathComponent("ARC.app", isDirectory: true)
+        let root = temporary.appendingPathComponent("root", isDirectory: true)
+        let installation = ARCInstallation(bundleURL: bundle, developmentBypass: false)
+        try writeBundle(bundle, specificationText: "legacy\n", launcherText: "launcher", releaseVersion: "1.1.0")
+        try installation.ensureInstalled(rootURL: root)
+        try writeBundle(bundle, specificationText: "version two\n", launcherText: "launcher", releaseVersion: "2.0.0")
+        try installation.ensureInstalled(rootURL: root)
+        XCTAssertEqual(try String(contentsOf: ARCCommunication.specificationURL(rootURL: root), encoding: .utf8), "version two\n")
+        let fresh = temporary.appendingPathComponent("fresh", isDirectory: true)
+        try installation.ensureInstalled(rootURL: fresh)
+        XCTAssertEqual(ARCCommunication.snapshot(rootURL: fresh).status, "ready")
+        for version in ["3.0.0", "2.0", "2.0.0-beta", "garbage"] {
+            try writeBundle(bundle, specificationText: "invalid\n", launcherText: "launcher", releaseVersion: version)
+            XCTAssertThrowsError(try installation.ensureInstalled(rootURL: root), version)
+            XCTAssertEqual(try String(contentsOf: ARCCommunication.specificationURL(rootURL: root), encoding: .utf8), "version two\n")
+        }
+    }
+
     func testTerseUpgradePreservesOperatorPreferenceAndRepairsMissingSpecification() throws {
         let bundle = temporary.appendingPathComponent("ARC.app", isDirectory: true)
         let root = temporary.appendingPathComponent("root", isDirectory: true)
@@ -1389,7 +1408,8 @@ final class ARCInstallationTests: XCTestCase {
     private func writeBundle(
         _ bundle: URL,
         specificationText: String,
-        launcherText: String
+        launcherText: String,
+        releaseVersion: String = "1.0.2"
     ) throws {
         let contents = bundle.appendingPathComponent("Contents", isDirectory: true)
         let install = contents.appendingPathComponent("Resources/install", isDirectory: true)
@@ -1454,7 +1474,7 @@ final class ARCInstallationTests: XCTestCase {
             knowledgeSha256: digest(try Data(contentsOf: knowledge)),
             product: "ARC",
             schema: 1,
-            version: "1.0.2"
+            version: releaseVersion
         )
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]

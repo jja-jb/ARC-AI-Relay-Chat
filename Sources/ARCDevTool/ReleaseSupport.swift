@@ -64,7 +64,7 @@ enum ARCReleaseSupport {
         output: URL
     ) throws {
         guard version.range(
-            of: #"^1\.[0-9]+\.[0-9]+$"#,
+            of: #"^[12]\.[0-9]+\.[0-9]+$"#,
             options: .regularExpression
         ) != nil, isSHA256(knowledgeSHA256) else {
             throw DevToolError.message("install manifest identity is invalid")
@@ -259,7 +259,7 @@ enum ARCReleaseSupport {
         try checkTraceability(root)
         try checkBrandAssets(root)
         try checkPrivacyManifest(root.appending(path: "app/Sources/ARCApp/PrivacyInfo.xcprivacy"))
-        try checkInfoPlist(root.appending(path: "app/Info.plist"), version: "1.1.0")
+        try checkInfoPlist(root.appending(path: "app/Info.plist"), version: "2.0.0")
     }
 
     static func checkApp(_ app: URL, version: String, release: Bool) throws {

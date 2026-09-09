@@ -182,7 +182,7 @@ struct ARCInstallation: ARCInstallationProtocol, Sendable {
         guard manifest.schema == 1,
               manifest.product == "ARC",
               manifest.version.range(
-                  of: #"^1\.[0-9]+\.[0-9]+$"#,
+                  of: #"^[12]\.[0-9]+\.[0-9]+$"#,
                   options: .regularExpression
               ) != nil,
               isSHA256(manifest.knowledgeSha256),

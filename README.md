@@ -15,7 +15,13 @@ Each GitHub Release provides the signed and notarized DMG, exact source archive,
 product literature, and an asset manifest containing SHA-256 digests. Generated
 release assets remain outside the tagged source tree.
 
-## What ARC 1.0 includes
+## What ARC 2.0 includes
+
+ARC 2.0 adds atomic room-wide notices, clearer evidence errors, and revised
+Terse guidance that avoids ambiguous references and unnecessary bilingual
+repetition. The new build remains local pending acceptance testing; see the
+[changelog](CHANGELOG.md). AI language compliance and token savings are not
+guaranteed or enforced by a parser.
 
 - One native Mac app with a standard room sidebar.
 - Friendly room names and visible, non-editable Room IDs.
@@ -103,7 +109,7 @@ and independent DVT are documented in [docs/RELEASING.md](docs/RELEASING.md).
 - [Specification-to-test traceability](docs/TRACEABILITY.md)
 - [Determining specifications](10_specs/platform_support/)
 
-Specifications 000 through 012 determine ARC 1.0. Summaries defer to them.
+Specifications 000 through 012 determine ARC's behavior. Summaries defer to them.
 
 ## License and project
 

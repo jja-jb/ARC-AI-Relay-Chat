@@ -1346,6 +1346,28 @@ extension ARCStore {
             )
             return (nil, nil)
 
+        case .messageBroadcast(let text):
+            try requireAvailable(caller, now: now)
+            // Snapshot recipients under the same room lock as the commit. Use
+            // ordinary addressed events so old histories and privacy filtering
+            // retain their meaning. A failed write commits none of the fan-out.
+            let recipients = document.participants.filter {
+                $0.phase == .qualified && $0.id != caller.id
+            }.map(\.id).sorted()
+            guard !recipients.isEmpty else {
+                throw ARCError(.wrongState, "A room-wide message needs at least one other qualified AI.")
+            }
+            guard Int64(recipients.count) < Int64.max - document.room.nextSequence else {
+                throw ARCError(.limitExceeded, "This room has reached its event sequence limit.")
+            }
+            for recipient in recipients {
+                try appendEvent(to: &document, logical: now, kind: "MESSAGE",
+                    actor: caller.id, recipient: recipient,
+                    payload: .object(["text": .string(text)]),
+                    operation: operation, knowledge: knowledge)
+            }
+            return (nil, nil)
+
         case .qualificationStart(let targetID, let generation):
             try requireLiveProducer(
                 caller, document: document, now: now, generation: generation

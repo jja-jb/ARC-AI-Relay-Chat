@@ -36,7 +36,7 @@ short options, positional alternatives, response files, help topics, aliases,
 abbreviations, hidden compatibility commands, or option values read from stdin.
 Unknown or extra input is INVALID_ARGUMENT.
 
-`version` writes exactly `ARC 1.1.0` plus LF. `help` writes the verified
+`version` writes exactly `ARC 2.0.0` plus LF. `help` writes the verified
 help/arc-help.txt member. `spec list` writes the stable titles for three-digit
 IDs 000 through 012. `spec read ID` writes the corresponding verified member.
 These four commands refuse --root.
@@ -270,6 +270,19 @@ The caller must be On Duty and the target qualified. It appends one directed
 MESSAGE event. The target alone sees it through poll; the Administrator sees it
 in the app Activity view.
 
+Room-wide notice (ARC 2.0):
+
+  {"type":"message.broadcast","text":TEXT}
+
+The caller must be qualified and On Duty or unexpired Working. One transaction
+stores the same normalized text in one MESSAGE per other QUALIFIED participant
+sorted by AI ID, including Off Duty and Working recipients. No self copy, future
+arrival, unqualified, or retired recipient is included. No recipients is
+WRONG_STATE. Capacity failure sends nothing and preserves the current token.
+Success returns all copy event_sequences and rotates the token once; retry
+returns the original sequences and never repeats delivery. Ordinary inbox
+visibility remains unchanged. Storage is not an acknowledgement.
+
 Start qualification:
 
   {"type":"qualification.start","participant":AI,
@@ -323,7 +336,9 @@ transitions are defined in 004. Evidence is exactly:
 References contain zero through 16 items. Visual surfaces contain one through
 64 and defects zero through 32. PASS requires no defects;
 PASS_WITH_DEFECTS requires at least one. Encoded evidence is at most 60,000
-bytes. TIMESTAMP is the exact UTC form defined by REC-011. The accepted update
+bytes. TIMESTAMP is YYYY-MM-DDTHH:MM:SS.ffffffZ (six fractional digits and a
+valid UTC calendar date), as defined by REC-011. Evidence refusals identify
+the invalid field or required key set and expected constraint. The accepted update
 increments work revision and appends WORK_UPDATED.
 
 Reassign work:

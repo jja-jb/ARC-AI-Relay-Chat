@@ -71,7 +71,8 @@ final class ARCCommunicationTests: XCTestCase {
         XCTAssertEqual(try store.activityRead(room: room).events, history)
         XCTAssertTrue(after.events.isEmpty)
         XCTAssertTrue(after.communication.notice.contains("whenever specification_sha256 changes"))
-        XCTAssertTrue(after.communication.notice.contains("that thought or concept"))
+        XCTAssertTrue(after.communication.notice.contains("that specific thought or concept"))
+        XCTAssertTrue(after.communication.notice.contains(ARCCommunication.languagePolicy))
         XCTAssertEqual(after.participant.id, before.participant.id)
     }
 
@@ -127,6 +128,9 @@ final class ARCCommunicationTests: XCTestCase {
             "not measured guarantees", "reread the whole local specification"] {
             XCTAssertTrue(text.contains(required), required)
         }
+        XCTAssertTrue(text.contains(ARCCommunication.languagePolicy))
+        XCTAssertTrue(text.contains("Choose one language per thought, not parallel translations"))
+        XCTAssertTrue(text.contains("Do not provide both translations to the operator"))
     }
 
     private func temporaryRoot() throws -> URL {

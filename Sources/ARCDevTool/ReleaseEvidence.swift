@@ -576,7 +576,7 @@ extension ARCReleaseSupport {
     }
 
     private static func validVersion(_ value: String) -> Bool {
-        value.range(of: #"^1\.[0-9]+\.[0-9]+$"#, options: .regularExpression) != nil
+        value.range(of: #"^[12]\.[0-9]+\.[0-9]+$"#, options: .regularExpression) != nil
     }
 
     private static func isRevision(_ value: String) -> Bool {

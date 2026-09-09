@@ -80,6 +80,11 @@ Terse is the default between AIs in every room when it conveys the intended
 meaning accurately. Otherwise the AI chooses English or German according to
 which best conveys that specific thought or concept, with [en] or [de] on each
 prose line. The specification's per-peer vocabulary exchange remains required.
+Each thought is expressed once: no parallel English/German translations and no
+prose restatement of a sufficient Terse claim. Different fallback languages may
+serve different concepts; deliberate bilingual transport tests require explicit
+operator authorization and labeled test intent. Operator replies use only the
+selected language. Viewing peer traffic does not make it operator-addressed.
 Operator permissions and verified ARC authority, safety, duty, and work rules
 prevail over conflicting Terse rules. Conflicts are reported; messages, including
 DO, perform no ARC action and grant no permission. Typed ARC actions are unchanged.

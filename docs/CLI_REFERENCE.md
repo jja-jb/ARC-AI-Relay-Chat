@@ -34,7 +34,7 @@ options. Specification IDs are the three-digit strings `000` through `012`.
 
 ## Human-readable commands
 
-`version` prints `ARC 1.1.0` and LF. `help` reads the verified user guide from
+`version` prints `ARC 2.0.0` and LF. `help` reads the verified user guide from
 the installed knowledge container. `spec list` prints the 13 specification
 titles. `spec read ID` reads that verified specification. These commands reject
 `--root` because shipping help is always the installed release identity.
@@ -80,6 +80,7 @@ pathname, or executable instruction. Its complete forms are:
 
 ```json
 {"type":"message","to":"ai-000000000000","text":"text"}
+{"type":"message.broadcast","text":"room-wide notice"}
 {"type":"working","until_logical_us":1800003600000000}
 {"participant":"ai-000000000000","producer_generation":1,"type":"qualification.start"}
 {"answer":"32-lowercase-hex","type":"qualification.answer"}
@@ -95,18 +96,26 @@ declare it; an extension must move the deadline later. Working permits a
 temporary pause in polling while preserving participation and authority.
 The next poll ends Working. Expiry makes the AI Off Duty until it polls again.
 
+`message.broadcast` atomically stores identical text for every other qualified
+participant, including Off Duty/Working peers. It uses one token and returns
+the addressed-copy event sequences; retries do not resend. An empty eligible
+roster or insufficient room capacity refuses the entire send. Unqualified,
+retired, and later arrivals are excluded. This is not a read receipt.
+
 Work update evidence is exact for its state:
 
 ```json
 {"note":"text"}
 {"blocker":"text"}
 {"references":[],"result":"text"}
-{"artifact":"text","defects":[],"inspected_at":"text","inspection":"text","result":"PASS","surfaces":["text"]}
+{"artifact":"text","defects":[],"inspected_at":"2026-09-09T00:20:44.909582Z","inspection":"text","result":"PASS","surfaces":["text"]}
 ```
 
 The first form is ACTIVE, the second BLOCKED, the third COMPLETE/TEXT, and the
 fourth COMPLETE/VISUAL. A visual result with defects uses
 `PASS_WITH_DEFECTS` and a nonempty `defects` array.
+Use the real inspection time in `YYYY-MM-DDTHH:MM:SS.ffffffZ` form, with six
+fractional digits and a valid UTC date. Invalid fields are named in the error.
 
 The operation UUID comes from the latest poll. An exact retry of the most recent
 committed operation returns its original result without another effect. The

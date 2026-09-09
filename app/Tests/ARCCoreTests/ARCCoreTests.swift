@@ -7,6 +7,179 @@ final class ARCCoreTests: XCTestCase {
     private let digest = String(repeating: "a", count: 64)
     private var roots: [URL] = []
 
+    func testVisualTimestampRefusalNamesFieldPreservesStateAndTokenThenCorrectedRetryWorks() throws {
+        let context = try qualifiedPair()
+        let assigned = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation,
+            request: .workAssign(owner: context.first.id, scope: "Inspect a rendered fixture",
+                evidenceMode: .visual, producerGeneration: 1))
+        let item = try XCTUnwrap(assigned.work)
+        let url = try context.store.roomFileURL(room: context.room)
+        let before = try Data(contentsOf: url)
+        var evidence: [String: ARCJSONValue] = [
+            "artifact": .string("fixture.pdf"), "defects": .array([]),
+            "inspected_at": .string("2026-09-09T01:19:00Z"),
+            "inspection": .string("Directly inspected rendered page"),
+            "result": .string("PASS"), "surfaces": .array([.string("Page 1")]),
+        ]
+        for timestamp in ["2026-09-09T01:19:00Z", "2026-09-09T01:19:00.000Z",
+            "2026-09-09T01:19:00.000000+00:00", "2026-02-30T01:19:00.000000Z", "yesterday"] {
+            evidence["inspected_at"] = .string(timestamp)
+            XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.first.id,
+                binding: context.first.binding, operation: assigned.nextOperation,
+                request: .workUpdate(work: item.id, revision: 1, state: .complete, evidence: .object(evidence)))) {
+                let error = $0 as? ARCError
+                XCTAssertEqual(error?.code, .invalidArgument)
+                XCTAssertTrue(error?.message.contains("inspected_at") == true)
+                XCTAssertTrue(error?.message.contains("YYYY-MM-DDTHH:MM:SS.ffffffZ") == true)
+                XCTAssertFalse(error?.message.contains(timestamp) == true && timestamp == "yesterday")
+            }
+            XCTAssertEqual(try Data(contentsOf: url), before)
+        }
+        evidence["inspected_at"] = .string("2026-09-09T01:19:00.000000Z")
+        let request = ARCActionRequest.workUpdate(work: item.id, revision: 1,
+            state: .complete, evidence: .object(evidence))
+        let completed = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: assigned.nextOperation, request: request)
+        XCTAssertEqual(completed.work?.state, .complete)
+        let replay = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: assigned.nextOperation, request: request)
+        XCTAssertEqual(replay.eventSequences, completed.eventSequences)
+        XCTAssertTrue(try context.store.diagnose(room: context.room).valid)
+    }
+
+    func testEvidenceErrorsIdentifyShapeFieldsAndConsistencyWithoutEchoingContent() throws {
+        let valid: [String: ARCJSONValue] = [
+            "artifact": .string("fixture.pdf"), "defects": .array([]),
+            "inspected_at": .string("2026-09-09T01:19:00.000000Z"),
+            "inspection": .string("Viewed"), "result": .string("PASS"),
+            "surfaces": .array([.string("Page 1")]),
+        ]
+        for (key, value) in [
+            ("artifact", ARCJSONValue.string("")), ("inspection", .integer(1)),
+            ("surfaces", .array([])), ("defects", .array([.string("defect")])),
+            ("result", .string("secret-invalid-result")), ("inspected_at", .null),
+        ] {
+            var changed = valid
+            changed[key] = value
+            for corrupt in [false, true] {
+                XCTAssertThrowsError(try ARCEvidence.validate(.object(changed), state: .complete,
+                    mode: .visual, corrupt: corrupt)) {
+                    XCTAssertEqual(($0 as? ARCError)?.code, corrupt ? .roomCorrupt : .invalidArgument)
+                    XCTAssertTrue(($0 as? ARCError)?.message.contains(key) == true)
+                    XCTAssertFalse(($0 as? ARCError)?.message.contains("secret-invalid-result") == true)
+                }
+            }
+        }
+        var extra = valid
+        extra["unknown"] = .string("private")
+        XCTAssertThrowsError(try ARCEvidence.validate(.object(extra), state: .complete, mode: .visual)) {
+            XCTAssertTrue(($0 as? ARCError)?.message.contains("requires exactly these fields") == true)
+        }
+    }
+
+    func testRoomWideNoticeUsesOneAtomicOperationAndExactUnicodeTextFor63Peers() throws {
+        let context = try qualifiedPair()
+        let file = try context.store.roomFileURL(room: context.room)
+        let files = try ARCFileStore(rootURL: context.store.rootURL)
+        // Synthetic maximum-size roster; real qualification is covered separately.
+        try files.update(context.room) { document in
+            for number in 3...64 {
+                document.participants.append(ARCParticipantRecord(
+                    id: String(format: "ai-%012x", number), name: "Peer \(number)", phase: .qualified,
+                    binding: UUID().uuidString.lowercased(), bindingGeneration: 1,
+                    qualification: nil, lastPollLogicalUs: document.room.lastClockLogicalUs,
+                    nextOperation: UUID().uuidString.lowercased(), lastOperation: nil))
+            }
+            return ((), true)
+        }
+        let text = "TELL WORD SAME 7\n\n[de] Größe, Füße, geprüft — ä ö ü ß.\n"
+        let request = ARCActionRequest.messageBroadcast(text: text)
+        XCTAssertEqual(try ARCActionJSON.decode(ARCActionJSON.encode(request)), request)
+        let result = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation, request: request)
+        XCTAssertEqual(result.eventSequences.count, 63)
+        let after = try Data(contentsOf: file)
+        let saved = try ARCRoomCodec.decode(after, expectedID: context.room)
+        let copies = saved.activity.filter { result.eventSequences.contains($0.sequence) }
+        XCTAssertEqual(copies.compactMap(\.recipient),
+            saved.participants.map(\.id).filter { $0 != context.first.id }.sorted())
+        XCTAssertTrue(copies.allSatisfy { $0.payload.objectValue?["text"]?.stringValue == text })
+        XCTAssertEqual(Set(copies.map(\.operationId)).count, 1)
+        let replay = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation, request: request)
+        XCTAssertEqual(replay.eventSequences, result.eventSequences)
+        XCTAssertEqual(try Data(contentsOf: file), after)
+        XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation,
+            request: .messageBroadcast(text: "Changed"))) {
+            XCTAssertEqual(($0 as? ARCError)?.code, .operationConflict)
+        }
+        let inbox = try context.store.poll(room: context.room, participant: context.second.id,
+            binding: context.second.binding, after: result.eventSequences[0] - 1)
+        XCTAssertEqual(inbox.events.filter { $0.kind == "MESSAGE" }.count, 1)
+        XCTAssertEqual(inbox.events.first?.payload.objectValue?["text"]?.stringValue, text)
+        XCTAssertFalse(inbox.more)
+        XCTAssertTrue(try context.store.diagnose(room: context.room).valid)
+        // Enough space for several individual copies, but not the whole send:
+        // publication must remain all-or-nothing across the full recipient set.
+        var full = try ARCRoomCodec.decode(Data(contentsOf: file), expectedID: context.room)
+        let now = full.room.lastClockLogicalUs
+        full.activity = (1...500).map { sequence in
+            ARCEventRecord(sequence: Int64(sequence), at: ARCTime.timestamp(now), logicalUs: now,
+                kind: "MESSAGE", actor: context.first.id, recipient: context.second.id, subject: nil,
+                payload: .object(["text": .string(String(repeating: "x", count: 15_000))]),
+                operationId: UUID().uuidString.lowercased(), knowledgeSha256: digest)
+        }
+        full.room.nextSequence = 501
+        let limit = ARCConstants.maximumRoomBytes - 1_024 - 64 * 4_096 - 40_000
+        var remaining = limit - (try ARCRoomCodec.encode(full)).count
+        XCTAssertGreaterThan(remaining, 0)
+        for index in full.activity.indices {
+            let extra = min(1_384, remaining)
+            full.activity[index].payload = .object(["text": .string(String(repeating: "x", count: 15_000 + extra))])
+            remaining -= extra
+        }
+        XCTAssertEqual(remaining, 0)
+        let fixture = full
+        try files.update(context.room) { value in value = fixture; return ((), true) }
+        let beforeRefusal = try Data(contentsOf: file)
+        XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: result.nextOperation,
+            request: .messageBroadcast(text: String(repeating: "x", count: 16_384)))) {
+            XCTAssertEqual(($0 as? ARCError)?.code, .limitExceeded)
+        }
+        XCTAssertEqual(try Data(contentsOf: file), beforeRefusal)
+    }
+
+    func testBroadcastExcludesUnqualifiedRetiredSelfAndRejectsUnavailableSender() throws {
+        let context = try qualifiedPair()
+        let invited = try context.store.participantInvite(room: context.room, name: "Invited", operationID: UUID())
+        context.clock.advance(seconds: 181)
+        XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation,
+            request: .messageBroadcast(text: "No sender heartbeat")))
+        let caller = try context.store.poll(room: context.room, participant: context.first.id,
+            binding: context.first.binding)
+        let result = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: caller.operation,
+            request: .messageBroadcast(text: "Off Duty peers still receive notices\n"))
+        XCTAssertEqual(result.eventSequences.count, 1)
+        let invitedInbox = try context.store.poll(room: context.room, participant: invited.participant.id,
+            binding: invited.instructions.bindingReference)
+        XCTAssertFalse(invitedInbox.events.contains { result.eventSequences.contains($0.sequence) })
+        _ = try context.store.participantRetire(room: context.room, participant: context.second.id, operationID: UUID())
+        XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: result.nextOperation,
+            request: .messageBroadcast(text: "Nobody eligible"))) {
+            XCTAssertEqual(($0 as? ARCError)?.code, .wrongState)
+        }
+        for json in [#"{"type":"message.broadcast","text":"x","to":"ai-000000000001"}"#,
+            #"{"type":"message.broadcast","text":"   "}"#] {
+            XCTAssertThrowsError(try ARCActionJSON.decode(Data(json.utf8)))
+        }
+    }
+
     func testTerseGuidanceDoesNotRejectOrTranslateMessageText() throws {
         let context = try qualifiedPair()
         let text = "\nTHIS IS NOT VALID TERSE\n[de] Dieser Gedanke braucht eine genaue Erklärung.\n[en] Keep the original words.\n"
@@ -150,6 +323,12 @@ final class ARCCoreTests: XCTestCase {
             value.activity[499].payload = .object(["text": .string(String(repeating: "x", count: 15_001))])
             return ((), true)
         }) { XCTAssertEqual(($0 as? ARCError)?.code, .limitExceeded) }
+        XCTAssertEqual(try Data(contentsOf: roomURL), bytes)
+        XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation,
+            request: .messageBroadcast(text: "Cannot fit"))) {
+            XCTAssertEqual(($0 as? ARCError)?.code, .limitExceeded)
+        }
         XCTAssertEqual(try Data(contentsOf: roomURL), bytes)
         for participant in [context.first, context.second] {
             _ = try context.store.participantRetire(room: context.room, participant: participant.id, operationID: UUID())

@@ -503,9 +503,11 @@ enum ARCHelpContent {
                 + "must read it before participating and reread it after changes. If it cannot, "
                 + "it must pause and tell you. Between AIs, use Terse whenever it expresses the "
                 + "meaning accurately; otherwise the AI chooses English or German for that thought. "
+                + "It should express each thought once, not provide parallel translations. "
                 + "Use Messages to operator below the room list to choose English or Deutsch for "
                 + "AI replies to you. The choice is remembered for every room and reaches existing "
                 + "AIs on their next poll. It does not translate room history or change ARC's menus. "
+                + "The activity window may therefore show AI-to-AI text in either language. "
                 + "ARC does not validate Terse syntax or guarantee accuracy or token savings."
         ),
         Section(

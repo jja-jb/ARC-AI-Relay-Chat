@@ -171,8 +171,12 @@ happens.
 `next_operation` equals the Participant's current `next_operation`. A retry of
 `token` with the same canonical request digest returns this result and does not
 mutate. A different request returns OPERATION_CONFLICT. Any other noncurrent
-token returns OPERATION_STALE. After a definitive act, ARC stores LastOperation
-and generates the new `next_operation`.
+token returns OPERATION_STALE. After a successful act, ARC stores LastOperation
+and generates the new `next_operation`. A definitive validation/state refusal
+does not consume the current token. An uncertain publication/I/O result must
+be retried with identical request bytes and token before changing the request.
+An atomic room-wide message records all addressed copy sequences in this same
+record; it introduces no new durable event shape or receipt model.
 
 REC-007 WORK
 
