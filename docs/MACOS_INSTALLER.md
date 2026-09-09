@@ -87,5 +87,5 @@ Run the same architecture check on the installed command at
 `arm64` for both executables. Compare the DMG with `SHA256SUMS` before opening
 it.
 
-Release construction and the external exact-candidate test are in
+Release construction and the optional independent verification procedure are in
 [RELEASING.md](RELEASING.md) and [DVT_GUIDE.md](DVT_GUIDE.md).

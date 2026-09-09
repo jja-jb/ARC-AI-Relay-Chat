@@ -1,6 +1,6 @@
-# Install ARC 2.5
+# Install ARC 2.5.1
 
-ARC 2.5 can read earlier room/1 records, including historical Terse wire-2 packets.
+ARC 2.5.1 can read earlier room/1 records, including historical Terse wire-2 packets.
 New Terse events carry wire_version:3; new agreement uses Terse 2.1 and its digest.
 Once a room records the new packet fields, earlier executables reject it. Do not downgrade
 that room; keep a backup before upgrading if you need rollback. The existing

@@ -1,8 +1,8 @@
-# Terse 2.1 in ARC 2.5
+# Terse 2.1 in ARC 2.5.1
 
 Terse 2.1 is governing specification 013, wire contract **3**. ARC is 2.5.1;
 their major versions now align, not their independent minor versions. This is
-a new candidate, not a modification of the frozen ARC 2.2 / Terse 1.0 release.
+a production release, not a modification of earlier published downloads.
 The complete language remains in `languages/terse/001-terse-language-specification.txt`.
 
 ## Seven implemented cost-oriented features

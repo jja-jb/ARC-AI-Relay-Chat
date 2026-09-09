@@ -28,7 +28,7 @@ final class ARCDevToolTests: XCTestCase {
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let bytes = try Data(contentsOf: source.appendingPathComponent(ARCReleaseSupport.terseSpecification))
         XCTAssertEqual(KnowledgeContainer.hex(KnowledgeContainer.sha256(bytes)),
-            "378aba7b229cf1985b77cdb934662c346929aae4ba9da249a3317f4a2ca4d723")
+            "afc0e5bb6cbe47401aa757c93af5d9141a9831622e17459d4ededdbc7ca31027")
         let provenance = try String(contentsOf: source.appendingPathComponent("languages/terse/README.md"), encoding: .utf8)
         XCTAssertTrue(provenance.contains("`" + KnowledgeContainer.hex(KnowledgeContainer.sha256(bytes)) + "`"),
             "Terse's documented current digest must match the exact packaged source bytes")
