@@ -12,8 +12,11 @@ repository. It is not a summary, external download, submodule, or link to the
 operator's Desktop file. Start with the
 [ARC specification index](../../10_specs/platform_support/001-shared-how-to-read-these-specs.txt)
 for all fourteen governing ARC specifications and their separate version identities.
-v1.0 file SHA-256:
-`64215c61f0b05599f7be03188b704def594b60df054ed269b813367d32db6aea`.
+ARC 2.2's complete v1.0 file SHA-256:
+`cce23937fc0dfb838009f486d9ed99bd20ba7666750e7ac8b6d219e04979b424`.
+Only the ARC release association in the header changed from the ARC 2.1 copy;
+the released Terse v1.0 language rules are byte-for-byte unchanged. A regression
+test verifies both the prior association digest and this documented digest.
 
 Builds install it with a generated SHA-256 file under `current/languages/terse/`,
 covered by ARC's signed, atomic installation manifest. It remains a separate

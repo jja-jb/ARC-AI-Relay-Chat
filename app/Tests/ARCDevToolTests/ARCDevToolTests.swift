@@ -29,6 +29,9 @@ final class ARCDevToolTests: XCTestCase {
         let bytes = try Data(contentsOf: source.appendingPathComponent(ARCReleaseSupport.terseSpecification))
         XCTAssertEqual(KnowledgeContainer.hex(KnowledgeContainer.sha256(bytes)),
             "cce23937fc0dfb838009f486d9ed99bd20ba7666750e7ac8b6d219e04979b424")
+        let provenance = try String(contentsOf: source.appendingPathComponent("languages/terse/README.md"), encoding: .utf8)
+        XCTAssertTrue(provenance.contains("`" + KnowledgeContainer.hex(KnowledgeContainer.sha256(bytes)) + "`"),
+            "Terse's documented current digest must match the exact packaged source bytes")
         let specification = String(decoding: bytes, as: UTF8.self)
         // The ARC association changes, never the released Terse v1.0 contract.
         let priorAssociation = specification.replacingOccurrences(of: "part of ARC v2.2", with: "part of ARC v2.1")
