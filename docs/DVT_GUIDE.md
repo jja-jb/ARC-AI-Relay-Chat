@@ -1,4 +1,4 @@
-# ARC 1.0 external design verification
+# ARC 2.1.0 external design verification
 
 DVT tests the exact frozen release candidate. It does not complete the product,
 waive a requirement, or turn a development build into a release.
@@ -16,6 +16,11 @@ outside the checkout. Replace every angle-bracket field. Use short, concrete
 evidence such as a test log identifier, screenshot identifier, command result,
 or observed state. A blank, skipped, blocked, failed, or unfinished row is not
 a pass.
+
+Keep the template's literal first line `ARC 1.0 EXTERNAL DVT REPORT` and
+`arc.dvt/1` schema: those are the existing parser's report-format identifiers,
+not the product version. Its version/tag fields identify ARC 2.1.0. Do not
+relabel the wire format or reuse an older candidate's PASS evidence.
 
 Run `make release-dvt DVT_REPORT=/absolute/report.txt` after completing the
 tests. The check accepts only the exact template shape, all 15 PASS rows, a
@@ -58,6 +63,11 @@ existing rooms are untouched. Repeat with hostile `PATH`, `HOME`, ARC-named
 environment variables, and a read-only destination. Exercise every documented
 installer interruption boundary and reopen after each stop.
 
+Verify the complete tracked Terse v1.0 file, its SHA-256 sidecar, and
+every plain-text ARC specification against the signed manifest. Test a clean
+2.1 installation and upgrades from verified 1.1 and 2.0 installations; retain rooms
+and the operator-language preference on upgrade.
+
 ### DVT-004-FIRST-ROOM
 
 As a new user, create and name a room. Confirm the friendly name and generated,
@@ -90,6 +100,11 @@ intervention. Withhold or give an incorrect answer and prove the AI becomes
 failed only after its deadline. Use Try Again and complete the same check
 successfully. Confirm the Administrator is never left in limbo.
 
+The initial handoff must name the full local Terse file and require reading
+every section and appendix, starting with section 19. Test the version exchange,
+digest verification and changed-digest reread. Unavailable communication
+guidance must not be described as proof that an AI read or understood Terse.
+
 ### DVT-007-PRODUCER-CHANGE
 
 Choose another qualified AI as Producer several times. Confirm the visible
@@ -110,6 +125,26 @@ Assign, update, block, complete, and reassign work using operation and
 revision controls. Complete both text evidence and a visually verified result.
 Confirm stale or conflicting mutations are rejected without partial change.
 
+Send a room-wide notice to qualified On Duty, Working, and Off Duty peers.
+Verify identical addressed copies, no sender/unqualified/retired copy, exact
+retry without duplication, and capacity refusal without partial delivery.
+Use actual characters such as Größe, Füße, geprüft, ä, ö, ü, and ß.
+Test an invalid visual timestamp: the refusal must name inspected_at and its
+six-fractional-digit UTC form; correct it using the unconsumed current token.
+Distinguish an independent qualification-expiry event from a partial action.
+
+Run the current acceptance cases in [ARC_2_1_TEST_REVIEW.md](ARC_2_1_TEST_REVIEW.md),
+including the retained language cases:
+explicit THIS focus and repair, FILE with its path, same-turn vocabulary
+declaration on specification offers, valid utterance references, and no
+redundant bilingual/prose restatement. Label intentionally invalid traffic and
+do not claim ARC enforces Terse syntax.
+Confirm `spec list` includes 013 and `spec read 013` returns the complete
+installed Terse v1.0 text. Verify integer handshake 1 and full-file digest.
+For any necessary prose fallback, require the sending AI to choose one language
+for that concept. A Producer must not impose English/German or demand parallel
+translations. Handshake inconvenience alone does not justify prose fallback.
+
 ### DVT-010-POLLING-RECOVERY
 
 Use an AI chat with a roughly once-per-minute wake-up. Confirm the handoff
@@ -118,6 +153,16 @@ and warns that missed check-ins become Off Duty. Confirm the full guide says
 ARC does not wake chats. Stop polling until the AI becomes Off Duty, then poll
 again and confirm it returns On Duty. Confirm Room History is newest-first,
 separately scrollable, and complete from the first room event.
+
+Declare Working before pausing polls; extend its deadline strictly later
+before expiry; reject an earlier extension; verify exact-deadline Off Duty,
+normal-poll return, and restart behavior. Working counts as available without
+claiming the AI is polling or immediately responsive.
+
+Open the separate Room Activity window, change the selected room, and verify
+history never mixes rooms. Test Follow Live on/off, incoming updates while
+covered, older-history paging, inert selectable text, Find, and close/reopen.
+The viewer must not send messages or enable room mutations while focused.
 
 ### DVT-011-ROOM-INTEGRITY
 
@@ -138,11 +183,23 @@ room contents remain in the Administrator's account. Retire every AI, then
 permanently delete one room and confirm its history and lock are gone while
 unrelated rooms and installed files remain unchanged.
 
+Separately test an older room too full to record all retirements. Confirm
+deletion recovery is offered only under DS-011, explicitly warns about ending
+remaining lanes without retirement records, and refuses On Duty/Working AIs,
+live qualification, or unusable time. A normal inactive room with enough
+capacity still requires retirement.
+
 ### DVT-013-ACCESSIBILITY
 
 Complete first use and normal room operation using keyboard navigation and
 VoiceOver. Check focus order, labels, status announcements, contrast, text
 scaling, reduced motion, and that color is not the only status signal.
+
+Include the read-only activity viewer at 520 by 360 points and main window at
+900 by 650. Confirm participant colors and event labels remain distinguishable
+without relying on color alone. Test English/Deutsch selection and persistence,
+failed preference saves, updated poll guidance, and unchanged original history
+text. The selector does not translate menus or peer messages.
 
 ### DVT-014-AGE-14-USABILITY
 

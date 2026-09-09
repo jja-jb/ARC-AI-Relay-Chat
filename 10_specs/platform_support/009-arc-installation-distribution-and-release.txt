@@ -1,8 +1,8 @@
-ARC v1.0 INSTALLATION, DISTRIBUTION, AND RELEASE CONTRACT
+ARC v2.1.0 INSTALLATION, DISTRIBUTION, AND RELEASE CONTRACT
 
 IR-001 ONE NATIVE PRODUCT
 
-ARC v1.0 is built from one root Swift package. Its shipping products are:
+ARC v2.1.0 is built from one root Swift package. Its shipping products are:
 
   ARC     the SwiftUI Mac application, linked directly with ARCCore;
   arc     the native command for AI participants.
@@ -36,7 +36,7 @@ It describes every regular file under:
   Contents/Resources/install/bin/arc
   Contents/Resources/install/current/
 
-The current tree contains at least:
+The ARC 2.1 shipped payload contains exactly these twenty files:
 
   bin/arc
   ARC_AI.arc-kb
@@ -54,12 +54,17 @@ atomically to:
 
   ~/Library/Application Support/ARC/current/
 
-It stores the exact manifest bytes as
-`current/ARC-INSTALL-MANIFEST.json` after publication. That receipt is not a
+It stages the exact manifest bytes as
+`current/ARC-INSTALL-MANIFEST.json` inside the same tree before publication.
+That receipt is not a
 manifest entry. Installation never enumerates or changes `rooms/`.
 
-The complete supplied Terse specification is installed verbatim as a separate
-plain-text file, not as a new Profile 1 knowledge-container member. Its sidecar
+The complete repository-owned Terse v1.0 specification at
+languages/terse/001-terse-language-specification.txt is installed byte-for-byte
+as a separate plain-text file, not as a new Profile 1 knowledge-container member.
+It includes ARC 2.0 and 2.1 reviewed corrections; it is not a claim that the original
+operator-supplied version 6 was unchanged. The earlier text remains in the
+earlier source tag. Its sidecar
 contains its lowercase SHA-256 plus LF; both files belong to the signed manifest
 and atomic current-tree replacement. The app refuses a bundle manifest missing
 either file. AIs reread the full file when its bytes change, regardless of the
@@ -80,7 +85,7 @@ are:
 
   schema             integer 1
   product            string `ARC`
-  version            semantic v1 release string
+  version            release string matching ^[12]\.[0-9]+\.[0-9]+$
   knowledge_sha256   lowercase SHA-256 of ARC_AI.arc-kb
   entries            array sorted by bytewise UTF-8 path
 
@@ -99,7 +104,11 @@ canonical relative names with no empty, dot, hidden, or link segment. A
 `current/` data path maps exactly to the same suffix below
 `Resources/install/current/`; `current/bin/arc` maps only to
 `Resources/install/bin/arc`. Total bytes and entry count are bounded. Every
-source must be a regular file with the stated bytes and mode.
+source must be a regular file with the stated bytes and mode. ARC 2.1.0's
+bundled manifest declares 2.1.0 and must match the app bundle's version.
+Acceptance of 1.x identities preserves verified prior-installation ownership
+for upgrades; it does not select older code for the new app. Unsupported major
+versions and malformed identities are refused.
 
 IR-005 SAFE REPLACEMENT
 
@@ -154,20 +163,20 @@ ARC is distributed under the exact checked-in Hummingbird License. LICENSE is
 the controlling legal text. LICENSE-SUMMARY.md is explanatory only. NOTICE.md
 identifies ARC and its copyright holder without changing the license.
 
-ARC v1.0 links only ARC-owned code and system macOS frameworks and libraries.
+ARC v2.1.0 links only ARC-owned code and system macOS frameworks and libraries.
 No third-party payload or separate third-party notice file belongs in the
 candidate. If that fact changes, publication pauses until the legal and source
 record is made complete.
 
 IR-009 PUBLIC RELEASE ASSETS
 
-The sealed public release contains exactly these assets for VERSION `2.0.0`:
+The sealed public release contains exactly these assets for VERSION `2.1.0`:
 
-  ARC-2.0.0.dmg
-  ARC-2.0.0-source.tar.gz
+  ARC-2.1.0.dmg
+  ARC-2.1.0-source.tar.gz
   ARC_AI_Relay_Chat_Literature.pdf
-  ARC-2.0.0-MANIFEST.json
-  ARC-2.0.0-DVT-REPORT.txt
+  ARC-2.1.0-MANIFEST.json
+  ARC-2.1.0-DVT-REPORT.txt
   RELEASE-METADATA.json
   SHA256SUMS
 
@@ -193,7 +202,7 @@ PASS row,
 the tester identity and date, the tag and commit, signatures, notarization,
 staples, and source cleanliness before writing final metadata and checksums.
 
-The manifest hash in the DVT report binds both immutable payload hashes. The
+The manifest hash in the DVT report binds all three immutable payload hashes. The
 release process never marks its own ad-hoc development build as the public
 candidate and never changes a tested payload afterward. Any changed byte makes
 a new candidate and requires a new DVT report.

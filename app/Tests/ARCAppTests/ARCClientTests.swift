@@ -7,6 +7,91 @@ import XCTest
 @testable import ARCApp
 
 final class ARCClientTests: XCTestCase {
+    func testDevelopmentBuildDefaultsToAnIsolatedRoot() {
+        if ProcessInfo.processInfo.environment["ARC_DEVELOPMENT_ROOT"] == nil {
+            XCTAssertNotEqual(ARCClient.defaultRoot.standardizedFileURL, ARCStore.defaultRootURL.standardizedFileURL)
+            XCTAssertTrue(ARCClient.defaultRoot.lastPathComponent.hasPrefix("arc-development-"))
+            XCTAssertEqual(ARCClient.defaultRoot, ARCClient.defaultRoot)
+        }
+    }
+
+    func testMainWindowDoesNotReintroduceSwiftUISelectionOverlay() throws {
+        let source = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("Sources/ARCApp")
+        for name in ["MainView.swift", "RoomView.swift", "CopyableText.swift"] {
+            let text = try String(contentsOf: source.appendingPathComponent(name), encoding: .utf8)
+            XCTAssertFalse(text.contains(".textSelection("), name)
+            XCTAssertTrue(text.contains("arcCopyable"), name)
+        }
+        let copy = try String(contentsOf: source.appendingPathComponent("CopyableText.swift"), encoding: .utf8)
+        XCTAssertTrue(copy.contains(".accessibilityAction(named: \"Copy Text\")"))
+        XCTAssertTrue(copy.contains(".contextMenu"))
+    }
+
+    @MainActor
+    func testLiveRoomWorkLayoutRemainsResponsive() async throws {
+        let state = AppState(client: TestClient(rootURL: temporaryRoot("arc-live-layout")),
+            installation: TestInstallation())
+        try await waitUntil { state.installationReady && !state.isBusy }
+        let roomID = "room-012345abcdef"
+        let owner = participant(name: "Testing associate", phase: .qualified, duty: .on)
+        state.rooms = [ARCRoomListItem(id: roomID, name: "Live layout regression", health: .current, failure: nil)]
+        state.selectedRoomID = roomID
+        func result(_ revision: Int) -> ARCRoomOpenResult {
+            ARCRoomOpenResult(room: testRoom(id: roomID, name: "Live layout regression", revision: Int64(revision)),
+                producer: testProducer(), participants: [owner], work: (1...2).map { index in
+                    ARCWorkView(id: "work-\(index)", owner: owner.id,
+                        state: revision % 3 == 0 ? .blocked : .active,
+                        scope: "Work \(index): " + String(repeating: "Review the evidence and report the precise result. ", count: 8),
+                        evidenceMode: .text, evidence: .object(["note": .string("Update \(revision)")]),
+                        assigningProducerGeneration: 1, revision: Int64(revision),
+                        createdAt: "2026-09-09T01:52:00.000000Z", updatedAt: "2026-09-09T01:52:01.000000Z")
+                })
+        }
+        state.roomResult = result(1)
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1100, height: 760),
+            styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer { window.close() }
+        let hosting = NSHostingView(rootView: MainView().environmentObject(state))
+        window.contentView = hosting
+        window.orderFront(nil)
+        let start = ProcessInfo.processInfo.systemUptime
+        for revision in 1...30 {
+            state.roomResult = result(revision)
+            state.showDetails = revision % 4 == 0
+            state.textSizeIndex = revision % 5 == 0 ? 5 : 2
+            window.setContentSize(NSSize(width: revision % 2 == 0 ? 900 : 1100, height: 760))
+            try await Task.sleep(nanoseconds: 50_000_000)
+            hosting.layoutSubtreeIfNeeded()
+            // Work is below the participant cards; render the lower viewport
+            // too, rather than passing a test that never instantiates its rows.
+            func scrollViews(_ view: NSView) -> [NSScrollView] {
+                (view as? NSScrollView).map { [$0] } ?? view.subviews.flatMap(scrollViews)
+            }
+            for scroll in scrollViews(hosting) {
+                guard let document = scroll.documentView else { continue }
+                let y = revision % 2 == 0 ? max(0, document.bounds.height - scroll.contentSize.height) : 0
+                scroll.contentView.scroll(to: NSPoint(x: 0, y: y))
+                scroll.reflectScrolledClipView(scroll.contentView)
+            }
+            try await Task.sleep(nanoseconds: 20_000_000)
+        }
+        XCTAssertLessThan(ProcessInfo.processInfo.systemUptime - start, 30,
+            "A live room must yield to its event loop while work, text size, and width change.")
+        XCTAssertEqual(state.selectedRoom?.id, roomID)
+        XCTAssertEqual(state.roomResult?.work.count, 2)
+        if let path = ProcessInfo.processInfo.environment["ARC_ROOM_TEST_SNAPSHOTS"] {
+            let directory = URL(fileURLWithPath: path, isDirectory: true)
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let bitmap = try XCTUnwrap(hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds))
+            hosting.cacheDisplay(in: hosting.bounds, to: bitmap)
+            try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))
+                .write(to: directory.appendingPathComponent("live-room.png"))
+        }
+    }
+
     @MainActor
     func testOperatorLanguagePersistsAndIsIncludedInCopiedInstructions() async throws {
         let root = URL(fileURLWithPath: "/private/tmp/arc-language-ui-\(UUID().uuidString)", isDirectory: true)

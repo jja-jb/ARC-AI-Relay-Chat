@@ -1,9 +1,10 @@
-ARC v1.0 TRACEABILITY AND DESIGN-VERIFICATION CONTRACT
+ARC v2.1.0 TRACEABILITY AND DESIGN-VERIFICATION CONTRACT
 
 TV-001 COMPLETE MEANS PRESENT AND TESTED
 
-A v1.0 candidate contains every behavior required by specifications 000 through
-012. There is no postponed v1 behavior, hidden unlock, simulated production
+A v2.1.0 candidate contains every behavior required by specifications 000 through
+012 and the separately bundled Terse contract under QD-001 and IR-003.
+There is no postponed required behavior, hidden unlock, simulated production
 path, or conditional feature. Verification shows that the complete candidate
 conforms; it does not turn features on.
 
@@ -21,7 +22,7 @@ Before building a candidate, a deterministic source check proves:
     native build graph;
   no service, daemon, provider adapter, extension system, hidden room format,
     second core, second storage mechanism, or product room-copy path exists;
-  all thirteen specifications, legal files, documentation, editable artwork,
+  all fourteen specifications, legal files, documentation, editable artwork,
     tests, release instructions, and public governance files are present;
   no source link, secret-shaped value, local room, cache, generated candidate,
     ignored working-tree file, or unexpected executable is admitted; and
@@ -35,7 +36,7 @@ TV-003 AUTOMATED NATIVE VERIFICATION
 `make check` runs from a clean source tree without a network. It must pass:
 
   Swift strict-concurrency compilation of ARCApp, ARCCommand, ARCCore, and
-    ARCDevTool, plus the ARCCore and ARCApp XCTest targets; the ARCApp target
+    ARCDevTool, plus the ARCCore, ARCApp, and ARCDevTool XCTest targets; the ARCApp target
     includes its installer tests;
   Clang warnings-as-errors compilation and adversarial tests for the C knowledge
     reader;
@@ -45,10 +46,12 @@ TV-003 AUTOMATED NATIVE VERIFICATION
     actions, binding redaction, strict action parsing, canonical-room refusal,
     bounded participants, current work, complete Activity, safe permanent
     deletion, recovery
-    controls, and Diagnose results;
+    controls, Working deadline/extension/expiry, atomic room-wide notices,
+    field-specific evidence refusals and corrected retries, and Diagnose results;
   ARCApp regressions for direct ARCCore calls, room refresh, selection and
     paging, handoff construction, scheduling labels, presentation states, and
-    installer verification, repair, rollback, and unsafe-path refusal;
+    read-only activity-window behavior, communication policy and preferences,
+    installer verification, repair, rollback, 1.x-to-2.x upgrade, and unsafe-path refusal;
   a native command smoke for exact version output, one canonical JSON Diagnose
     result, provider-neutral `poll` and `act` envelopes, invalid-command exit
     status, and stdout/stderr separation;
@@ -62,7 +65,7 @@ TV-004 DURABLE-RECORD PROOF
 The automated record checks decode canonical room bytes and separately present
 unknown fields, malformed durable relationships, over-depth action values,
 unsafe paths, linked roots, corrupt room files, operation retry conflicts, exact
-current work and participant limits, and Activity rollover. They prove that a
+current work and participant limits, and complete Activity paging. They prove that a
 refused action cannot leak a partial mutation when a due lifecycle transition
 commits.
 They also prove that every committed Activity item remains page-readable for
@@ -81,7 +84,9 @@ TV-005 AI PROTOCOL PROOF
 Provider-independent ARCCore tests include one, two, three, and sixty-four
 participants; the room becomes Active at two qualified On Duty AIs with a live
 Producer and continues to support additional AIs through the limit. The
-sixty-fifth current AI is refused without mutation. The native command smoke
+sixty-fifth non-retired AI is refused without mutation. Unexpired Working
+counts as available under QD-006, including for the Producer and assigned owner.
+The native command smoke
 checks its smallest public framing boundary; external DVT exercises the exact
 public command flow with compatible AI chats.
 
@@ -99,7 +104,9 @@ Administrator without a stated next action.
 Duty tests distinguish local schedule labels from actual polls. Missing polls
 make an AI Off Duty; a late valid poll restores On Duty. Closing the app,
 sleeping the Mac, changing a display timer, or writing a message never counts
-as a check-in. No test claims that ARC wakes a third-party chat.
+as a check-in. Working tests cover declaration, strict extension before expiry,
+return by normal poll, exact-deadline expiry, clock rollback, and restart.
+No test claims that ARC wakes a third-party chat.
 
 TV-006 MESSAGE AND WORK PROOF
 
@@ -113,6 +120,19 @@ work, completion must include the participant's statement that the rendered or
 canvas result was visually inspected; a source-text check alone is insufficient.
 This rule covers document and Google Docs canvas work without giving ARC access
 to the external application.
+
+Tests cover exact Unicode message text, one atomic broadcast to 63 other
+qualified peers, recipient filtering, privacy, replay/conflict, and no partial
+copies or token consumption on capacity refusal. A timestamp refusal must name
+inspected_at and its exact UTC form; a corrected request may reuse the current
+unconsumed token. Definitive refusal and uncertain publication are distinct.
+
+The full tracked Terse v1.0 bytes and installed digest are verified, along
+with consistent onboarding/poll language guidance. These checks do not prove
+AI comprehension or syntax conformance. A renewed peer test exercises THIS
+repair, FILE paths, vocabulary-version mismatch, same-turn specification
+offers, correct utterance references, and nonduplicating fallback, with
+deliberately malformed test traffic identified as such.
 
 TV-007 HUMAN-EXPERIENCE DVT
 
@@ -140,11 +160,20 @@ The tester performs, in order:
  11. quit and reopen ARC, verify retained truth, and create a genuinely new room;
  12. diagnose a valid room, then separately present corrupt, over-limit,
      incompatible, linked, and busy test rooms and verify safe recovery text;
- 13. prove Delete Room is unavailable while any AI participates, retire every
+ 13. prove Delete Room is unavailable with On Duty or unexpired Working AIs or
+     an active access check; verify the narrowly defined full-room recovery
+     separately and verify ordinary inactive rooms still require retirement; retire every
      AI, permanently delete only the selected room, and confirm its history
      and lock are gone while every other room remains; and
  14. use all menus, keyboard traversal, VoiceOver labels, larger text, dark
-     appearance, reduced motion, and a 900 by 650 point window.
+     appearance, reduced motion, and a 900 by 650 point main window; verify the
+     separate viewer at 520 by 360 points, room following, Follow Live toggling,
+     read-only commands, older-history paging, inert text, Find, and close/reopen;
+ 15. verify Working declaration, extension, expiry, and return, plus atomic
+     room-wide notices without treating delivery as comprehension; and
+ 16. verify complete local Terse reading/digest changes, per-peer version
+     exchange, and English/Deutsch operator selection independently of original
+     peer traffic. Neither the app nor this test claims to enforce AI adherence.
 
 At every step the tester asks a typical reader age 14 or older to identify the
 current state and next action without implementation vocabulary. A confusing

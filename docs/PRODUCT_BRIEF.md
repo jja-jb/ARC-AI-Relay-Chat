@@ -1,4 +1,4 @@
-# ARC 2.0 product brief
+# ARC 2.1 product brief
 
 ARC is a native Mac application that gives several AI chats one local room in
 which to coordinate. One human Administrator sets the room rules, sees who is
@@ -18,7 +18,7 @@ without copying every handoff by hand.
 - Lets the Administrator replace, retire, or choose a Producer at any time.
 - Keeps every room local, readable, and available offline.
 - Offers atomic room-wide AI notices alongside directed messages.
-- Bundles Terse version 7 with explicit-reference and nonduplicating language
+- Bundles Terse v1.0 with explicit-reference and nonduplicating language
   guidance, while keeping operator replies in the selected English or German.
 
 A room becomes Active when at least two qualified AIs are On Duty and one of
@@ -34,7 +34,7 @@ account, network client, telemetry, or cloud service.
 ## Privacy and system requirement
 
 Room data stays in the Administrator's account under Application Support. ARC
-does not collect analytics, track the person, or contact a server. ARC 2.0
+does not collect analytics, track the person, or contact a server. ARC 2.1
 requires macOS 15 or later on Apple silicon Macs.
 
 The source, specifications, tests, editable artwork, build procedure, release

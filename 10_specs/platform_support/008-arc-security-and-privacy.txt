@@ -1,4 +1,4 @@
-ARC v1.0 SECURITY AND PRIVACY CONTRACT
+ARC v2.1.0 SECURITY AND PRIVACY CONTRACT
 
 SP-001 HONEST TRUST BOUNDARY
 
@@ -16,9 +16,14 @@ without security theater.
 
 SP-002 LOCAL AND OFFLINE
 
-ARC stores product files and room records only below:
+ARC stores its installed command/support payload, operator-language file,
+and room records below:
 
   ~/Library/Application Support/ARC/
+
+The app bundle itself is ordinarily in /Applications. Standard macOS window
+preferences may be stored in the org.jonnybass.arc preferences domain; those
+preferences are not a second room record or AI inbox.
 
 ARC has no telemetry, analytics, advertising identifier, account service,
 cloud sync, provider login, credential store, embedded browser, update checker,
@@ -104,9 +109,14 @@ control.
 
 SP-008 PERMANENT DELETION IS EXPLICIT AND NARROW
 
-Delete Room is enabled only for a valid selected room in which every AI is
-RETIRED. One standard Mac confirmation names the room and states that deletion
-and its complete history are permanent and cannot be undone. ARC revalidates
+Delete Room requires a valid selected room and normally every AI RETIRED.
+The sole exception is DS-011's full-room recovery: under the room lock, a
+simulation proves insufficient capacity to record all retirements, time is
+usable, no AI is On Duty or unexpired Working, and no live access check remains.
+Ordinary inactive rooms with enough retirement capacity still retire first.
+One standard Mac confirmation names the room and states that deletion
+and its complete history are permanent and cannot be undone. The exceptional
+path also warns that remaining lanes end without recorded retirement. ARC revalidates
 the room under its lock, unlinks exactly that room and its empty adjacent lock,
 and synchronizes the directory. It does not enumerate or remove another room,
 installed file, or unknown sibling, and it does not use the macOS Trash.
@@ -132,5 +142,5 @@ and is signed, notarized, stapled, and independently tested under 009 and 010
 before final metadata and checksums are written.
 
 ARC has no dynamic extension, plug-in, provider adapter, downloaded code,
-embedded script engine, or writable executable payload. Its production
+embedded script engine, or writable executable extension mechanism. Its production
 entitlements are the minimum needed for an ordinary local Mac application.

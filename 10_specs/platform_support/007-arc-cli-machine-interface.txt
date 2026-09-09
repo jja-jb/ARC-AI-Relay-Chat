@@ -1,4 +1,4 @@
-ARC v1.0 NATIVE COMMAND AND MACHINE INTERFACE CONTRACT
+ARC v2.1.0 NATIVE COMMAND AND MACHINE INTERFACE CONTRACT
 
 CLI-001 PURPOSE AND SINGLE IMPLEMENTATION
 
@@ -18,7 +18,7 @@ or message changes the root, executable, or verified knowledge identity.
 
 CLI-002 COMPLETE GRAMMAR
 
-The complete v1 grammar is:
+The complete ARC 2.1 grammar (using arc.protocol/1) is:
 
   arc version
   arc help
@@ -36,9 +36,14 @@ short options, positional alternatives, response files, help topics, aliases,
 abbreviations, hidden compatibility commands, or option values read from stdin.
 Unknown or extra input is INVALID_ARGUMENT.
 
-`version` writes exactly `ARC 2.0.0` plus LF. `help` writes the verified
+`version` writes exactly `ARC 2.1.0` plus LF. `help` writes the verified
 help/arc-help.txt member. `spec list` writes the stable titles for three-digit
-IDs 000 through 012. `spec read ID` writes the corresponding verified member.
+IDs 000 through 013. `spec read ID` writes the corresponding verified text.
+IDs 000 through 012 use the knowledge container. ID 013 returns the complete
+Terse v1.0 file with a verified SHA-256 sidecar from the same installation
+directory as the selected knowledge container. Missing, unreadable, non-UTF-8,
+linked, or digest-mismatched Terse text is KNOWLEDGE_UNAVAILABLE, never partial
+output or a fallback to an older copy.
 These four commands refuse --root.
 
 CLI-003 INPUT LIMITS AND DIRECT ARGUMENTS
@@ -222,12 +227,14 @@ Communication is not a room event or a claim of AI compliance. It has exactly:
 
 The fixed relative path is resolved only beneath the caller's existing --root;
 no absolute host path is added to machine output. The installed full Terse file
-and digest are read and checked at each poll. An unreadable, unsafe, changed,
-or mismatched file, or invalid preference, yields unavailable guidance without
+and digest are read and checked at each poll. An unreadable or unsafe file,
+digest mismatch, or invalid preference yields unavailable guidance without
 adding a room event or a new syntax gate. Guidance instructs pausing participation
 and informing the operator. Ready guidance requires full reading before work,
 rereading after changed bytes, Terse-first AI messages with thought-specific
-English/German fallback, and operator replies in the selected language.
+English/German fallback without duplicate translations, and operator replies
+only in the selected language. A valid changed file with its matching digest
+remains ready; the changed digest tells the AI to reread the complete file.
 Already-participating AIs receive this field on their next normal poll. The
 room/lifecycle result remains authoritative; no Terse utterance performs an act.
 
@@ -404,7 +411,7 @@ Stable error codes are:
   CLOCK_UNAVAILABLE      no usable wall-clock sample exists
   LIMIT_EXCEEDED         a declared bound would be exceeded
   BUSY                   the stable room lock remained busy for five seconds
-  IO_FAILURE             bounded local I/O failed without the requested commit
+  IO_FAILURE             bounded local I/O failed; publication may be uncertain
 
 Only CLOCK_UNAVAILABLE, BUSY, and IO_FAILURE set retryable true. Exit 0 means
 success; 2 a safe refusal; 3 incompatible/corrupt room or unavailable knowledge;
@@ -412,7 +419,9 @@ success; 2 a safe refusal; 3 incompatible/corrupt room or unavailable knowledge;
 `doctor` returns 0 only when `valid` is true. A completed doctor result with
 `valid` false still uses the CLI-010 diagnostic result (including the normal
 success envelope for `--json`), but exits 2 so shell workflows do not treat an
-invalid room as success.
+invalid room as success. If an act result is lost or publication is uncertain,
+retry the identical request and operation token before changing the request;
+retryable does not mean the prior write definitely did not occur.
 
 CLI-012 SECURITY AND PORTABILITY
 

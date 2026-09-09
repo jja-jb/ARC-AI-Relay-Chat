@@ -44,6 +44,11 @@ extension ARCError {
 }
 
 struct ARCClient: ARCClientProtocol, Sendable {
+    #if DEBUG || ARC_VISUAL_TESTING
+    private static let isolatedDevelopmentRoot = FileManager.default.temporaryDirectory
+        .appendingPathComponent("arc-development-" + UUID().uuidString, isDirectory: true)
+    #endif
+
     static var defaultRoot: URL {
         #if DEBUG || ARC_VISUAL_TESTING
         if let developmentRoot = ProcessInfo.processInfo.environment["ARC_DEVELOPMENT_ROOT"],
@@ -51,8 +56,10 @@ struct ARCClient: ARCClientProtocol, Sendable {
             return URL(fileURLWithPath: developmentRoot, isDirectory: true)
                 .standardized
         }
-        #endif
+        return isolatedDevelopmentRoot
+        #else
         return ARCStore.defaultRootURL
+        #endif
     }
 
     let rootURL: URL

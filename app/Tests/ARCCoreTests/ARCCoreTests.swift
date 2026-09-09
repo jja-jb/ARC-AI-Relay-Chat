@@ -7,6 +7,84 @@ final class ARCCoreTests: XCTestCase {
     private let digest = String(repeating: "a", count: 64)
     private var roots: [URL] = []
 
+    func testLiveLayoutFixtureKeepsLongWorkAndFullHistory() throws {
+        let context = try qualifiedPair()
+        var operation = context.first.operation
+        for index in 1...3 {
+            let result = try context.store.act(room: context.room, participant: context.first.id,
+                binding: context.first.binding, operation: operation,
+                request: .workAssign(owner: context.second.id,
+                    scope: "Layout probe \(index). " + String(repeating: "Inspect the rendered surface and report evidence without inventing an inspection. ", count: 5),
+                    evidenceMode: .text, producerGeneration: 1))
+            operation = result.nextOperation
+        }
+        for index in 1...60 {
+            let result = try context.store.act(room: context.room, participant: context.first.id,
+                binding: context.first.binding, operation: operation,
+                request: .message(to: context.second.id, text: "[en] Synthetic layout history \(index). " + String(repeating: "Long readable text. ", count: 25)))
+            operation = result.nextOperation
+        }
+        XCTAssertEqual(try context.store.roomOpen(room: context.room).work.count, 3)
+        XCTAssertTrue(try context.store.diagnose(room: context.room).valid)
+        // Optional manual app exercise, never the installed root. The ordinary
+        // test always uses its isolated temporary fixture and cleans it up.
+        if let path = ProcessInfo.processInfo.environment["ARC_LAYOUT_FIXTURE_OUTPUT"] {
+            let destination = URL(fileURLWithPath: path).standardizedFileURL
+            guard destination.path.hasPrefix("/private/tmp/arc-2.1-layout-") else {
+                throw ARCError(.invalidArgument, "Layout fixture output must be an isolated temporary path.")
+            }
+            try FileManager.default.copyItem(at: context.store.rootURL, to: destination)
+        }
+    }
+
+    func testBlankMessageErrorsAndByteBoundsPreserveStateAndToken() throws {
+        let context = try qualifiedPair()
+        let file = try context.store.roomFileURL(room: context.room)
+        let before = try Data(contentsOf: file)
+        for text in ["", "\n", " \n", "\t", "\u{00a0}"] {
+            for request in [ARCActionRequest.message(to: context.second.id, text: text),
+                            .messageBroadcast(text: text)] {
+                XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.first.id,
+                    binding: context.first.binding, operation: context.first.operation, request: request)) {
+                    XCTAssertEqual(($0 as? ARCError)?.code, .invalidArgument)
+                    XCTAssertEqual(($0 as? ARCError)?.message, "Message must not be blank.")
+                }
+                XCTAssertEqual(try Data(contentsOf: file), before)
+            }
+        }
+        for text in [String(repeating: "a", count: 16_385), String(repeating: "ü", count: 8_193)] {
+            XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.first.id,
+                binding: context.first.binding, operation: context.first.operation,
+                request: .messageBroadcast(text: text))) {
+                XCTAssertEqual(($0 as? ARCError)?.message, "Message must be within 16384 UTF-8 bytes.")
+            }
+            XCTAssertEqual(try Data(contentsOf: file), before)
+        }
+        // The exact byte boundary, Unicode, and corrected same-token request all succeed.
+        let text = String(repeating: "ü", count: 8_192)
+        let sent = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation,
+            request: .messageBroadcast(text: text))
+        XCTAssertEqual(sent.eventSequences.count, 1)
+        XCTAssertTrue(try context.store.diagnose(room: context.room).valid)
+    }
+
+    func testDirectSelfMessageIsDeliberateAndRetryDoesNotDuplicate() throws {
+        let context = try qualifiedPair()
+        let request = ARCActionRequest.message(to: context.first.id, text: "Private self-note")
+        let sent = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation, request: request)
+        let retry = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation, request: request)
+        XCTAssertEqual(sent.eventSequences, retry.eventSequences)
+        let own = try context.store.poll(room: context.room, participant: context.first.id,
+            binding: context.first.binding, after: sent.eventSequences[0] - 1)
+        XCTAssertEqual(own.events.filter { $0.kind == "MESSAGE" }.count, 1)
+        let peer = try context.store.poll(room: context.room, participant: context.second.id,
+            binding: context.second.binding, after: sent.eventSequences[0] - 1)
+        XCTAssertTrue(peer.events.filter { $0.kind == "MESSAGE" }.isEmpty)
+    }
+
     func testVisualTimestampRefusalNamesFieldPreservesStateAndTokenThenCorrectedRetryWorks() throws {
         let context = try qualifiedPair()
         let assigned = try context.store.act(room: context.room, participant: context.first.id,

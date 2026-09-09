@@ -1,4 +1,4 @@
-ARC v1.0 AI KNOWLEDGE CONTAINER CONTRACT
+ARC v2.1.0 AI KNOWLEDGE CONTAINER CONTRACT
 
 AKC-001 PURPOSE AND BOUNDARY
 
@@ -27,7 +27,7 @@ multiply, comparison, conversion to `size_t`, and range end before use. It never
 forms `offset + length` until it has proved the addition fits both `uint64_t`
 and `size_t`.
 
-The exact v1 bounds are:
+The exact knowledge-format version-1 bounds (unchanged in ARC 2.1) are:
 
   container bytes          1 through 8,388,608
   directory members        18 or 19 for Profile 1; never more than 32
@@ -114,7 +114,11 @@ Profile 1 permits only one optional member, with required flag 0:
 
 No unknown, duplicate, hidden, nested-container, binary, executable, plugin, or
 provider-specific member is admitted. Member count is therefore exactly 18 or
-19.
+19. The complete Terse specification is a separate signed-installation file,
+not a Profile 1 member; see IR-003. It is nevertheless governing ARC
+specification 013, exposed in full by `arc spec read 013`. Profile membership
+is a storage format, not the definition of the normative set. The specs and AI guide inside this
+container describe how to locate, verify, read, and use that language file.
 
 AKC-006 PAYLOAD PARTITION AND TEXT
 

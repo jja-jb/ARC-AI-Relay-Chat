@@ -1,9 +1,9 @@
-ARC v1.0 HOW TO READ THE DETERMINING SPECIFICATIONS
+ARC v2.1.0 HOW TO READ THE DETERMINING SPECIFICATIONS
 
 READ-001 DETERMINING SET
 
-The determining ARC v1.0 set is exactly the thirteen UTF-8 text members numbered
-000 through 012. They are read together:
+The determining ARC v2.1.0 set comprises fourteen specifications, numbered
+000 through 013. They are read together:
 
   000  product constitution and decision rule
   001  this reading and precedence contract
@@ -18,6 +18,36 @@ The determining ARC v1.0 set is exactly the thirteen UTF-8 text members numbered
   010  traceability and design-verification testing
   011  exact durable JSON record and event schemas
   012  sealed AI knowledge container and text round trip
+  013  full Terse v1.0 language contract (canonical file under languages/terse/)
+
+This set describes software version 2.1.0. Product version is distinct from
+the data, interface, and language identifiers below. The /1 data and interface
+versions remain unchanged; Terse begins formal versioning at v1.0:
+
+  room record                  arc.room/1
+  participant protocol         arc.protocol/1
+  qualification                arc.qualification/1
+  knowledge magic/version      ARCKB001 / 1, Profile 1
+  install manifest schema      integer 1
+  release candidate schema     arc.release-candidate/1
+  external DVT report schema    arc.dvt/1
+  Terse language release        1.0 (wire vocabulary identifier 1)
+
+The full Terse language contract is tracked in the same source repository at
+languages/terse/001-terse-language-specification.txt. It IS specification 013,
+a governing part of ARC's specifications, not an optional supplement. Its
+canonical filename remains stable; `arc spec read 013` returns its full verified
+text. Specifications 000 through 012 remain in the fixed Profile 1 container;
+013 ships as the separate signed text and digest defined in IR-003. This storage
+choice does not reduce its normative standing. ARC's integration and precedence
+rules live in QD-001; Terse syntax and meaning live in specification 013.
+Its release and full-file digest are independent of ARC's product version.
+Earlier numbered development drafts predate formal Terse versioning. Existing
+release tags and artifacts preserve those draft bytes, not formal releases.
+
+Editing source specifications does not change an already signed candidate or
+the installed files. Updated text ships only through a newly prepared, signed
+payload; an existing release's tag, manifest, digests, and artifacts stay fixed.
 
 No README, source comment, screenshot, test, generated document, prior prototype,
 room message, or provider prompt can override this set. Those artifacts conform
@@ -44,6 +74,8 @@ Apply requirements in this order when wording appears to conflict:
   3. behavioral contracts in 002 through 005 and 008;
   4. the Mac presentation contract in 006;
   5. installation, release, and verification contracts in 009 and 010.
+  6. language syntax, meaning, and peer communication in 013, subject to the
+     operator's scope and verified ARC authority above.
 
 This order resolves wording; it never authorizes silent data loss or an extra
 product mechanism. A genuine unresolved contradiction is a specification defect
@@ -64,13 +96,14 @@ instead of restating its mechanics:
   release form           009
   evidence of conformity 010
   knowledge bytes        012
+  Terse language         013 (full file under languages/terse/)
 
 If two mechanisms claim the same job, the implementation is not conforming.
 
 READ-005 HUMAN AND ENGINEERING WORDS
 
-The ordinary app uses Room, Room ID, AI participant, Producer, On Duty, Off
-Duty, Work, and Activity. Durable record, generation, digest, operation token, event
+The ordinary app uses Room, Room ID, AI participant, Producer, On Duty, Working,
+Off Duty, Work, and Room Activity. Durable record, generation, digest, operation token, event
 sequence, logical time, and schema belong in Details, developer documentation,
 or AI instructions. Plain wording changes presentation only; it never changes
 the underlying record or authority.
@@ -81,4 +114,4 @@ A release is complete only when every public control, command, state, schema,
 error, background action, knowledge member, and recovery path maps to one source
 implementation and at least one verification case. A prototype behavior that is
 not in this set is removed. A requirement without code and evidence is not an
-unfinished v1.0 feature; it means the candidate is not ARC v1.0.
+unfinished v2.1.0 feature; it means the candidate is not ARC v2.1.0.

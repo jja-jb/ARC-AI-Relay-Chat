@@ -114,7 +114,10 @@ enum ARCText {
         allowPathSeparator: Bool = true, trimWhitespace: Bool = true
     ) throws -> String {
         let value = trimWhitespace ? normalized(raw) : raw.precomposedStringWithCanonicalMapping
-        guard !normalized(value).isEmpty, value.utf8.count <= maximumBytes,
+        guard !normalized(value).isEmpty else {
+            throw ARCError(.invalidArgument, "\(label) must not be blank.")
+        }
+        guard value.utf8.count <= maximumBytes,
               maximumCharacters.map({ value.count <= $0 }) ?? true else {
             let limit = maximumCharacters.map { "\($0) characters and " } ?? ""
             throw ARCError(

@@ -1,6 +1,6 @@
 # ARC.app source
 
-ARC.app is the native SwiftUI interface for ARC 1.0. The root `Package.swift`
+ARC.app is the native SwiftUI interface for ARC 2.1. The root `Package.swift`
 owns the complete product graph; there is no app-local package.
 
 The application target:
@@ -20,6 +20,11 @@ swift test
 make app-development-check
 make app-release-check
 ```
+
+Development builds use a fresh temporary ARC root by default. Set an explicit
+absolute `ARC_DEVELOPMENT_ROOT` only for a chosen test fixture. Release builds
+ignore that variable and use the ordinary Application Support location. This
+prevents an ordinary development launch from upgrading the user's installation.
 
 Editable artwork is in `app/Assets/`. The privacy manifest source is
 `app/Sources/ARCApp/PrivacyInfo.xcprivacy` and is copied to

@@ -1,4 +1,4 @@
-ARC v1.0 MACOS APPLICATION CONTRACT
+ARC v2.1.0 MACOS APPLICATION CONTRACT
 
 UI-001 ONE ORDINARY PRODUCT
 
@@ -15,6 +15,14 @@ the main window's selected room. It is an ordinary resizable Mac window that
 other windows may cover, not an always-on-top panel. Closing it does not close
 the main window, change the room, or end AI participation. It opens only on
 request and can be reopened.
+
+The live main window must yield to input while work and history change.
+It must not use SwiftUI selectable-Text overlays in its nested room layouts:
+that path exhibited a main-thread layout spin and unbounded memory growth.
+Main-window text provides Copy Text in its context menu and accessibility
+actions. Range selection and Find remain in the native activity transcript.
+UI validation must render work rows, resize and scroll the window, and change
+work state repeatedly; model-only tests do not establish responsiveness.
 
 UI-002 FIRST USE IN MINUTES
 
@@ -34,6 +42,9 @@ applies to every room, and affects only AI replies to the operator in the
 existing human chat, not ARC's menus or AI-to-AI fallback. Active AIs receive the
 current choice in their next poll. A failed save keeps the prior selection and
 reports the error. No room, participant, or history is rewritten for this setting.
+The selector is instruction-based: ARC does not translate original peer traffic
+or prove that an AI obeyed the selected language. QD-001 forbids redundant
+English/German translations and prose duplication of sufficient Terse.
 
 The room always presents one AI-name field beside `Copy AI Instructions to
 Paste Buffer`. Directly beneath them it says `Paste the instructions directly
@@ -82,8 +93,9 @@ UI-004 ADMINISTRATOR CONTROL NEVER DISAPPEARS
 
 For every readable room the Administrator can add an AI, copy or replace a
 non-retired AI's instructions, retire an AI, rename the room, and diagnose it.
-After every AI is retired, Delete Room becomes visible and enabled in both the
-Room menu and the selected sidebar row's context menu. A time failure disables
+Delete Room stays visible in the Room menu and the selected sidebar row's
+context menu. It is enabled after every AI is retired, or for the narrowly
+bounded full-room recovery case in DS-011. A time failure disables
 only actions whose truth depends on
 duty or deadlines. A busy local write disables competing writes and presents
 progress; it does not discard the requested action silently.
@@ -94,7 +106,7 @@ saw a request merely because the local display timer advanced.
 
 UI-005 MENUS AND KEYBOARD
 
-ARC uses normal Mac menus. The complete v1 application command surface is:
+ARC uses normal Mac menus. The complete ARC 2.1 application command surface is:
 
   File    New Room...
   Edit    Find in Activity... (alongside standard text editing commands)
@@ -115,9 +127,10 @@ UI-006 PLAIN CONFIRMATIONS AND ERRORS
 Every confirmation names the affected room or AI and the consequence. Retire
 AI says that participation stops while history remains. Replace Instructions
 says that the previous handoff stops working, the AI returns to Waiting to
-connect, On Duty is cleared, and its Producer role is cleared when applicable.
+connect, On Duty and Working are cleared, and its Producer role is cleared when applicable.
 Delete Room names the room and says that the room and complete history are
-permanently deleted and cannot be recovered.
+permanently deleted and cannot be recovered. Full-room recovery additionally
+warns that remaining lanes end without recording retirement, as DS-011 requires.
 
 An error has three parts: what ARC could not do, whether room data changed, and
 one next action. Normal errors do not expose system paths, bindings, raw record
@@ -128,7 +141,9 @@ UI-007 HELP AND PRIVACY IN THE APP
 
 ARC Help is concise, version-matched text embedded in the signed product. It
 explains Room versus Room ID, copying AI instructions, qualification, Producer, On
-Duty, Off Duty, Work, complete Room History, the timer's limit, replacement,
+Duty, Working deadlines, Off Duty, Work, complete Room History, the separate
+read-only activity window and Follow Live, operator-language selection,
+Terse's instruction-based limits, the timer's limit, replacement,
 retirement, permanent deletion, and diagnosis. Privacy states the local trust
 boundary and the absence
 of network activity, telemetry, encryption, and provider credentials.

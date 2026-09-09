@@ -2,6 +2,40 @@
 
 ARC uses semantic versions. Dates use ISO 8601.
 
+## 2.1.0 — 2026-09-08 (unpublished candidate)
+
+- Remove SwiftUI selectable-text overlays from the live main window after
+  a captured main-thread layout spin and rapidly growing memory footprint.
+  Main-window text offers Copy Text through its context menu and accessibility
+  action; the separate native activity transcript retains selection and Find.
+- Distinguish blank text from oversized text in validation errors. Add tests
+  for Unicode byte limits, unchanged state, and corrected same-token retries.
+- Document deliberate direct self-messages and Producer self-assignment;
+  test self-message privacy and idempotence.
+- Ship the full Terse contract v1.0 with per-recipient broadcast agreement,
+  silent-observer precedence, and accurate limits on security claims.
+- Designate Terse v1.0 as its first formal release, with integer handshake 1;
+  earlier drafts predate versioning. Make the full language text governing ARC
+  specification 013 and expose it through the verified specification reader.
+- Require necessary prose fallback to be chosen by the sending AI, never the
+  Producer. Prohibit parallel translations and convenience-based avoidance of
+  Terse in onboarding, polling guidance, and the governing language contract.
+- Add rendered main-window update/resize coverage and a guard against
+  reintroducing the implicated text-selection path. The captured hang is real;
+  the exact original trigger was not reproduced by the initial synthetic test.
+- Isolate development app launches in a temporary data root unless a test root
+  is explicitly provided. Signed release builds keep their standard location.
+- Include the following source-specification corrections prepared after 2.0.
+  Prior release artifacts and installed data are not rewritten by this build.
+
+- Synchronize all ARC specification titles and current-behavior rules
+  with current behavior, while retaining the actual protocol and storage format identifiers.
+- Reconcile Working availability, the optional read-only activity window,
+  full-room deletion recovery, action refusal/retry semantics, room creation
+  replay, binding visibility, and the atomic installation receipt.
+- Index the complete tracked Terse specification and its provenance;
+  expand verification guidance for current behavior and language limitations.
+
 ## 2.0.0 — 2026-09-08 (unpublished candidate)
 
 - Name the exact invalid evidence field and expected format. VISUAL timestamps

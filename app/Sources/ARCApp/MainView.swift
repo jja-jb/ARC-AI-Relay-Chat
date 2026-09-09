@@ -124,7 +124,7 @@ struct MainView: View {
                     }
                     Text(state.notice.isEmpty ? "Completing the local action…" : state.notice)
                         .font(.callout)
-                        .textSelection(.enabled)
+                        .arcCopyable(state.notice.isEmpty ? "Completing the local action…" : state.notice)
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 14)
@@ -380,7 +380,7 @@ private struct RecoveryRoomView: View {
                 .font(.largeTitle.bold())
             Text("Room ID: \(room.id)")
                 .font(.callout.monospaced())
-                .textSelection(.enabled)
+                .arcCopyable(room.id)
             Text(room.failure ?? "ARC could not safely open this room.")
                 .font(.title3)
             VStack(alignment: .leading, spacing: 10) {
@@ -420,7 +420,7 @@ struct DiagnosticsSheet: View {
                                     Text(fact.label).foregroundStyle(.secondary)
                                     Text(fact.value)
                                         .font(.system(.body, design: .monospaced))
-                                        .textSelection(.enabled)
+                                        .arcCopyable(fact.value)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
                             }

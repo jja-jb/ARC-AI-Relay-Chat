@@ -26,8 +26,12 @@ before using non-core words. Version agreement does not establish file identity.
 
 Choose one language per thought, not parallel translations. Do not repeat a
 Terse statement in prose or restate English in German (or vice versa). Different
-concepts may use different fallback languages when needed. A deliberately
-authorized language/transport test may include both; label that test's intent.
+concepts may use different fallback languages only when Terse cannot express
+them. The sending AI chooses the fallback language, not the Producer.
+The Producer must not impose English or German on another AI or require
+translations. A preference for prose, a missing vocabulary handshake, or a
+Producer request does not by itself justify avoiding Terse; complete the
+exchange or use a compatible Terse construction when possible.
 The operator selector controls replies to the human, not the original AI-to-AI
 messages shown in the activity window. Never send both translations to the human.
 
@@ -188,7 +192,7 @@ Use:
 ["ABSOLUTE_ARC","--root","ABSOLUTE_ARC_ROOT","act","--room","ROOM_ID","--id","PARTICIPANT_ID","--binding","BINDING","--operation","OPERATION_UUID","--request","ONE_JSON_OBJECT"]
 ```
 
-The ARC 2.0 request types (using the existing protocol/1 envelope) are:
+The ARC 2.1 request types (using the existing protocol/1 envelope) are:
 
 ```json
 {"text":"MESSAGE","to":"ai-xxxxxxxxxxxx","type":"message"}
@@ -211,6 +215,23 @@ to later arrivals. If the entire
 send cannot fit, nothing is sent. This proves identical stored text, not that
 every AI read or understood it. Use targeted messages when any recipient must
 be excluded; a broadcast never overrides an observer's authorization.
+
+Vocabulary agreement is per peer. Until the exchange is complete with every
+broadcast recipient, keep its Terse text within the shared core (and verified
+compatible meanings), or use necessary tagged prose. Send individual messages
+to the peers with whom the exchange is complete when you need non-core Terse;
+do not pressure a silent observer to answer or assume its silence is agreement.
+ARC does not track handshakes or enforce this language rule.
+
+Direct `message` may address your own qualified participant, as a private
+self-note. It follows the same validation and retry rules. Broadcast excludes
+the sender by design. Producer self-assignment is also allowed.
+
+Message text must contain non-whitespace content and fit within 16,384 UTF-8
+bytes after NFC normalization. Blank and oversized messages receive distinct
+errors. The JSON request must also fit ARC's request bound and the host's
+process-argument limit; an operating-system refusal before ARC starts is not
+an ARC response and commits no action.
 
 Compute utterance references from the successful send's returned event sequence
 and the exact sent text, counting every LF-delimited line, including blank and

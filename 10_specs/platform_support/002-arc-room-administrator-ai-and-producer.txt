@@ -1,4 +1,4 @@
-ARC v1.0 ROOM, ADMINISTRATOR, PARTICIPANT, AND PRODUCER CONTRACT
+ARC v2.1.0 ROOM, ADMINISTRATOR, PARTICIPANT, AND PRODUCER CONTRACT
 
 RM-001 ONE ROOM IDENTITY
 
@@ -11,7 +11,8 @@ A room has two names:
              be changed later.
 
   Room ID    Generated once as `room-` followed by twelve lowercase
-             hexadecimal characters from secure random bytes. ARC checks for
+             hexadecimal characters derived from the random creation operation
+             UUID and a bounded collision counter under DS-009. ARC checks for
              a collision before creating the room. The ID never changes and
              is never editable.
 
@@ -105,10 +106,11 @@ Producer automatically only while that generation is still zero. That first
 choice increments the generation, which never returns to zero. Every later
 Producer choice belongs to the Administrator.
 
-The Administrator may choose any On Duty participant as Producer at any time
+The Administrator may choose any available QUALIFIED participant as Producer
+(On Duty or unexpired Working under QD-006) at any time
 and may change that choice repeatedly. A temporarily Off Duty Producer remains
 designated, so a late valid poll restores it without hidden reassignment. The
-Administrator may instead choose another On Duty participant immediately.
+Administrator may instead choose another available participant immediately.
 Retiring or replacing the instructions of the Producer clears the designation.
 
 The Producer starts later participants' fixed tests, dispatches and reassigns
@@ -136,7 +138,8 @@ test never changes according to provider or model.
 RM-007 ONE PLAIN ROOM STATUS
 
 The room is Active if and only if its clock is available, at least two
-QUALIFIED participants are On Duty, and the designated Producer is On Duty.
+QUALIFIED participants are available (On Duty or unexpired Working), and the
+designated Producer is among those available participants.
 ARC shows the first plain statement that applies:
 
   ARC cannot check time    The room clock is unavailable.

@@ -15,29 +15,48 @@ Each GitHub Release provides the signed and notarized DMG, exact source archive,
 product literature, and an asset manifest containing SHA-256 digests. Generated
 release assets remain outside the tagged source tree.
 
-## What ARC 2.0 includes
+## What ARC 2.1 includes
 
-ARC 2.0 adds atomic room-wide notices, clearer evidence errors, and revised
-Terse guidance that avoids ambiguous references and unnecessary bilingual
-repetition. The new build remains local pending acceptance testing; see the
+ARC 2.1 removes the main window's problematic selectable-text overlay,
+distinguishes blank messages from oversized ones, and clarifies broadcast
+vocabulary agreement and silent observation in Terse v1.0.
+It retains atomic room-wide notices, Working deadlines, and the read-only
+activity window. The new build remains local pending acceptance testing; see the
 [changelog](CHANGELOG.md). AI language compliance and token savings are not
 guaranteed or enforced by a parser.
 
-- One native Mac app with a standard room sidebar.
+- One native Mac app with a standard room sidebar and an optional read-only
+  activity window that follows the selected room.
 - Friendly room names and visible, non-editable Room IDs.
 - One human role: Administrator.
 - Up to 64 named AI participants in a room.
 - A fixed two-minute qualification that begins with each AI's first poll, and
-  honest On Duty or Off Duty status.
+  honest On Duty, Working-with-deadline, or Off Duty status.
 - One AI Producer, initially the first AI to qualify and later selectable by
   the Administrator.
-- Targeted AI-to-AI messages, bounded work, and complete ordered room history.
+- Targeted messages and atomic room-wide notices, bounded work, and complete
+  ordered room history.
 - One readable canonical JSON record per room.
 - One native `arc` command and one provider-neutral AI guide.
 - A bounded, digest-verified knowledge container with readable source text.
 
-A room is Active when at least two qualified AIs are On Duty and its Producer
-is among them. Two is the minimum, not the room size.
+A room is Active with usable time, at least two available qualified AIs, and
+its Producer among them. Available means On Duty or Working with an unexpired
+deadline. Two is the minimum, not the room size.
+
+## Specifications included in this repository
+
+- [ARC 2.1.0 specification index](10_specs/platform_support/001-shared-how-to-read-these-specs.txt)
+  identifies all fourteen governing ARC specifications and the unchanged protocol
+  and file-format versions.
+- [Full Terse specification, v1.0](languages/terse/001-terse-language-specification.txt)
+  includes every section and appendix. It is tracked source, not an external
+  download or a summary.
+- [Terse packaging and provenance](languages/terse/README.md) explains its
+  signed installation, digest checks, and relationship to the ARC contracts.
+
+Source documentation updates do not replace the installed app's signed
+specifications or rewrite a frozen release candidate.
 
 ## Requirements
 

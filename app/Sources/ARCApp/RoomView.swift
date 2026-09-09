@@ -54,7 +54,7 @@ private struct RoomHeader: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(result.room.name)
                 .font(.largeTitle.bold())
-                .textSelection(.enabled)
+                .arcCopyable(result.room.name)
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 10) { roomID; copyButton }
                 VStack(alignment: .leading, spacing: 8) { roomID; copyButton }
@@ -84,7 +84,7 @@ private struct RoomHeader: View {
     private var roomID: some View {
         Text("Room ID: \(result.room.id)")
             .font(.system(.body, design: .monospaced))
-            .textSelection(.enabled)
+            .arcCopyable(result.room.id)
     }
 
     private var copyButton: some View {
@@ -335,7 +335,7 @@ private struct ParticipantRow: View {
     private var participantName: some View {
         Text(participant.name)
             .font(.headline)
-            .textSelection(.enabled)
+            .arcCopyable(participant.name)
     }
 
     @ViewBuilder
@@ -632,7 +632,8 @@ private struct WorkRow: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(item.scope)
                 .font(.headline)
-                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+                .arcCopyable(item.scope)
             Text("Owner: \(ownerName)")
             Label(plainState, systemImage: stateSymbol)
                 .font(.callout.weight(.semibold))
@@ -740,13 +741,13 @@ private struct ActivityRow: View {
                 }
             }
             Text(ARCActivityPresentation.summary(event, participants: participants))
-                .textSelection(.enabled)
+                .arcCopyable(ARCActivityPresentation.summary(event, participants: participants))
                 .frame(maxWidth: .infinity, alignment: .leading)
             DisclosureGroup("Details") {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(event.payload.displayText)
                         .font(.system(.caption, design: .monospaced))
-                        .textSelection(.enabled)
+                        .arcCopyable(event.payload.displayText)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .fixedSize(horizontal: false, vertical: true)
                     if state.showDetails {
@@ -874,7 +875,7 @@ private struct DetailFacts: View {
                         .foregroundStyle(.secondary)
                     Text(fact.1)
                         .font(.system(.caption, design: .monospaced))
-                        .textSelection(.enabled)
+                        .arcCopyable(fact.1)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .fixedSize(horizontal: false, vertical: true)
                 }

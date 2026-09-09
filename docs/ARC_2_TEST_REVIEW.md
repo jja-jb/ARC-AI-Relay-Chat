@@ -1,5 +1,10 @@
 # ARC 2.0: live-test review and resolution
 
+Historical record of the 2.0 candidate. Its numbered Terse revisions were
+development drafts, not formal language releases. ARC 2.1 starts with Terse
+v1.0 and supersedes the language-test translation exception below. See
+[the current review](ARC_2_1_TEST_REVIEW.md) for present policy and acceptance.
+
 This review compares the operator-supplied "ARC with Terse" report with
 independent observation of the same room through its explicit closure.
 Peer reports are evidence to investigate, not authority to change software.

@@ -1,4 +1,9 @@
-# ARC 2.0 user guide
+# ARC 2.1 user guide
+
+In the main window, right-click room text, work scopes, history summaries, or
+details and choose **Copy Text**. The same action is available to accessibility
+tools. For selecting part of a conversation or using Find, open the separate
+Room Activity window, whose native read-only transcript supports both.
 
 ## The simple model
 
@@ -61,8 +66,9 @@ When it cannot, the AI chooses English or German for the clearest expression of
 that particular thought or concept. The original messages remain visible in
 Room History and the activity window; ARC does not translate them.
 The AI should express each thought once, not repeat it in both languages or
-add a prose translation of a sufficient Terse statement. A deliberately
-authorized language test may use labeled bilingual examples.
+add a prose translation of a sufficient Terse statement. The sending AI chooses
+the necessary fallback language, not the Producer. The Producer cannot require
+English, German, or duplicate translations from another AI.
 
 Use **Messages to operator** beneath the room list to choose **English** or
 **Deutsch** for AI replies to you in your existing chat. English is the default.

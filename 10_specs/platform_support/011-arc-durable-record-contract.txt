@@ -1,4 +1,4 @@
-ARC v1.0 EXACT ROOM-RECORD CONTRACT
+ARC v2.1.0 EXACT ROOM-RECORD CONTRACT
 
 REC-001 AUTHORITATIVE BYTES
 
@@ -109,7 +109,8 @@ working_until_logical_us is permitted only for QUALIFIED participants, must be
 a supported LogicalTime strictly later than last_poll_logical_us, and is omitted
 when absent. It can remain stored after expiry; duty is derived at read time.
 Poll, replacement, and retirement clear it. Existing records without the field
-keep their meaning. Older executables cannot read new Working records/events.
+keep their meaning. ARC 1.1.0 and 2.1.0 both understand Working records/events;
+executables predating Working support cannot read records containing them.
 
 Participant IDs and case-insensitive names are unique within the room. Present
 bindings are unique. A non-retired Participant has one binding; a RETIRED
@@ -125,9 +126,11 @@ Qualification. INVITED, WAITING_FOR_PRODUCER, and FAILED have a binding and no
 Qualification. RETIRED has neither binding nor Qualification. Retirement is
 terminal.
 
-Bindings are credentials. They exist in the private room and Administrator
-instruction result. AI guide, poll, act, roster, Activity, diagnostics, and
-ordinary logs must not disclose them.
+Bindings are private lane references, not provider authentication. They exist
+in the room record and Administrator instruction result. A validated caller's
+own binding appears in its guide's exact poll argument array and copied
+handoff. Poll/act machine results, roster, Activity, diagnostics, ordinary
+participant details, and logs do not disclose bindings or another AI's lane.
 
 REC-005 QUALIFICATION
 
@@ -199,7 +202,8 @@ VISUAL. IDs are unique. The owner has valid AIID syntax but may be absent after
 a retired Participant record is pruned; that non-COMPLETE Work remains visible
 to the Producer for reassignment. Creation sets OPEN, `{}` evidence, and revision 1.
 Every owner update or Producer reassignment increases revision exactly once.
-Reassignment sets a new On Duty owner, OPEN, `{}` evidence, and the current
+Reassignment sets a new available owner (On Duty or unexpired Working), OPEN,
+`{}` evidence, and the current
 Producer generation. COMPLETE is terminal.
 
 `assigning_producer_generation` is no greater than the room's current
@@ -273,7 +277,7 @@ same Event set in newest-first pages of 50.
 
 REC-010 EVENT VOCABULARY
 
-ARC v1.0 creates only these Event kinds and payloads:
+ARC v2.1.0 creates only these Event kinds and payloads:
 
   ROOM_CREATED
     actor administrator; payload {name}
@@ -406,11 +410,15 @@ the complete read.
 A mutation builds and validates one complete next document in bounded memory.
 It writes a create-exclusive unpredictable 0600 regular sibling, synchronizes
 the file, atomically renames it over the room, and synchronizes the directory.
-Creation uses exclusive rename and retries a new random RoomID on collision.
-Any refusal before publication leaves prior room bytes unchanged. The stable
+Creation uses exclusive rename and at most sixteen stable RoomID candidates
+derived from the creation operation UUID and counter under DS-009.
+A refusal does not publish partial requested-action state; independently due
+qualification failures may commit under CLI-009. Otherwise a refusal before
+publication leaves prior room bytes unchanged. The stable
 lock file is not removed after an operation. Permanent deletion is the only
 operation that removes both the selected room and its lock after proving every
-Participant is RETIRED.
+Participant is RETIRED or revalidating the exceptional DS-011 full-room
+recovery conditions under the same lock.
 
 REC-015 VERSION AND RECOVERY RULE
 
@@ -419,3 +427,9 @@ preserved or repaired. An unknown `format` is ROOM_INCOMPATIBLE. Other invalid
 room bytes are ROOM_CORRUPT. ARC never guesses a conversion and never invents a
 second source of truth. A later format requires an explicit new specification
 and reader; it must not silently broaden `arc.room/1`.
+
+ARC 2.0 keeps ARC 1.1's record and protocol versions. Room-wide messages use
+ordinary addressed MESSAGE events and the existing LastOperation record;
+ARC 1.1 can read that history but does not accept the new message.broadcast
+request. Matching format identifiers alone do not promise compatibility with
+executables predating the supported record fields and event vocabulary.

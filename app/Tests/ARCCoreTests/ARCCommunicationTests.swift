@@ -7,6 +7,56 @@ import XCTest
 final class ARCCommunicationTests: XCTestCase {
     private var roots: [URL] = []
 
+    func testGoverningTerseSpecificationReturnsOnlyCompleteVerifiedBytes() throws {
+        let root = try temporaryRoot()
+        let installation = root.appendingPathComponent("current")
+        XCTAssertThrowsError(try ARCCommunication.specificationText(installationURL: installation))
+        let source = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let full = try String(contentsOf: source.appendingPathComponent(
+            ARCCommunication.specificationRelativePath), encoding: .utf8)
+        try installSpecification(root: root, text: full)
+        XCTAssertEqual(try ARCCommunication.specificationText(installationURL: installation), full)
+        XCTAssertTrue(full.contains("Status: Terse v1.0, first formal release"))
+        XCTAssertTrue(full.contains("TELL WORD SAME 1"))
+        try Data((full + "changed\n").utf8).write(to: ARCCommunication.specificationURL(rootURL: root))
+        XCTAssertThrowsError(try ARCCommunication.specificationText(installationURL: installation)) { error in
+            XCTAssertEqual((error as? ARCError)?.code, .knowledgeUnavailable)
+        }
+    }
+
+    func testFallbackIsSenderChosenTerseFirstAndNeverDuplicatedOnEverySurface() throws {
+        let root = try temporaryRoot()
+        try installSpecification(root: root, text: "Full fixture specification\n")
+        let source = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let guide = try String(contentsOf: source.appendingPathComponent("docs/ARC_AI.md"), encoding: .utf8)
+        let terse = try String(contentsOf: source.appendingPathComponent(ARCCommunication.specificationRelativePath), encoding: .utf8)
+        for language in ARCOperatorLanguage.allCases {
+            try ARCOperatorPreferences.save(language, rootURL: root)
+            let poll = ARCCommunication.snapshot(rootURL: root)
+            let setup = ARCCommunication.setupText(rootURL: root, language: language)
+            XCTAssertEqual(poll.operatorLanguage, language)
+            for text in [poll.notice, setup, guide] {
+                XCTAssertTrue(text.contains("Only when it cannot"))
+                XCTAssertTrue(text.contains("The sending AI chooses the fallback language, not the Producer."))
+                XCTAssertTrue(text.contains("Choose one language per thought, not parallel translations"))
+                XCTAssertTrue(text.contains("does not by itself justify avoiding Terse"))
+                XCTAssertFalse(text.contains("test may include both"))
+                XCTAssertFalse(text.contains("test may deliberately include both"))
+            }
+        }
+        XCTAssertTrue(terse.contains("14.15 In ARC"))
+        XCTAssertTrue(terse.contains("The sending AI, not the Producer"))
+        XCTAssertTrue(terse.contains("Producer MUST NOT"))
+        XCTAssertTrue(terse.contains("each concept\nis expressed only once"))
+        XCTAssertFalse(terse.contains("test MAY include translations"))
+        XCTAssertTrue(terse.contains("ARC's permitted AI-to-AI prose set is English and German"))
+        XCTAssertTrue(terse.contains("These categories are not blanket prose exemptions"))
+        XCTAssertFalse(terse.contains("A room MAY declare the set of natural languages"))
+        XCTAssertFalse(terse.contains("Der Parser lehnt den Pfad ab"))
+    }
+
     func testTerseCanonicalLineEndingsSurviveActionDecodingAndSafetyLimitsRemain() throws {
         let input = ARCActionRequest.message(to: "ai-012345abcdef", text: "TELL WORD SAME 6\n\nTELL HEAR\n")
         XCTAssertEqual(try ARCActionJSON.decode(ARCActionJSON.encode(input)), input)

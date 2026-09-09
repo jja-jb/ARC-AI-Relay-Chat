@@ -72,10 +72,15 @@ struct ARCCommand {
             } else if subcommand == "read", arguments.count == 2,
                       let id = Int(arguments[1]),
                       arguments[1] == String(format: "%03d", id) {
-                guard (0...12).contains(id) else {
+                guard (0...13).contains(id) else {
                     throw ARCError(.notFound, "ARC has no specification with that ID.")
                 }
                 let knowledge = try ARCKnowledgeFile.openDefault(rootURL: root)
+                if id == 13 {
+                    writeText(withFinalLF(try ARCCommunication.specificationText(
+                        installationURL: knowledge.containerURL.deletingLastPathComponent())))
+                    return
+                }
                 guard let text = try knowledge.text(.specification(id)) else {
                     throw ARCError(.notFound, "ARC has no specification with that ID.")
                 }
@@ -284,6 +289,7 @@ struct ARCCommand {
     010  Verification
     011  Durable record
     012  AI knowledge container
+    013  Terse v1.0 (full language specification)
     """ + "\n"
 }
 

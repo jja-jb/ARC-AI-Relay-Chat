@@ -1,4 +1,4 @@
-ARC v1.0 DURABLE STATE AND INTEGRITY CONTRACT
+ARC v2.1.0 DURABLE STATE AND INTEGRITY CONTRACT
 
 DS-001 ONE ROOM, ONE RECORD
 
@@ -58,8 +58,11 @@ different reads.
 
 A mutation reads and validates one complete prior revision, checks all lane,
 authority, generation, work revision, operation, time, and limit preconditions,
-then constructs one complete next revision in memory. Any refusal leaves the
-prior file byte-identical.
+then constructs one complete next revision in memory. A refused requested
+action never leaks a partial action mutation. An independently due qualification
+failure may still commit under CLI-009; otherwise a pre-publication refusal
+leaves the prior file byte-identical. A final I/O failure after rename may leave
+the complete new revision present; follow the exact-retry rule in DS-009.
 
 DS-004 ATOMIC PUBLICATION
 
@@ -82,13 +85,15 @@ increases. Sequence values never repeat or reset.
 
 One mutation may append more than one Activity item when the single typed action
 has multiple visible consequences. Their sequences are consecutive and the
-operation result lists them in order. The room's `updated_at` is the commit
+operation result lists the requested action's events in order, excluding any
+independently due qualification-failure events committed before that action.
+The room's `updated_at` is the commit
 time. A retry that returns an existing result is read-only and adds no Activity.
 
 DS-006 PORTABLE NONDECREASING TIME
 
 Durable room time is UTC epoch microseconds. A valid sample is a finite,
-nonnegative system wall time that fits signed 64-bit microseconds. For a
+nonnegative system wall time within REC-011's supported LogicalTime range. For a
 mutation:
 
   logical_us = max(room.last_clock_logical_us, sampled_wall_us)
@@ -146,7 +151,10 @@ of the same token and exact canonical request returns the stored result without
 another mutation. The same token with different request bytes returns
 OPERATION_CONFLICT. A prior or unknown token returns OPERATION_STALE.
 
-After a definitive act, ARC supplies one new operation UUID. An Administrator
+After a successful act, ARC supplies one new operation UUID. A definitive
+validation or state refusal does not consume a current token. A lost response
+or uncertain I/O/publication result requires an identical request and token
+retry before changing the request. An Administrator
 mutation similarly stores one last operation ID and request digest at room
 level so a lost local result cannot duplicate the change.
 
