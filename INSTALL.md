@@ -66,7 +66,7 @@ make check
 make app-development-check
 ```
 
-The development app is written under `/private/tmp/arc-build-2.5.0/development/`.
+The development app is written under `/private/tmp/arc-build-2.5.1/development/`.
 It uses a fresh temporary root unless `ARC_DEVELOPMENT_ROOT` explicitly names
 an absolute test root. Building alone installs nothing. A development launch
 installs support files only in that chosen test root; release builds ignore

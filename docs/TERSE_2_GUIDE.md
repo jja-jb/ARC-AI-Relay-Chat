@@ -1,6 +1,6 @@
 # Terse 2.1 in ARC 2.5
 
-Terse 2.1 is governing specification 013, wire contract **3**. ARC is 2.5.0;
+Terse 2.1 is governing specification 013, wire contract **3**. ARC is 2.5.1;
 their major versions now align, not their independent minor versions. This is
 a new candidate, not a modification of the frozen ARC 2.2 / Terse 1.0 release.
 The complete language remains in `languages/terse/001-terse-language-specification.txt`.
@@ -80,7 +80,7 @@ Example packet bodies (definitions of brief, suite and check names must be
 explicitly shared; none of these changes ARC work):
 
 ```json
-{"kind":"context","key":"brief","fields":{"target":"ARC-2.5.0","checks_complete":false}}
+{"kind":"context","key":"brief","fields":{"target":"ARC-2.5.1","checks_complete":false}}
 {"kind":"batch","items":[{"id":"done","text":"ASK YOU DONE WORK\n"},{"id":"checked","text":"ASK YOU SEE WORK\n"}]}
 {"kind":"results","subject":"suite","checks":[{"id":"parser","status":"pass","basis":"verified"}]}
 {"kind":"dependency","subject":"package","requires":["tests","literature"]}

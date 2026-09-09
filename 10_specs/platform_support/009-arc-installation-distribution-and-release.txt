@@ -1,8 +1,8 @@
-ARC v2.5.0 INSTALLATION, DISTRIBUTION, AND RELEASE CONTRACT
+ARC v2.5.1 INSTALLATION, DISTRIBUTION, AND RELEASE CONTRACT
 
 IR-001 ONE NATIVE PRODUCT
 
-ARC v2.5.0 is built from one root Swift package. Its shipping products are:
+ARC v2.5.1 is built from one root Swift package. Its shipping products are:
 
   ARC     the SwiftUI Mac application, linked directly with ARCCore;
   arc     the native command for AI participants.
@@ -104,8 +104,8 @@ canonical relative names with no empty, dot, hidden, or link segment. A
 `current/` data path maps exactly to the same suffix below
 `Resources/install/current/`; `current/bin/arc` maps only to
 `Resources/install/bin/arc`. Total bytes and entry count are bounded. Every
-source must be a regular file with the stated bytes and mode. ARC 2.5.0's
-bundled manifest declares 2.5.0 and must match the app bundle's version.
+source must be a regular file with the stated bytes and mode. ARC 2.5.1's
+bundled manifest declares 2.5.1 and must match the app bundle's version.
 Acceptance of 1.x identities preserves verified prior-installation ownership
 for upgrades; it does not select older code for the new app. Unsupported major
 versions and malformed identities are refused.
@@ -163,49 +163,53 @@ ARC is distributed under the exact checked-in Hummingbird License. LICENSE is
 the controlling legal text. LICENSE-SUMMARY.md is explanatory only. NOTICE.md
 identifies ARC and its copyright holder without changing the license.
 
-ARC v2.5.0 links only ARC-owned code and system macOS frameworks and libraries.
+ARC v2.5.1 links only ARC-owned code and system macOS frameworks and libraries.
 No third-party payload or separate third-party notice file belongs in the
 candidate. If that fact changes, publication pauses until the legal and source
 record is made complete.
 
 IR-009 PUBLIC RELEASE ASSETS
 
-The sealed public release contains exactly these assets for VERSION `2.5.0`:
+The maintainer-authorized production release contains these seven assets for
+VERSION `2.5.1`:
 
-  ARC-2.5.0.dmg
-  ARC-2.5.0-source.tar.gz
+  ARC-2.5.1.dmg
+  ARC-2.5.1-source.tar.gz
   ARC_AI_Relay_Chat_Literature.pdf
-  ARC-2.5.0-MANIFEST.json
-  ARC-2.5.0-DVT-REPORT.txt
-  RELEASE-METADATA.json
+  ARC-2.5.1-MANIFEST.json
+  PRODUCTION-ACCEPTANCE.md
+  PRODUCTION-METADATA.json
   SHA256SUMS
 
 Preparation creates only the immutable DMG, complete source archive,
 product-literature PDF, and candidate manifest. The candidate manifest lists
 those three payloads with byte size, SHA-256, media type, source tag, source
-commit, and role. External DVT creates the report. Sealing creates release
-metadata and SHA256SUMS only after that report passes.
+commit, and role. The production acceptance record identifies Joseph Austin's
+authorization, actual evidence and accepted exceptions. Production metadata
+binds the source and payload identities; SHA256SUMS covers every other asset.
 
 Release metadata records product/version, immutable tag and commit, minimum
 macOS, architectures, bundle identity, knowledge digest, Hummingbird LICENSE
 digest, code-signing identity, notarization identifiers, and the final
-external DVT identity and result. SHA256SUMS is bytewise-name-sorted and covers
-the other six public assets; it cannot contain its own digest.
+verification evidence and maintainer acceptance. Independent certification is
+claimed only when the optional strict DVT procedure actually passes. SHA256SUMS
+is bytewise-name-sorted and covers the other six public assets; it cannot
+contain its own digest.
 
 IR-010 TWO-PHASE RELEASE EVIDENCE
 
-Preparation first creates and freezes the signed candidate DMG, source archive,
-product-literature PDF, and candidate manifest. A person independent of
-implementation runs 010's DVT against that manifest on a clean supported Apple
-silicon Mac and completes the report. Sealing verifies every hash and required
-PASS row,
-the tester identity and date, the tag and commit, signatures, notarization,
-staples, and source cleanliness before writing final metadata and checksums.
+Preparation first freezes the signed DMG, exact source archive, literature and
+manifest. Verification checks payload hashes, tag and commit, signatures,
+notarization, staples, installed identities and source cleanliness. Record
+actual automated, human and AI-participant evidence; never invent PASS results.
+Joseph Austin is the sole release authorizer and may accept explicitly recorded
+limitations. No second reviewer or independent tester is required to approve.
 
-The manifest hash in the DVT report binds all three immutable payload hashes. The
-release process never marks its own ad-hoc development build as the public
-candidate and never changes a tested payload afterward. Any changed byte makes
-a new candidate and requires a new DVT report.
+The optional strict external-DVT path retains its exact-report validation and
+produces a DVT report plus RELEASE-METADATA.json instead of maintainer-acceptance
+records. An unperformed optional procedure is not a publication veto.
+A changed tested payload requires a new identity and relevant verification;
+published tags and downloads are never replaced.
 
 IR-011 PUBLICATION AND REPOSITORY QUALITY
 
@@ -215,8 +219,10 @@ build/test, license, and support. It has no hype, endorsements, vanity numbers,
 comparison claims, hidden binary dependency, generated marketing document, or
 unfinished-feature promise.
 
-The release is published only from a clean, protected revision after CI and
-external DVT pass. The release page names the version, compatibility, checksum
+The release is published from a clean, protected revision on Joseph Austin's
+authorization, with actual CI and verification results and accepted exceptions
+recorded. Protect against force pushes and deletion; do not require another
+person's approval. The release page names the version, compatibility, checksum
 verification, installation, material changes, known externally verified
 limitations, and links to source and evidence. Publication itself is a human
 maintainer action; build tooling does not push or publish a release. The

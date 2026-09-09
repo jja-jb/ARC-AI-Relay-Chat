@@ -1,5 +1,8 @@
 # ARC 2.5.0 production release decision
 
+Historical record for unchanged 2.5.0 downloads. Current production packaging
+is recorded in [ARC_2_5_1_PRODUCTION_RELEASE.md](ARC_2_5_1_PRODUCTION_RELEASE.md).
+
 Date: 2026-09-09. Decision: approved for general availability by the maintainer.
 ARC 2.5.0 (250), Terse 2.1 / wire 3. Apple silicon; macOS 15 or later.
 

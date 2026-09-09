@@ -10,11 +10,11 @@ final class ARCDevToolTests: XCTestCase {
             ("10_specs/platform_support/000-shared-constitution.txt", "Specifications 000 through 013"),
             ("README.md", "Specifications 000 through 013"),
             ("ARCHITECTURE.md", "full governing Terse v2.1 specification, 013"),
-            ("man/arc.1", "ARC 2.5.0"),
+            ("man/arc.1", "ARC 2.5.1"),
             ("man/arc.1", "IDs 000 through 013"),
             ("man/arc.1", "message.broadcast"),
             ("INSTALL.md", "# Install ARC 2.5"),
-            ("RELEASE_CHECKLIST.md", "# ARC 2.5 release checklist"),
+            ("RELEASE_CHECKLIST.md", "# ARC 2.5.1 production checklist"),
             ("brand/arc-product-brief.html", "Terse v2.1 is governing specification 013")
         ]
         for (path, expected) in checks {

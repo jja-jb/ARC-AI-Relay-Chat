@@ -259,7 +259,7 @@ enum ARCReleaseSupport {
         try checkTraceability(root)
         try checkBrandAssets(root)
         try checkPrivacyManifest(root.appending(path: "app/Sources/ARCApp/PrivacyInfo.xcprivacy"))
-        try checkInfoPlist(root.appending(path: "app/Info.plist"), version: "2.5.0")
+        try checkInfoPlist(root.appending(path: "app/Info.plist"), version: "2.5.1")
     }
 
     static func checkApp(_ app: URL, version: String, release: Bool) throws {
@@ -533,7 +533,7 @@ enum ARCReleaseSupport {
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         let manifest = try decoder.decode(ARCBrandManifest.self, from: data)
         let expected = Set([
-            "arc-app-icon.svg", "arc-mark.svg", "arc-product-brief.html",
+            "arc-app-icon.svg", "arc-mark.svg", "arc-product-brief.html", "arc-radio.png",
             "arc-relay-artwork.png",
             "arc-relay-artwork.prompt.txt", "arc-social-preview.png",
         ])

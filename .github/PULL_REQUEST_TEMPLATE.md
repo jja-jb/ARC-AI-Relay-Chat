@@ -4,7 +4,7 @@ Describe the user problem and the smallest complete change that solves it.
 
 ## Product agreement
 
-- [ ] The one-window app, public CLI, durable schema, specifications, help, and
+- [ ] The main app, optional activity window, CLI, schema, specifications, help, and
       public documentation still agree.
 - [ ] The change adds no parallel workflow for an existing ARC action.
 - [ ] Room text stays inert, and no timer or record is described as proof that
@@ -13,9 +13,10 @@ Describe the user problem and the smallest complete change that solves it.
 
 ## Verification
 
-List the exact commands and results. Run `make check` before requesting
-review. Installer, package, or release changes also require the matching DVT
-steps in `docs/DVT_GUIDE.md`.
+List the exact commands and results, including failures and unrun checks.
+Use `make check` and relevant package verification from `docs/RELEASING.md`.
+Joseph Austin alone authorizes releases; independent DVT is optional evidence
+when he requests it, not a second approval requirement.
 
 ## Hygiene
 

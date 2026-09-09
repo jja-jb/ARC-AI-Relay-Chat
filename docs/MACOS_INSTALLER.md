@@ -1,4 +1,4 @@
-# ARC 2.5.0 Mac installation design
+# ARC 2.5.1 Mac installation design
 
 ## Release form
 
@@ -78,7 +78,7 @@ the old root launcher only after proving it belongs to that legacy receipt.
 /usr/bin/codesign --verify --deep --strict --verbose=2 /Applications/ARC.app
 /usr/sbin/spctl --assess --type execute --verbose=2 /Applications/ARC.app
 /usr/bin/xcrun stapler validate /Applications/ARC.app
-/usr/bin/xcrun stapler validate ARC-2.5.0.dmg
+/usr/bin/xcrun stapler validate ARC-2.5.1.dmg
 /usr/bin/lipo -archs /Applications/ARC.app/Contents/MacOS/ARC
 ```
 

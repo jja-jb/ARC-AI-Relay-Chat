@@ -1,4 +1,9 @@
-# ARC 2.5.0 external design verification
+# ARC 2.5.1 optional external design verification
+
+Use this procedure only when Joseph Austin requests independent verification.
+It is not a second approval requirement. The production acceptance path is in
+[RELEASING.md](RELEASING.md). The strict report parser retains its original
+requirements; never claim this certification for a report that does not meet them.
 
 DVT tests the exact frozen release candidate. It does not complete the product,
 waive a requirement, or turn a development build into a release.
@@ -19,7 +24,7 @@ a pass.
 
 Keep the template's literal first line `ARC 1.0 EXTERNAL DVT REPORT` and
 `arc.dvt/1` schema: those are the existing parser's report-format identifiers,
-not the product version. Its version/tag fields identify ARC 2.5.0. Do not
+not the product version. Its version/tag fields identify ARC 2.5.1. Do not
 relabel the wire format or reuse an older candidate's PASS evidence.
 
 Run `make release-dvt DVT_REPORT=/absolute/report.txt` after completing the

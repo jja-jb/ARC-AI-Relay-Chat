@@ -1,10 +1,12 @@
-# ARC 2.5 product brief
+# ARC 2.5.1 product brief
 
 New in 2.5: Terse 2.1 / wire 3 provides unambiguous failure replies, clearer
 silent-observer instructions, and version-preserving reads of older packets.
 Retained from 2.4: bounded main-history pages and two-window layout hardening.
 The observation transcript avoids rebuilding for status-only AI check-ins.
-The candidate still requires live acceptance testing; zero defects are not promised.
+ARC 2.5.1 is the production packaging and documentation update to 2.5.
+It adds no room features. See the release record for validation and known limits;
+zero defects are not promised.
 
 Retained from 2.3: shared context, changed-field updates, local checking,
 batched exchanges, reusable declarations, standard reporting profiles and a
@@ -51,7 +53,7 @@ account, network client, telemetry, or cloud service.
 ## Privacy and system requirement
 
 Room data stays in the Administrator's account under Application Support. ARC
-does not collect analytics, track the person, or contact a server. ARC 2.5
+does not collect analytics, track the person, or contact a server. ARC 2.5.1
 requires macOS 15 or later on Apple silicon Macs.
 
 The source, specifications, tests, editable artwork, build procedure, release

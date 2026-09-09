@@ -1,8 +1,8 @@
-ARC v2.5.0 TRACEABILITY AND DESIGN-VERIFICATION CONTRACT
+ARC v2.5.1 TRACEABILITY AND DESIGN-VERIFICATION CONTRACT
 
 TV-001 COMPLETE MEANS PRESENT AND TESTED
 
-A v2.5.0 candidate contains every behavior required by specifications 000 through
+A v2.5.1 candidate contains every behavior required by specifications 000 through
 012 and the separately bundled Terse contract under QD-001 and IR-003.
 There is no postponed required behavior, hidden unlock, simulated production
 path, or conditional feature. Verification shows that the complete candidate
@@ -33,7 +33,9 @@ clean version-control status as proof that ignored ambient files are absent.
 
 TV-003 AUTOMATED NATIVE VERIFICATION
 
-`make check` runs from a clean source tree without a network. It must pass:
+`make check` runs from a clean source tree without a network. It checks the
+following requirements; record actual results and explicitly accepted exceptions
+under IR-010 rather than relabeling a failed or unrun check as passing:
 
   Swift strict-concurrency compilation of ARCApp, ARCCommand, ARCCore, and
     ARCDevTool, plus the ARCCore, ARCApp, and ARCDevTool XCTest targets; the ARCApp target
@@ -136,6 +138,12 @@ deliberately malformed test traffic identified as such.
 
 TV-007 HUMAN-EXPERIENCE DVT
 
+TV-007 through TV-009 define comprehensive verification coverage and the optional
+strict independent-DVT procedure. Joseph Austin chooses the evidence needed for
+a release and is its sole authorizer. Existing human and participant evidence
+may be used with its actual scope stated; no additional reviewer or fresh test
+round is implied merely by this checklist. Unperformed cases are never PASS.
+
 Terse 2.1 additionally requires tests for packet/command validation, digest and
 binding-scoped declarations, profile withdrawal, private references, stale and
 foreign deltas, missing-baseline recovery, the 64-delta bound, batched partial
@@ -221,6 +229,11 @@ SKIP, provisional, self-authored, mismatched, or partially hashed reports do
 not pass.
 
 TV-010 SEAL AND PUBLICATION CHECK
+
+Maintainer-acceptance publication follows IR-009 through IR-011 and records
+actual results, identities and accepted exceptions. No independent report is
+required for that path. The following strict sealing rules apply only when
+Joseph Austin chooses the optional external-DVT certification.
 
 Sealing re-reads the immutable prepared files and strict external report. It
 checks the annotated tag, clean source, app and DMG signatures,

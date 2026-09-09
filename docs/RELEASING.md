@@ -1,145 +1,95 @@
-# Releasing ARC 2.5
+# Releasing ARC 2.5.1
 
-## ARC 2.5.0 maintainer-acceptance exception
+## Authority and evidence
 
-The maintainer approved general availability after reporting completion of
-human-facing testing and reviewing the AI-room results and disclosed source-test
-limitation. For this release only, the decision and limits are recorded in
-[ARC_2_5_PRODUCTION_RELEASE.md](ARC_2_5_PRODUCTION_RELEASE.md).
-This is not a claim that the independent fifteen-row DVT procedure below passed.
-No DVT PASS report or canonical release-seal metadata is fabricated.
+Joseph Austin alone authorizes publication. Tests and reviews inform his
+decision; no independent reviewer or second person's approval is required.
+Record failures, unrun checks and accepted limitations accurately. Never turn
+an accepted exception into a fabricated PASS.
 
-The four frozen candidate assets and the existing compatibility patch remain
-unchanged. Additional PRODUCTION-ACCEPTANCE.md and PRODUCTION-METADATA.json
-record the actual acceptance basis, source provenance and asset hashes;
-SHA256SUMS covers every other attached asset. These are a separately identified
-maintainer-acceptance record, not the arc.dvt/1 or release-seal format.
-The published annotated tag is not moved. Future corrections use a new version.
-The normal independent-DVT process below remains available for future releases.
+ARC 2.5.1 aligns production documentation, installed specifications, literature
+and source with the release identity. It includes the existing source-test
+compatibility correction. Room behavior and the aggregate timing assertion
+are unchanged. See [the production record](ARC_2_5_1_PRODUCTION_RELEASE.md).
+The [2.5.0 record](ARC_2_5_PRODUCTION_RELEASE.md) is historical.
 
-This procedure freezes and records an already complete product. It uploads
-the app and DMG to Apple for notarization, but does not publish a release,
-push repository changes, or create a tag.
+## Build and freeze
 
-## Requirements
+Use macOS 15 or later, Apple silicon, and Xcode Command Line Tools.
+Use the clean annotated v2.5.1 tag. Keep generated assets outside the checkout.
+The controlling LICENSE digest remains
+988a906412af48c37e35fc3272402818677d31572fb65ea931aa98f21e003c24.
 
-Use macOS 15 or later with Xcode Command Line Tools. Start from a clean checkout
-whose `HEAD` is the reviewed annotated `v2.5.0` tag. The source build has no remote
-package dependency and performs no network access. Signing and notarization are
-the only steps that contact Apple.
-
-Verify the Hummingbird License:
+Run build targets sequentially:
 
 ```sh
-shasum -a 256 LICENSE
-```
-
-The result must be:
-
-```text
-988a906412af48c37e35fc3272402818677d31572fb65ea931aa98f21e003c24
-```
-
-Then run:
-
-```sh
-make clean
 make check
 make app-release-check
-```
-
-Both shipping executables must be arm64-only. The app check
-also validates the bundle identity, privacy manifest, exact files-only install
-manifest, knowledge digest, specifications, and legal payload.
-
-Run build targets sequentially. Concurrent make processes must use separate
-BUILD and OUTPUT directories; Swift's build lock does not protect shared app
-staging folders. Defaults are `/private/tmp/arc-build-2.5.0` and
-`/private/tmp/arc-output-2.5.0`, outside cloud-synchronized checkouts.
-
-## Freeze the candidate
-
-Store the Developer ID identity and notarytool profile in the Keychain or your
-release environment, never in this repository. Run:
-
-```sh
 make release-prepare \
-  SIGNING_IDENTITY="Developer ID Application: REVIEWED IDENTITY" \
-  NOTARY_PROFILE="reviewed-keychain-profile" \
+  SIGNING_IDENTITY="Developer ID Application: AUTHORIZED IDENTITY" \
+  NOTARY_PROFILE="authorized-keychain-profile" \
   LITERATURE_PDF=/absolute/path/ARC_AI_Relay_Chat_Literature.pdf
 ```
 
-The target independently checks the tag and clean tree, runs all local checks,
-builds Apple-silicon executables, signs the native command and app, notarizes and
-staples the app, creates and signs the DMG, notarizes and staples the DMG, makes
-an archive from the exact tag, and writes:
+Generate the literature from brand/arc-product-brief.html and visually inspect
+both pages. The brand manifest verifies the editable input and public graphics.
+No separate source-compatibility patch belongs in this release.
 
-```text
-/private/tmp/arc-output-2.5.0/candidate/ARC-2.5.0/ARC-2.5.0.dmg
-/private/tmp/arc-output-2.5.0/candidate/ARC-2.5.0/ARC-2.5.0-source.tar.gz
-/private/tmp/arc-output-2.5.0/candidate/ARC-2.5.0/ARC_AI_Relay_Chat_Literature.pdf
-/private/tmp/arc-output-2.5.0/candidate/ARC-2.5.0/ARC-2.5.0-MANIFEST.json
-```
+Preparation verifies the clean annotated tag, builds and checks native products,
+signs and notarizes the command-containing app, staples it, creates and signs the
+DMG, notarizes and staples the DMG, archives the exact tag, and writes the four
+prepared assets under /private/tmp/arc-output-2.5.1/candidate/ARC-2.5.1.
+Signing credentials stay in the Keychain or release environment, never source.
 
-The candidate manifest records the immutable DMG, source, and literature names,
-sizes, and SHA-256 values together with the tag, commit, architectures, minimum
-macOS, knowledge identity, and Hummingbird License identity. Do not change any
-candidate byte after this point.
+## Production verification and records
 
-## External DVT
+Mount the prepared DMG read-only. Verify the app and command signatures,
+arm64-only architectures, bundle version and identifier, Gatekeeper acceptance,
+notarization and staples, privacy and installed-file manifests, knowledge and
+Terse digests, and exact bundled specification and legal bytes. Do not install
+over a user's app just to perform these checks. Detach the image after checking.
 
-Give the exact candidate to an independent tester. Follow
-[DVT_GUIDE.md](DVT_GUIDE.md) on a clean Apple silicon Mac. Copy
-[DVT_REPORT_TEMPLATE.md](DVT_REPORT_TEMPLATE.md) to a plain-text path outside
-the checkout, complete every field and evidence row, and run:
+Verify the source archive is the exact annotated-tag tree and includes the
+current source, tests, docs, specifications and graphics. Rebuild from the
+archive using the documented non-Git checks. The archive's source-archive-test
+correctly refuses without Git metadata; verify that check from the tagged Git
+checkout. Record actual results, including any accepted timing-test exception.
 
-```sh
-make release-dvt \
-  DVT_REPORT=/absolute/path/ARC-2.5.0-DVT-REPORT.txt
-```
+Publish seven production assets:
 
-A changed candidate, mismatched commit, unfinished evidence, non-PASS row,
-unidentified-machine report, or malformed report stops the release.
+- ARC-2.5.1.dmg
+- ARC-2.5.1-source.tar.gz
+- ARC_AI_Relay_Chat_Literature.pdf
+- ARC-2.5.1-MANIFEST.json
+- PRODUCTION-ACCEPTANCE.md
+- PRODUCTION-METADATA.json
+- SHA256SUMS
 
-## Seal the release records
+Copy the production decision into PRODUCTION-ACCEPTANCE.md. Generate metadata
+with schema arc.maintainer-production-acceptance/1, the exact version, tag,
+commit, acceptance basis, actual verification results, signer, Apple submission
+identifiers, knowledge and Terse digests, and each payload's size and SHA-256.
+Identify this as maintainer acceptance, not independent DVT certification.
+SHA256SUMS covers every other asset in bytewise filename order.
 
-Every mounted-candidate validation step must succeed before sealing can run.
-The check stops at the first failure; unmount cleanup must not turn a failed
-app, signature, architecture, archive, or source check into a successful gate.
+## Optional independent verification
 
-After DVT passes, run:
+The strict release-dvt, release-seal and release-check tools remain available
+when Joseph Austin chooses the independent report format in
+[DVT_GUIDE.md](DVT_GUIDE.md). Their strict report rules are not weakened.
+They produce their own DVT report and RELEASE-METADATA.json instead of the
+maintainer-acceptance records. An unperformed strict procedure is not a
+publication veto and must not be described as having passed.
 
-```sh
-make release-seal \
-  SIGNING_IDENTITY="Developer ID Application: REVIEWED IDENTITY" \
-  NOTARY_PROFILE="reviewed-keychain-profile" \
-  LITERATURE_PDF=/absolute/path/ARC_AI_Relay_Chat_Literature.pdf \
-  DVT_REPORT=/absolute/path/ARC-2.5.0-DVT-REPORT.txt
-```
+## Publish and verify
 
-This repeats the clean-tag and DVT binding checks and writes exactly seven public
-assets under `/private/tmp/arc-output-2.5.0/release/ARC-2.5.0/`
-(or the explicitly overridden OUTPUT directory):
+Push the exact source and annotated tag. Keep main protected against force
+pushes and deletion. No required second-reviewer rule belongs in this project.
+Use CI as evidence; record an explicitly accepted exception rather than hiding
+a failed result. Build tooling itself does not publish.
 
-```text
-ARC-2.5.0.dmg
-ARC-2.5.0-source.tar.gz
-ARC_AI_Relay_Chat_Literature.pdf
-ARC-2.5.0-MANIFEST.json
-ARC-2.5.0-DVT-REPORT.txt
-RELEASE-METADATA.json
-SHA256SUMS
-```
-
-Release metadata records the signer, Apple notarization identifiers, knowledge
-and license identities, tester and test time, tag and commit, bundle identity,
-architectures, and final PASS. `SHA256SUMS` covers the other six files in
-bytewise filename order.
-
-## Human publication
-
-Before publishing, a maintainer who did not perform the seal compares all seven
-files with the records, verifies the logged-out repository view and security
-contact, and reviews the release page for factual, modest language. Publish the
-tested bytes once. Compare downloaded assets with `SHA256SUMS`. Never replace a
-published tag or asset; use a new patch version for a correction.
+On Joseph Austin's authorization, publish the identified assets as a production
+GitHub Release and mark it Latest. Compare every downloaded asset with the local
+copy and checksum list. Verify the source tag, main, public download links,
+release status and source inventory. Never move a published tag or replace a
+published download; corrections use a new patch version.

@@ -17,7 +17,7 @@ final class ARCCommunicationTests: XCTestCase {
             ARCCommunication.specificationRelativePath), encoding: .utf8)
         try installSpecification(root: root, text: full)
         XCTAssertEqual(try ARCCommunication.specificationText(installationURL: installation), full)
-        XCTAssertTrue(full.contains("Status: Terse v2.1, release candidate"))
+        XCTAssertTrue(full.contains("Status: Terse v2.1, production"))
         XCTAssertTrue(full.contains("TELL WORD SAME 3"))
         try Data((full + "changed\n").utf8).write(to: ARCCommunication.specificationURL(rootURL: root))
         XCTAssertThrowsError(try ARCCommunication.specificationText(installationURL: installation)) { error in

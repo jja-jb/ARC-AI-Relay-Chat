@@ -17,7 +17,13 @@
       "path": "arc-product-brief.html",
       "media_type": "text/html; charset=utf-8",
       "dimensions": "2 x US Letter",
-      "sha256": "f3b7b9b6c5eb999c239be86f2112ffb185368e02f7012b5d9f57011f6ced9cba"
+      "sha256": "6c40b2fddec267a0940f4cea7b6be78cabd7b56ff9629283ac8fc4aa478f7dfb"
+    },
+    {
+      "path": "arc-radio.png",
+      "media_type": "image/png",
+      "dimensions": "1760x2240",
+      "sha256": "aeab1d87600cb4847fadf887c257df78c11ad8846584e61d30e24a48cfdc764f"
     },
     {
       "path": "arc-relay-artwork.png",

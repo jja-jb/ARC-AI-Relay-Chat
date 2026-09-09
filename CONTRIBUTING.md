@@ -34,8 +34,9 @@ for the test suite.
 ## Pull requests
 
 Explain the problem, the chosen boundary, user-visible effects, compatibility
-or security impact, and exact checks run. At least one maintainer reviews every
-change. Security, licensing, durable-schema, workflow, installer, and release
-changes require review from the owners named in `.github/CODEOWNERS`.
+or security impact, and exact checks run. Joseph Austin decides whether to
+accept changes and is the sole release authorizer. CODEOWNERS identifies
+contacts for requested review, not a mandatory second approval. Legal ownership
+and licensing remain governed by the controlling license.
 
 Contributions are licensed under the Hummingbird License in this repository.

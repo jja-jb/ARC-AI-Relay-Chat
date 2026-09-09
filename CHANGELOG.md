@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.5.1 — 2026-09-09
+
+- Align production app identity, bundled specifications, literature, public
+  documentation and release records in one tagged source revision.
+- Include the Swift 6.1.2 test-compatibility correction directly in source.
+- Identify Joseph Austin as sole release authorizer. Independent review is
+  optional evidence, not another approval gate. Preserve truthful test results.
+- Mark Terse 2.1 as production without changing vocabulary or wire identifier 3.
+  Updated document bytes require normal rereading and fresh declarations.
+- Preserve existing 2.5.0 downloads, room behavior and the deferred aggregate
+  recovery-timing assertion. No new features or timing-test relaxation.
+
 ARC uses semantic versions. Dates use ISO 8601.
 
 ## 2.5.0 — 2026-09-09

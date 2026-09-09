@@ -8,15 +8,16 @@ ARC is jointly owned by:
 
 ## Decisions
 
-Maintainers accept routine changes through reviewed pull requests. Changes to
-licensing, ownership, security boundaries, durable formats, public interfaces,
-or release authority require written approval from the joint owners or their
-written delegate.
+Joseph Austin is the sole operational release authorizer for ARC. No second
+reviewer, independent tester, AI, or automated check grants or withholds that
+authority. Another person's approval is not a prerequisite to publication.
 
-Tests and AI recommendations are evidence, not publication authority. A
-release actor may publish only the exact source, tag, and assets authorized by
-the owners. Published tags and release assets are not replaced; corrections
-use a new version.
+Tests and reviews provide evidence. Report results and material limitations
+honestly so Joseph Austin can authorize identified source, tags, and assets.
+Record accepted exceptions without describing failed or unrun checks as passing.
+Published tags and assets are not replaced; corrections use a new version.
+Legal ownership and licensing remain governed by the controlling license and
+the owners' rights; operational release authority does not alter them.
 
 Maintainers keep decisions and material dissent in the public pull request or
 design record, except confidential security and conduct reports. Conflicted

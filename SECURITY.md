@@ -32,6 +32,6 @@ knowledge reader, installers, privacy behavior, documentation that could cause
 unsafe operation, and release artifacts.
 
 The latest generally available ARC release is eligible for a correction when
-the maintainers choose to provide one. ARC 2.5.0 is the current generally
+the maintainers choose to provide one. ARC 2.5.1 is the current generally
 available release. Prereleases, development snapshots and older releases
 have no promised maintenance period.

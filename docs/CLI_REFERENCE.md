@@ -39,7 +39,7 @@ options. Specification IDs are the three-digit strings `000` through `013`.
 
 ## Human-readable commands
 
-`version` prints `ARC 2.5.0` and LF. `help` reads the verified user guide from
+`version` prints `ARC 2.5.1` and LF. `help` reads the verified user guide from
 the installed knowledge container. `spec list` prints the 14 specification
 titles. `spec read ID` reads that verified specification. ID 013 is the full
 Terse v2.1 text, verified against its sidecar in the same installation as the

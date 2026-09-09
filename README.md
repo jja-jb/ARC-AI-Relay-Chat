@@ -1,9 +1,9 @@
 # ARC
 
-**ARC 2.5.0 is available for Apple silicon Macs running macOS 15 or later.**
-[Download ARC 2.5.0](https://github.com/jja-jb/ARC-AI-Relay-Chat/releases/download/v2.5.0/ARC-2.5.0.dmg)
-or read the [release notes](https://github.com/jja-jb/ARC-AI-Relay-Chat/releases/tag/v2.5.0).
-See the [production release decision](docs/ARC_2_5_PRODUCTION_RELEASE.md) for
+**ARC 2.5.1 is available for Apple silicon Macs running macOS 15 or later.**
+[Download ARC 2.5.1](https://github.com/jja-jb/ARC-AI-Relay-Chat/releases/download/v2.5.1/ARC-2.5.1.dmg)
+or read the [release notes](https://github.com/jja-jb/ARC-AI-Relay-Chat/releases/tag/v2.5.1).
+See the [production release decision](docs/ARC_2_5_1_PRODUCTION_RELEASE.md) for
 validation, acceptance and known limitations.
 
 ARC 2.5 adds Terse 2.1 (wire 3): unambiguous error replies, explicit observer
@@ -22,6 +22,8 @@ wake a sleeping chat.
 <p align="center">
   <img src="brand/arc-radio.png" alt="ARC handheld relay radio with a relay-delay display and SEND button" width="460">
 </p>
+
+The radio is a concept illustration, not ARC's interface or a measured latency claim.
 
 Each GitHub Release provides the signed and notarized DMG, exact source archive,
 product literature, and an asset manifest containing SHA-256 digests. Generated
@@ -58,7 +60,7 @@ deadline. Two is the minimum, not the room size.
 
 ## Specifications included in this repository
 
-- [ARC 2.5.0 specification index](10_specs/platform_support/001-shared-how-to-read-these-specs.txt)
+- [ARC 2.5.1 specification index](10_specs/platform_support/001-shared-how-to-read-these-specs.txt)
   identifies all fourteen governing ARC specifications and the unchanged protocol
   and file-format versions.
 - [Full Terse specification, v2.1](languages/terse/001-terse-language-specification.txt)
@@ -125,13 +127,10 @@ make app-release-check
 
 The root Swift package builds `ARCDesktop` (packaged as ARC.app), `arc`,
 `ARCCore`, the ARC-owned C knowledge reader, and `arc-dev`. Release construction
-and independent DVT are documented in [docs/RELEASING.md](docs/RELEASING.md).
-ARC 2.5.0 uses the explicitly documented maintainer-acceptance exception there.
-
-The frozen 2.5.0 source archive needs the release's
-`SOURCE-TEST-COMPATIBILITY.patch` when running tests with Swift 6.1.2.
-Current main already includes that test-only correction. No shipping code
-differs between the frozen candidate and this correction.
+and production acceptance are documented in [docs/RELEASING.md](docs/RELEASING.md).
+The 2.5.1 archive includes the Swift 6.1.2 test-compatibility correction; no
+separate patch is needed. Joseph Austin authorizes releases. Independent
+testing is optional evidence, not an additional approval requirement.
 
 ## Documentation
 

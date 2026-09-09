@@ -1,4 +1,4 @@
-# ARC 2.5.0 traceability
+# ARC 2.5.1 traceability
 
 Terse 2.1 specification 013 sections 20–26 map to ARCTerseTests and the
 Terse/ledger/score helpers in ARCCore. TERSE_MESSAGE uses the existing durable
@@ -54,13 +54,14 @@ stacks, not a claim that every possible interface stall has been excluded.
 `testDirectSelfMessageIsDeliberateAndRetryDoesNotDuplicate` cover MW-003's
 diagnostics, Unicode boundary, refusal/retry, and self-note privacy. Terse's
 full current bytes and per-recipient broadcast rule are pinned in packaging
-tests. Live AI conformance and independent acceptance remain separate gates.
+tests. Live AI conformance and human acceptance are distinct evidence sources,
+not additional authorization gates. Joseph Austin alone authorizes releases.
 Development-root isolation is covered by
 `testDevelopmentBuildDefaultsToAnIsolatedRoot`; release builds retain the
 standard root and ignore development overrides. The bounded manual interface
 smoke check is recorded in ARC_2_1_TEST_REVIEW.md.
 
-The source specification set is synchronized to ARC 2.5.0 behavior. Room,
+The source specification set is synchronized to ARC 2.5.1 behavior. Room,
 protocol, qualification, knowledge Profile 1, and report schema identifiers
 retain their own versions; they do not become /2 because the product is 2.5.
 The complete Terse v2.1 source remains in languages/terse/ as governing ARC

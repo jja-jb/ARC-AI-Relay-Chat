@@ -1,4 +1,4 @@
-ARC v2.5.0 MACOS APPLICATION CONTRACT
+ARC v2.5.1 MACOS APPLICATION CONTRACT
 
 Terse Cost Comparison is a sidebar control opening a local, read-only report
 sheet. It imports only user-selected regular JSON files of at most 131072

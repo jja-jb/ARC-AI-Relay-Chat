@@ -1,10 +1,11 @@
 # ARC 2.5.0 final-test handoff — 9 September 2026
 
 Historical handoff: the prerelease status and open items below describe the
-state before final testing. The current decision is recorded in
+state before final testing. The 2.5.0 decision is recorded in
 [ARC_2_5_PRODUCTION_RELEASE.md](ARC_2_5_PRODUCTION_RELEASE.md), including the
 maintainer-acceptance exception. Do not treat the historical status below as
-the current release status.
+the current release status. Current production packaging is documented in
+[ARC_2_5_1_PRODUCTION_RELEASE.md](ARC_2_5_1_PRODUCTION_RELEASE.md).
 
 Status: prerelease, not approved for general availability. The maintainer has
 requested distribution through the existing GitHub repository for a fresh
