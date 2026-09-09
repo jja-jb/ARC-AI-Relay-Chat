@@ -1,4 +1,4 @@
-ARC v2.1.0 EVENT, MESSAGE, AND WORK CONTRACT
+ARC v2.2.0 EVENT, MESSAGE, AND WORK CONTRACT
 
 An unexpired Working declaration under QD-006 also satisfies the On Duty
 availability requirements in this contract. Its owner is busy, not absent;
@@ -96,7 +96,7 @@ The four and only four work states are:
   OPEN      The Producer assigned the scope; work has not started.
   ACTIVE    The owner is working on the scope.
   BLOCKED   The owner recorded a concrete blocker.
-  COMPLETE  The owner recorded the required completion evidence; terminal.
+  COMPLETE  The owner recorded completion evidence; corrections are auditable.
 
 The owner may change OPEN to ACTIVE, BLOCKED, or COMPLETE; ACTIVE to BLOCKED or
 COMPLETE; and BLOCKED to ACTIVE or COMPLETE. Every change cites the current
@@ -105,7 +105,7 @@ event. Silence never changes a state and never means progress or completion.
 
 MW-005 SIMPLE REASSIGNMENT
 
-The current On Duty Producer may reassign any nonterminal work item to any On
+The current On Duty Producer may reassign any retained work item to any On
 Duty participant. The request cites the current Producer generation and work
 revision. Reassignment records a reason, preserves the event history, sets the
 new owner, resets the current state to OPEN, and appends one event. There is no
@@ -116,8 +116,16 @@ If a nonterminal item's owner is not On Duty, the persisted work state does not
 change. The Mac view and Producer poll derive and show "Waiting for Producer to
 reassign." This includes an owner who is waiting, qualifying, failed, replaced,
 Off Duty or retired. A late valid poll by a QUALIFIED owner restores
-On Duty; the Producer may still reassign the item at any time. COMPLETE never
-changes or moves.
+On Duty; the Producer may still reassign the item at any time. Reassigning COMPLETE
+reopens it and is refused if that would exceed 50 non-COMPLETE items. Prior evidence
+and completion events remain in history. A pruned work record cannot be reopened.
+
+The current available owner may correct a retained COMPLETE item with work.correct,
+its current revision, a nonblank reason and full replacement evidence of the same
+mode. It remains COMPLETE; revision advances and WORK_CORRECTED records the prior
+revision, reason and new evidence. Original events are never rewritten. Ordinary
+work.update cannot mutate COMPLETE. Incorrect conclusions needing new work should
+be reopened by the Producer, not disguised as an evidence-only correction.
 
 MW-006 ONE POLL
 
@@ -129,6 +137,8 @@ page containing:
   supplied;
   the participant's current nonterminal work; and
   for the Producer, room work and candidates needing Producer action.
+Both owners and the live Producer receive up to 16 recently completed relevant
+work records as well; older retained revisions remain discoverable in visible events.
 
 The event page follows room event order and returns one numeric `next_after`
 value. The same poll returns every current relevant work item, even when no new
@@ -158,6 +168,9 @@ these canonical JSON objects; no unknown key is allowed:
 
 `inspection` names the visual inspection tool or method. `references` has zero
 through 16 entries; an empty list declares that `result` is self-contained.
+New completions and corrections require inspected_at at or after work.created_at
+and no later than the request's logical time. Legacy stored evidence stays readable.
+This check establishes timestamp plausibility, not that inspection took place.
 `inspected_at` uses the exact Timestamp form in REC-011:
 YYYY-MM-DDTHH:MM:SS.ffffffZ, with exactly six fractional digits and a valid
 UTC calendar date, for example 2026-09-09T00:20:44.909582Z. Evidence refusals

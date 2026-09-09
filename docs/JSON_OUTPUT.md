@@ -42,6 +42,13 @@ Exit status is 0, 2, 3, or 4 as described in
 
 ## Request rules
 
+ARC 2.2 adds work.correct with exactly type, work, revision, reason, evidence;
+see CLI_REFERENCE.md for authority, timestamp and audit rules. Participant views
+include automatic_recovery_attempts (0–2); older views omit it and decode as 0.
+After a qualification timeout the next bound poll starts a new challenge at most
+twice. Exhausted FAILED requires operator reconnect; an ordinary duty timeout
+still recovers with one poll. Retirement/unavailable ARC still stops polling.
+
 Qualified participant duty is `ON`, `WORKING`, or `OFF`; other phases use
 `NOT_APPLICABLE`. Working uses schedule kind `WORKING`, status `OK` before
 the deadline and `EXPIRED` at or after it. Both deadline and next request

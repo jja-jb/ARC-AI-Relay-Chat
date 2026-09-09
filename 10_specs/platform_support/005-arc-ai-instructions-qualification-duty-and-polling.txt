@@ -1,4 +1,4 @@
-ARC v2.1.0 AI INSTRUCTIONS, QUALIFICATION, DUTY, AND POLLING CONTRACT
+ARC v2.2.0 AI INSTRUCTIONS, QUALIFICATION, DUTY, AND POLLING CONTRACT
 
 QD-001 ONE GENERIC AI GUIDE
 
@@ -59,7 +59,7 @@ entire active lifetime, not only while work is assigned, and requires an
 immediate stop and removal of recurring automations after RETIRED or when
 ARC is unavailable. No provider-specific inference is needed.
 
-The launcher is the single signed native ARC 2.1 executable installed by ARC,
+The launcher is the single signed native ARC 2.2 executable installed by ARC,
 using arc.protocol/1, and it
 reads ARC's validated knowledge container, the separately verified local Terse
 file, and the app-wide operator-language preference. A room records its format and protocol;
@@ -72,7 +72,7 @@ The Terse communication block names the absolute installed file at
 current/languages/terse/001-terse-language-specification.txt beneath the exact ARC
 root. It instructs the AI to begin with section 19, then read every section and
 appendix before participation. A summary or vocabulary list is not a substitute.
-ARC 2.1 bundles governing Terse v1.0 specification 013 from the tracked
+ARC 2.2 bundles governing Terse v1.0 specification 013 from the tracked
 repository file. Its wire vocabulary identifier is the integer 1.
 Matching word spellings alone do not establish matching meanings across
 contract versions; the full language file defines the exchange and repair rules.
@@ -215,10 +215,19 @@ it shows that the AI may check in now. Only an actual valid poll is a check-in.
 
 If the fixed steps are incomplete at the deadline, ARC records one failure
 event and changes the participant to FAILED. The Mac immediately shows
-ARC access check failed, Try Again, Replace Instructions, and Retire AI. Try Again
-keeps the same binding and creates a fresh challenge. Its t0 begins only when
-that AI next polls, then it gives the same three opportunities. It is not a
-hidden fourth opportunity.
+Waiting to reconnect with plain-language guidance. On that same AI's next valid
+bound poll ARC starts a fresh challenge, increments automatic_recovery_attempts,
+and appends QUALIFICATION_RECOVERED. At most two automatic recoveries are allowed
+per invitation or explicit Administrator reset. Each gets a new t0, answer and
+40-second completing poll; a prior answer cannot qualify it. Other participants
+and administrator refresh/tick never start or consume a recovery window.
+After exhaustion the row says Connection needs your help and prominently offers
+Reconnect AI & Copy Instructions. This keeps the binding, resets the automatic
+retry budget, and creates a fresh challenge; t0 waits for that AI's next poll.
+Copying into the existing AI chat and fixing host scheduling are explained inline.
+FAILED with exhausted recovery requires the AI to stop recurring polls and notify
+the operator, not run an endless retry loop. Retirement and integrity pauses remain
+unconditional stops. This is recovery, not a relaxation of qualification.
 
 QD-006 ONE PORTABLE DUTY POLL
 
@@ -283,7 +292,7 @@ observation. The Administrator's activity viewer shows the complete history.
 
 QD-008 CLEAR RECOVERY AND RETIREMENT
 
-FAILED has Try Again. Lost or exposed instructions use the single confirmed
+FAILED has bounded automatic recovery and Reconnect AI & Copy Instructions. Lost or exposed instructions use the single confirmed
 Replace Instructions action. Ordinary Off Duty uses a later poll, not a
 reconnect workflow. RETIRED is terminal.
 

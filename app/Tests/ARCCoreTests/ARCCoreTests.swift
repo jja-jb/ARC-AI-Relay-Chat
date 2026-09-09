@@ -7,6 +7,172 @@ final class ARCCoreTests: XCTestCase {
     private let digest = String(repeating: "a", count: 64)
     private var roots: [URL] = []
 
+    func testReopeningCompleteWorkRespectsCurrentCapacityAndPreservesToken() throws {
+        let context = try qualifiedPair()
+        var operation = context.first.operation
+        let assigned = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: operation,
+            request: .workAssign(owner: context.first.id, scope: "Completed", evidenceMode: .text, producerGeneration: 1))
+        let item = try XCTUnwrap(assigned.work)
+        let complete = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: assigned.nextOperation,
+            request: .workUpdate(work: item.id, revision: 1, state: .complete,
+                evidence: .object(["references": .array([]), "result": .string("Done")])) )
+        operation = complete.nextOperation
+        for i in 0..<50 {
+            operation = try context.store.act(room: context.room, participant: context.first.id,
+                binding: context.first.binding, operation: operation,
+                request: .workAssign(owner: context.first.id, scope: "Item \(i)", evidenceMode: .text,
+                    producerGeneration: 1)).nextOperation
+        }
+        let file = try context.store.roomFileURL(room: context.room)
+        let before = try Data(contentsOf: file)
+        XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: operation,
+            request: .workReassign(work: item.id, revision: 2, owner: context.first.id,
+                reason: "Reopen", producerGeneration: 1))) {
+            XCTAssertEqual(($0 as? ARCError)?.code, .limitExceeded)
+        }
+        XCTAssertEqual(try Data(contentsOf: file), before)
+        _ = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: operation,
+            request: .workCorrect(work: item.id, revision: 2, reason: "Correction still fits",
+                evidence: .object(["references": .array([]), "result": .string("Corrected")])) )
+        XCTAssertTrue(try context.store.diagnose(room: context.room).valid)
+    }
+
+    func testRecoveryAndCorrectionValidateDurableShapeAndOldRecords() throws {
+        let context = try qualifiedPair()
+        let url = try context.store.roomFileURL(room: context.room)
+        let data = try Data(contentsOf: url)
+        var document = try ARCRoomCodec.decode(data, expectedID: context.room)
+        XCTAssertNil(document.participants[0].automaticRecoveryAttempts)
+        for invalid in [-1, 3] {
+            document.participants[0].automaticRecoveryAttempts = invalid
+            XCTAssertThrowsError(try ARCRoomCodec.validate(document))
+        }
+        XCTAssertEqual(try Data(contentsOf: url), data)
+    }
+
+    func testAutomaticRecoveryIsBoundedFreshAndRestartsOnlyOnOwnPoll() throws {
+        let setup = try makeStore()
+        let room = try setup.store.roomCreate(displayName: "Recovery", operationID: UUID()).room.id
+        let invited = try setup.store.participantInvite(room: room, name: "Late AI", operationID: UUID())
+        let id = invited.participant.id, binding = invited.instructions.bindingReference
+        var poll = try setup.store.poll(room: room, participant: id, binding: binding)
+        let oldChallenge = try XCTUnwrap(poll.qualification?.challenge)
+        for attempt in 1...2 {
+            setup.clock.advance(seconds: 120)
+            // Reading/ticking the administrator view must not consume recovery.
+            _ = try setup.store.roomTick(room: room)
+            XCTAssertEqual(try setup.store.roomOpen(room: room).participants[0].automaticRecoveryAttempts, attempt - 1)
+            poll = try setup.store.poll(room: room, participant: id, binding: binding, after: poll.nextAfter)
+            XCTAssertEqual(poll.participant.phase, .qualifying)
+            XCTAssertEqual(poll.participant.automaticRecoveryAttempts, attempt)
+            XCTAssertNotEqual(poll.qualification?.challenge, oldChallenge)
+            XCTAssertEqual(poll.qualification?.earliestCompletionLogicalUs, poll.room.logicalUs + 40_000_000)
+            XCTAssertThrowsError(try setup.store.act(room: room, participant: id, binding: binding,
+                operation: poll.operation, request: .qualificationAnswer(answer: oldChallenge)))
+            XCTAssertTrue(poll.events.contains { $0.kind == "QUALIFICATION_RECOVERED" })
+        }
+        setup.clock.advance(seconds: 120)
+        poll = try setup.store.poll(room: room, participant: id, binding: binding, after: poll.nextAfter)
+        XCTAssertEqual(poll.participant.phase, .failed)
+        XCTAssertNil(poll.qualification)
+        let before = try Data(contentsOf: setup.store.roomFileURL(room: room))
+        _ = try setup.store.poll(room: room, participant: id, binding: binding, after: poll.nextAfter)
+        XCTAssertEqual(try Data(contentsOf: setup.store.roomFileURL(room: room)), before)
+        let resetID = UUID()
+        _ = try setup.store.participantTryAgain(room: room, participant: id, operationID: resetID)
+        _ = try setup.store.participantTryAgain(room: room, participant: id, operationID: resetID)
+        poll = try setup.store.poll(room: room, participant: id, binding: binding, after: poll.nextAfter)
+        XCTAssertEqual(poll.participant.automaticRecoveryAttempts, 0)
+        let answered = try setup.store.act(room: room, participant: id, binding: binding,
+            operation: poll.operation, request: .qualificationAnswer(answer: XCTUnwrap(poll.qualification?.challenge)))
+        setup.clock.advance(seconds: 40)
+        poll = try setup.store.poll(room: room, participant: id, binding: binding, after: poll.nextAfter)
+        XCTAssertEqual(poll.participant.phase, .qualified)
+        XCTAssertEqual(poll.operation, answered.nextOperation)
+        XCTAssertTrue(try setup.store.diagnose(room: room).valid)
+    }
+
+    func testCompletedEvidenceCorrectionIsAuthorizedRevisionedAndReplaySafe() throws {
+        let context = try qualifiedPair()
+        let assigned = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation,
+            request: .workAssign(owner: context.second.id, scope: "Correctable record", evidenceMode: .text, producerGeneration: 1))
+        let item = try XCTUnwrap(assigned.work)
+        let original: ARCJSONValue = .object(["result": .string("Original"), "references": .array([])])
+        let completed = try context.store.act(room: context.room, participant: context.second.id,
+            binding: context.second.binding, operation: context.second.operation,
+            request: .workUpdate(work: item.id, revision: 1, state: .complete, evidence: original))
+        let corrected: ARCJSONValue = .object(["result": .string("Corrected"), "references": .array([])])
+        let request = ARCActionRequest.workCorrect(work: item.id, revision: 2, reason: "Correct transcription", evidence: corrected)
+        XCTAssertEqual(try ARCActionJSON.decode(ARCActionJSON.encode(request)), request)
+        let file = try context.store.roomFileURL(room: context.room)
+        let before = try Data(contentsOf: file)
+        XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: assigned.nextOperation, request: request))
+        XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.second.id,
+            binding: context.second.binding, operation: completed.nextOperation,
+            request: .workCorrect(work: item.id, revision: 1, reason: "Stale", evidence: corrected)))
+        XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.second.id,
+            binding: context.second.binding, operation: completed.nextOperation,
+            request: .workCorrect(work: item.id, revision: 2, reason: " ", evidence: corrected)))
+        XCTAssertEqual(try Data(contentsOf: file), before)
+        let changed = try context.store.act(room: context.room, participant: context.second.id,
+            binding: context.second.binding, operation: completed.nextOperation, request: request)
+        let replay = try context.store.act(room: context.room, participant: context.second.id,
+            binding: context.second.binding, operation: completed.nextOperation, request: request)
+        XCTAssertEqual(changed.eventSequences, replay.eventSequences)
+        XCTAssertEqual(changed.work?.revision, 3)
+        XCTAssertEqual(changed.work?.state, .complete)
+        let poll = try context.store.poll(room: context.room, participant: context.second.id,
+            binding: context.second.binding)
+        XCTAssertEqual(poll.work.first { $0.id == item.id }?.evidence, corrected)
+        XCTAssertTrue(poll.events.contains { $0.payload.objectValue?["evidence"] == original })
+        XCTAssertTrue(poll.events.contains { $0.kind == "WORK_CORRECTED" })
+        // Producer can reopen for reinspection, including after the old owner retires.
+        _ = try context.store.participantRetire(room: context.room, participant: context.second.id, operationID: UUID())
+        let reopened = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: assigned.nextOperation,
+            request: .workReassign(work: item.id, revision: 3, owner: context.first.id,
+                reason: "Reinspect after correction", producerGeneration: 1))
+        XCTAssertEqual(reopened.work?.state, .open)
+        XCTAssertEqual(reopened.work?.revision, 4)
+        XCTAssertTrue(try context.store.diagnose(room: context.room).valid)
+    }
+
+    func testVisualCompletionAndCorrectionRejectOutOfLifetimeTimes() throws {
+        let context = try qualifiedPair()
+        let assigned = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation,
+            request: .workAssign(owner: context.first.id, scope: "Time bounds", evidenceMode: .visual, producerGeneration: 1))
+        let item = try XCTUnwrap(assigned.work)
+        func evidence(_ time: String) -> ARCJSONValue {
+            .object(["artifact": .string("fixture"), "defects": .array([]), "inspected_at": .string(time),
+                "inspection": .string("Viewed fixture"), "result": .string("PASS"), "surfaces": .array([.string("page")])])
+        }
+        let file = try context.store.roomFileURL(room: context.room)
+        let before = try Data(contentsOf: file)
+        let now = try ARCTime.logicalUS(context.clock.now())
+        for time in [ARCTime.timestamp(now - 1), ARCTime.timestamp(now + 1), "2026-09-09T00:20:44.909582Z"] {
+            XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.first.id,
+                binding: context.first.binding, operation: assigned.nextOperation,
+                request: .workUpdate(work: item.id, revision: 1, state: .complete, evidence: evidence(time)))) {
+                XCTAssertTrue(($0 as? ARCError)?.message.contains("inspected_at") == true)
+            }
+            XCTAssertEqual(try Data(contentsOf: file), before)
+        }
+        let complete = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: assigned.nextOperation,
+            request: .workUpdate(work: item.id, revision: 1, state: .complete, evidence: evidence(item.createdAt)))
+        XCTAssertThrowsError(try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: complete.nextOperation,
+            request: .workCorrect(work: item.id, revision: 2, reason: "Future", evidence: evidence(ARCTime.timestamp(now + 1)))))
+        XCTAssertTrue(try context.store.diagnose(room: context.room).valid)
+    }
+
     func testLiveLayoutFixtureKeepsLongWorkAndFullHistory() throws {
         let context = try qualifiedPair()
         var operation = context.first.operation
@@ -29,8 +195,18 @@ final class ARCCoreTests: XCTestCase {
         // Optional manual app exercise, never the installed root. The ordinary
         // test always uses its isolated temporary fixture and cleans it up.
         if let path = ProcessInfo.processInfo.environment["ARC_LAYOUT_FIXTURE_OUTPUT"] {
+            let invited = try context.store.participantInvite(room: context.room,
+                name: "Connection recovery example", operationID: UUID())
+            let binding = invited.instructions.bindingReference
+            let id = invited.participant.id
+            context.clock.advance(seconds: 181)
+            _ = try context.store.poll(room: context.room, participant: id, binding: binding)
+            for _ in 0..<3 {
+                context.clock.advance(seconds: 120)
+                _ = try context.store.poll(room: context.room, participant: id, binding: binding)
+            }
             let destination = URL(fileURLWithPath: path).standardizedFileURL
-            guard destination.path.hasPrefix("/private/tmp/arc-2.1-layout-") else {
+            guard destination.path.hasPrefix("/private/tmp/arc-2.2-layout-") else {
                 throw ARCError(.invalidArgument, "Layout fixture output must be an isolated temporary path.")
             }
             try FileManager.default.copyItem(at: context.store.rootURL, to: destination)
@@ -114,7 +290,7 @@ final class ARCCoreTests: XCTestCase {
             }
             XCTAssertEqual(try Data(contentsOf: url), before)
         }
-        evidence["inspected_at"] = .string("2026-09-09T01:19:00.000000Z")
+        evidence["inspected_at"] = .string(item.createdAt)
         let request = ARCActionRequest.workUpdate(work: item.id, revision: 1,
             state: .complete, evidence: .object(evidence))
         let completed = try context.store.act(room: context.room, participant: context.first.id,
@@ -652,7 +828,7 @@ final class ARCCoreTests: XCTestCase {
         let participant = try XCTUnwrap(roster.first)
         XCTAssertEqual(Set(participant.keys), [
             "id", "name", "phase", "duty", "is_producer",
-            "binding_generation", "schedule", "last_check_in",
+            "binding_generation", "schedule", "last_check_in", "automatic_recovery_attempts",
         ])
         XCTAssertNil(participant["binding"])
 
@@ -965,7 +1141,8 @@ final class ARCCoreTests: XCTestCase {
             room: expiryRoom, participant: expiryInvitation.participant.id,
             binding: expiryBinding, after: expiryPoll.nextAfter
         )
-        XCTAssertEqual(atDeadline.participant.phase, .failed)
+        XCTAssertEqual(atDeadline.participant.phase, .qualifying)
+        XCTAssertEqual(atDeadline.participant.automaticRecoveryAttempts, 1)
         XCTAssertTrue(atDeadline.events.contains {
             $0.kind == "QUALIFICATION_FAILED"
         })

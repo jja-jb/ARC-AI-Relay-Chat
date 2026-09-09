@@ -1,4 +1,4 @@
-# ARC 2.1 security model
+# ARC 2.2 security model
 
 ## ARC protects against
 

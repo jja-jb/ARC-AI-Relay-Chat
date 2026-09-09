@@ -1,4 +1,4 @@
-ARC v2.1.0 ROOM, ADMINISTRATOR, PARTICIPANT, AND PRODUCER CONTRACT
+ARC v2.2.0 ROOM, ADMINISTRATOR, PARTICIPANT, AND PRODUCER CONTRACT
 
 RM-001 ONE ROOM IDENTITY
 
@@ -88,11 +88,13 @@ The ordinary phase paths are:
   INVITED -> QUALIFYING or WAITING_FOR_PRODUCER
   WAITING_FOR_PRODUCER -> QUALIFYING
   QUALIFYING -> QUALIFIED or FAILED
-  FAILED -> QUALIFYING through Try Again
+  FAILED -> QUALIFYING through bounded returning-poll recovery or Administrator reconnect
   any non-retired phase -> INVITED through Replace Instructions
   any non-retired phase -> RETIRED
 
-Try Again starts a fresh fixed test with the current binding. Replace
+Reconnect AI & Copy Instructions starts a fresh fixed test with the current
+binding and resets its two-retry recovery budget. Automatic recovery starts only
+on that candidate's own valid poll, not a room refresh. Replace
 Instructions is one confirmed action for lost or exposed instructions. It
 invalidates the old binding, creates one new binding generation, clears the
 current test and check-in, and returns the participant to INVITED without
@@ -170,7 +172,8 @@ visible in every valid room view. INVITED shows Copy Instructions Again,
 Replace Instructions, and
 Retire AI. WAITING_FOR_PRODUCER and QUALIFYING show Replace Instructions under
 More plus Retire AI. Copy Instructions Again is also in that More menu.
-FAILED shows Try Again, Copy Instructions Again, Replace Instructions, and Retire
+FAILED shows recovery guidance, prominent Reconnect AI & Copy Instructions,
+Copy Instructions Again, Replace Instructions, and Retire
 AI. A qualified Off Duty AI shows Copy Instructions Again, Replace Instructions
 under More, and Retire AI. A qualified On Duty or Working AI shows Make Producer
 when eligible, Copy Instructions Again and Replace Instructions under More,
@@ -190,7 +193,7 @@ are available without being the main language of the screen.
 
 A clock problem never hides the room or the Administrator's control. Adding an
 AI, copying or replacing instructions, retiring an AI, renaming, and
-diagnosis remain available. Make Producer and qualification Try Again wait
+diagnosis remain available. Make Producer and qualification reconnect wait
 until ARC can judge duty and deadlines again.
 
 Delete Room is visible in the Room menu and the selected room's sidebar

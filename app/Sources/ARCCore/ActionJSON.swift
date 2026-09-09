@@ -72,6 +72,16 @@ public enum ARCActionJSON {
                 state: state,
                 evidence: normalizedEvidence
             )
+        case "work.correct":
+            try exact(object, keys: ["type", "work", "revision", "reason", "evidence"])
+            guard let evidence = object["evidence"] else {
+                throw ARCError(.invalidArgument, "Correction evidence is required.")
+            }
+            return .workCorrect(
+                work: try id(object["work"], prefix: "work-", label: "Work item"),
+                revision: try positive(object["revision"], label: "Work revision"),
+                reason: try text(object["reason"], label: "Correction reason", maximum: 1_024, allowNewlines: true),
+                evidence: normalize(evidence))
         case "work.reassign":
             try exact(object, keys: [
                 "type", "work", "revision", "owner", "reason", "producer_generation",
@@ -119,6 +129,11 @@ public enum ARCActionJSON {
                 "type": .string("work.update"), "work": .string(work),
                 "revision": .integer(revision), "state": .string(state.rawValue),
                 "evidence": evidence,
+            ])
+        case .workCorrect(let work, let revision, let reason, let evidence):
+            value = .object([
+                "type": .string("work.correct"), "work": .string(work),
+                "revision": .integer(revision), "reason": .string(reason), "evidence": evidence,
             ])
         case .workReassign(let work, let revision, let owner, let reason, let generation):
             value = .object([

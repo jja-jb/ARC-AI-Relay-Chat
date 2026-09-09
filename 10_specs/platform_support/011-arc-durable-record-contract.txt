@@ -1,4 +1,4 @@
-ARC v2.1.0 EXACT ROOM-RECORD CONTRACT
+ARC v2.2.0 EXACT ROOM-RECORD CONTRACT
 
 REC-001 AUTHORITATIVE BYTES
 
@@ -93,6 +93,7 @@ Participant has exactly:
   qualification          Qualification, optional
   last_poll_logical_us   LogicalTime, optional
   working_until_logical_us LogicalTime, optional
+  automatic_recovery_attempts integer 0 through 2, optional (absent means zero)
   next_operation         OperationID
   last_operation         LastOperation, optional
 
@@ -109,7 +110,7 @@ working_until_logical_us is permitted only for QUALIFIED participants, must be
 a supported LogicalTime strictly later than last_poll_logical_us, and is omitted
 when absent. It can remain stored after expiry; duty is derived at read time.
 Poll, replacement, and retirement clear it. Existing records without the field
-keep their meaning. ARC 1.1.0 and 2.1.0 both understand Working records/events;
+keep their meaning. ARC 1.1.0 and 2.2.0 both understand Working records/events;
 executables predating Working support cannot read records containing them.
 
 Participant IDs and case-insensitive names are unique within the room. Present
@@ -204,7 +205,10 @@ to the Producer for reassignment. Creation sets OPEN, `{}` evidence, and revisio
 Every owner update or Producer reassignment increases revision exactly once.
 Reassignment sets a new available owner (On Duty or unexpired Working), OPEN,
 `{}` evidence, and the current
-Producer generation. COMPLETE is terminal.
+Producer generation. COMPLETE permits explicit work.correct by its available
+current owner or Producer work.reassign to reopen, never ordinary work.update.
+Corrections increment revision and retain prior events. Reopening obeys the
+50 non-COMPLETE bound. Pruned work has history but no mutable work record.
 
 `assigning_producer_generation` is no greater than the room's current
 `producer_generation`. It records the generation that assigned or most
@@ -243,7 +247,9 @@ Evidence is one exact object selected by Work state and mode:
 has 0 through 16 entries, surfaces 1 through 64, and defects 0 through 32.
 PASS requires no defects; PASS_WITH_DEFECTS requires at least one. The complete
 compact sorted-key encoding of Evidence is at most 60,000 bytes.
-`inspected_at` uses the exact Timestamp form in REC-011.
+`inspected_at` uses the exact Timestamp form in REC-011. New completion/correction
+must be within [work.created_at, request logical time], inclusive. Historical
+evidence is not retroactively invalidated. ARC cannot prove inspection occurred.
 
 REC-009 EVENT
 
@@ -277,7 +283,7 @@ same Event set in newest-first pages of 50.
 
 REC-010 EVENT VOCABULARY
 
-ARC v2.1.0 creates only these Event kinds and payloads:
+ARC v2.2.0 creates only these Event kinds and payloads:
 
   ROOM_CREATED
     actor administrator; payload {name}
@@ -292,6 +298,17 @@ ARC v2.1.0 creates only these Event kinds and payloads:
   QUALIFICATION_RETRIED
     actor administrator; recipient/subject AIID;
     payload {answer_type,awaiting_first_poll,challenge}
+  QUALIFICATION_RECOVERED
+    actor arc; recipient/subject AIID;
+    payload {answer_type,awaiting_first_poll,challenge,deadline_logical_us};
+    starts on this candidate's actual returning poll, awaiting_first_poll false;
+    deadline event.logical_us + 120000000; at most two automatic recoveries
+    per invitation or Administrator reset; old answers do not carry forward
+  WORK_CORRECTED
+    actor current owner AIID; no recipient; subject WorkID;
+    payload {evidence,reason,revision,supersedes_revision,state};
+    state COMPLETE; revision = supersedes_revision + 1; reason nonblank <=1024
+    UTF-8 bytes; full corrected evidence of the original mode; old events remain
   AI_RETIRED
     actor administrator; subject AIID;
     payload {producer_cleared,time_verified}

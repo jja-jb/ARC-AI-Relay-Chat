@@ -1,4 +1,4 @@
-# ARC 2.1.0 traceability
+# ARC 2.2.0 traceability
 
 Every determining requirement has one explicit implementation owner and one
 verification route below. `make check` proves local evidence. DVT proves the
@@ -7,6 +7,17 @@ cannot honestly prove. An unlisted identifier, implementation surface, or
 public behavior fails `source-check`.
 
 ## Local regression additions — September 2026
+
+ARC 2.2: QD-005/QD-008 and UI-003 are covered by
+testAutomaticRecoveryIsBoundedFreshAndRestartsOnlyOnOwnPoll and
+testConnectionRecoveryGuidanceIsExplicitAndRendersBothAppearances. MW-005/MW-007,
+CLI-008 and REC-010 are covered by
+testCompletedEvidenceCorrectionIsAuthorizedRevisionedAndReplaySafe,
+testVisualCompletionAndCorrectionRejectOutOfLifetimeTimes,
+testReopeningCompleteWorkRespectsCurrentCapacityAndPreservesToken and
+testRecoveryAndCorrectionValidateDurableShapeAndOldRecords. The live 2.1 report
+and observation reconciliation is in ARC_2_2_TEST_REVIEW.md. These tests establish
+bounded recovery and audit behavior, not AI comprehension or honest evidence.
 
 ARC 2.1: `testMainWindowDoesNotReintroduceSwiftUISelectionOverlay` and
 `testLiveRoomWorkLayoutRemainsResponsive` cover UI-001's copy-safe main window,
@@ -25,9 +36,9 @@ Development-root isolation is covered by
 standard root and ignore development overrides. The bounded manual interface
 smoke check is recorded in ARC_2_1_TEST_REVIEW.md.
 
-The source specification set is synchronized to ARC 2.1.0 behavior. Room,
+The source specification set is synchronized to ARC 2.2.0 behavior. Room,
 protocol, qualification, knowledge Profile 1, and report schema identifiers
-retain their own versions; they do not become /2 because the product is 2.1.
+retain their own versions; they do not become /2 because the product is 2.2.
 The complete Terse v1.0 source remains in languages/terse/ as governing ARC
 specification 013, mapped through QD-001 / IR-003 and CLI-002. Its separate
 signed file preserves the Profile 1 format. The full verified text is exposed

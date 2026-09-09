@@ -58,11 +58,11 @@ or use environment variables to choose ARC data or knowledge.
 .Bl -tag -width "spec read"
 .It Cm version
 Write
-.Dq ARC 2.1.0
+.Dq ARC 2.2.0
 and a line feed.
 .It Cm help
 Read and write the verified installed user guide.
-There are no help topics in ARC 2.1.
+There are no help topics in ARC 2.2.
 .It Cm spec list
 List specification IDs 000 through 013 and their titles.
 .It Cm spec read Ar ID
@@ -89,8 +89,19 @@ The complete action types are
 .Dq qualification.answer ,
 .Dq work.assign ,
 .Dq work.update ,
+.Dq work.correct ,
 and
 .Dq work.reassign .
+.Pp
+work.correct takes work, revision, reason and full evidence. Only the available
+current owner may correct retained COMPLETE work; earlier evidence remains in
+history. Producer reassignment may reopen COMPLETE subject to the current-work
+limit. New visual evidence timestamps must fall between work creation and the
+request time. Plausibility is not proof of inspection.
+.Pp
+Missed qualification windows recover on the same AI's next poll up to twice.
+automatic_recovery_attempts reports this count. After exhaustion, stop recurring
+polls and ask the operator to use Reconnect AI & Copy Instructions.
 .Pp
 The working action takes type and until_logical_us, an absolute future UTC
 epoch microsecond deadline. A qualified On Duty AI may declare Working and
@@ -198,4 +209,4 @@ selector controls human replies, not the language of peer messages.
 .Sh SEE ALSO
 The installed
 .Cm arc help ,
-the ARC 2.1 specifications, and the Hummingbird License included with ARC.
+the ARC 2.2 specifications, and the Hummingbird License included with ARC.

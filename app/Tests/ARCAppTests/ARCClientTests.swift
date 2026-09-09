@@ -7,6 +7,49 @@ import XCTest
 @testable import ARCApp
 
 final class ARCClientTests: XCTestCase {
+    @MainActor
+    func testConnectionRecoveryGuidanceIsExplicitAndRendersBothAppearances() async throws {
+        func ai(_ phase: ARCParticipantPhase, _ attempts: Int) -> ARCParticipantView {
+            ARCParticipantView(id: "ai-012345abcdef", name: "Delayed AI", phase: phase,
+                duty: .notApplicable, isProducer: false, binding: nil, bindingGeneration: 1,
+                schedule: ARCScheduleView(kind: .qualification, status: .waiting,
+                    nextRequestLogicalUs: nil, deadlineLogicalUs: nil), lastCheckIn: nil,
+                automaticRecoveryAttempts: attempts)
+        }
+        XCTAssertTrue(ARCConnectionRecoveryPresentation.message(for: ai(.failed, 0))!.contains("automatically retry"))
+        XCTAssertTrue(ARCConnectionRecoveryPresentation.message(for: ai(.failed, 2))!.contains("existing chat"))
+        XCTAssertTrue(ARCConnectionRecoveryPresentation.message(for: ai(.qualifying, 1))!.contains("retry 1 of 2"))
+        XCTAssertNil(ARCConnectionRecoveryPresentation.message(for: ai(.retired, 2)))
+        let state = AppState(client: TestClient(rootURL: temporaryRoot("arc-recovery-layout")),
+            installation: TestInstallation())
+        try await waitUntil { state.installationReady && !state.isBusy }
+        let roomID = "room-012345abcdef"
+        state.rooms = [ARCRoomListItem(id: roomID, name: "Guided recovery", health: .current, failure: nil)]
+        state.selectedRoomID = roomID
+        state.roomResult = ARCRoomOpenResult(room: testRoom(id: roomID, name: "Guided recovery", revision: 1),
+            producer: testProducer(), participants: [ai(.failed, 2)], work: [])
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 960, height: 850),
+            styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer { window.close() }
+        let hosting = NSHostingView(rootView: MainView().environmentObject(state))
+        window.contentView = hosting
+        window.orderFront(nil)
+        for appearance in [NSAppearance.Name.aqua, .darkAqua] {
+            window.appearance = NSAppearance(named: appearance)
+            try await Task.sleep(nanoseconds: 100_000_000)
+            hosting.layoutSubtreeIfNeeded()
+            if let path = ProcessInfo.processInfo.environment["ARC_ROOM_TEST_SNAPSHOTS"] {
+                let directory = URL(fileURLWithPath: path, isDirectory: true)
+                try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+                let bitmap = try XCTUnwrap(hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds))
+                hosting.cacheDisplay(in: hosting.bounds, to: bitmap)
+                try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))
+                    .write(to: directory.appendingPathComponent("recovery-\(appearance.rawValue).png"))
+            }
+        }
+    }
+
     func testDevelopmentBuildDefaultsToAnIsolatedRoot() {
         if ProcessInfo.processInfo.environment["ARC_DEVELOPMENT_ROOT"] == nil {
             XCTAssertNotEqual(ARCClient.defaultRoot.standardizedFileURL, ARCStore.defaultRootURL.standardizedFileURL)
@@ -1025,6 +1068,11 @@ final class ARCInstallationTests: XCTestCase {
         try writeBundle(bundle, specificationText: "version two\n", launcherText: "launcher", releaseVersion: "2.0.0")
         try installation.ensureInstalled(rootURL: root)
         XCTAssertEqual(try String(contentsOf: ARCCommunication.specificationURL(rootURL: root), encoding: .utf8), "version two\n")
+        for version in ["2.1.0", "2.2.0"] {
+            try writeBundle(bundle, specificationText: "version two\n", launcherText: "launcher", releaseVersion: version)
+            try installation.ensureInstalled(rootURL: root)
+            XCTAssertEqual(try String(contentsOf: ARCCommunication.specificationURL(rootURL: root), encoding: .utf8), "version two\n")
+        }
         let fresh = temporary.appendingPathComponent("fresh", isDirectory: true)
         try installation.ensureInstalled(rootURL: fresh)
         XCTAssertEqual(ARCCommunication.snapshot(rootURL: fresh).status, "ready")

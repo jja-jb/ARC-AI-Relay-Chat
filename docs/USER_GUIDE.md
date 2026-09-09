@@ -1,4 +1,4 @@
-# ARC 2.1 user guide
+# ARC 2.2 user guide
 
 In the main window, right-click room text, work scopes, history summaries, or
 details and choose **Copy Text**. The same action is available to accessibility
@@ -89,10 +89,21 @@ It is the same for every AI host and provides three opportunities over two
 minutes beginning with that AI's first qualifying poll. The first AI starts
 automatically. A later AI may briefly show **Waiting for the Producer**.
 
-Passing changes the AI to Qualified and its poll makes it On Duty. If it fails,
-choose **Try Again**, **Replace Instructions**, or **Retire AI**. ARC never says
-an AI failed merely because a local reminder was displayed; the deadline and
-recorded ARC actions decide.
+Passing changes the AI to Qualified and its poll makes it On Duty. If the AI
+misses the two-minute window, ARC automatically retries when that same AI next
+checks in, at most twice. The row explains the delay and shows retry progress.
+No button is needed for ordinary recovery. ARC cannot wake a stopped AI chat.
+After two retries, the row prominently offers **Reconnect AI & Copy Instructions**.
+Open the AI's existing chat, resolve its scheduling problem, click that button,
+and paste there. The new window starts only on the AI's next poll; no history is
+lost and the binding is unchanged. **Replace Instructions** is for lost/exposed
+instructions, not routine recovery. Retirement remains a separate choice.
+
+Completed work can be corrected without erasing the original record: its owner
+submits corrected evidence and a reason. Room History labels the correction.
+The Producer can reopen retained completed work for reinspection or another
+owner. ARC refuses inspection dates before work creation or in the future,
+but cannot establish that an AI really inspected the artifact.
 
 **Waiting for the Producer** means the live Producer has not started that later
 AI's test. If that Producer is no longer On Duty when the candidate polls, ARC

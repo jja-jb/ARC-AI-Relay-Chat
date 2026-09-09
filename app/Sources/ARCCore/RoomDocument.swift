@@ -41,6 +41,8 @@ struct ARCParticipantRecord: Codable, Sendable {
     var nextOperation: String
     var lastOperation: ARCLastOperationRecord?
     var workingUntilLogicalUs: Int64? = nil
+    // Optional for backwards-compatible decoding of pre-2.2 rooms.
+    var automaticRecoveryAttempts: Int? = nil
 }
 
 struct ARCQualificationRecord: Codable, Sendable {
@@ -433,6 +435,9 @@ enum ARCRoomCodec {
         var participantNames = Set<String>()
         var bindings = Set<String>()
         for participant in document.participants {
+            guard (0...2).contains(participant.automaticRecoveryAttempts ?? 0) else {
+                throw ARCError(.roomCorrupt, "An AI connection recovery count is invalid.")
+            }
             if let deadline = participant.workingUntilLogicalUs {
                 guard participant.phase == .qualified, ARCTime.isLogical(deadline),
                       let lastPoll = participant.lastPollLogicalUs, deadline > lastPoll else {
@@ -716,6 +721,10 @@ enum ARCRoomCodec {
             )
         case "QUALIFICATION_RETRIED":
             valid = qualificationStart(actorIsValid: event.actor == "administrator")
+        case "QUALIFICATION_RECOVERED":
+            valid = qualificationStart(actorIsValid: event.actor == "arc")
+                && payload["awaiting_first_poll"]?.boolValue == false
+                && payload["deadline_logical_us"]?.integerValue != nil
         case "QUALIFICATION_ANSWERED":
             valid = ai(event.actor) && event.actor == event.recipient
                 && event.actor == event.subject && exact([])
@@ -752,6 +761,15 @@ enum ARCRoomCodec {
                 && payload["owner"]?.stringValue == event.recipient
                 && text("reason", maximum: 1_024, newlines: true)
                 && integer("revision")
+        case "WORK_CORRECTED":
+            valid = ai(event.actor) && event.recipient == nil && work(event.subject)
+                && exact(["evidence", "reason", "revision", "supersedes_revision", "state"])
+                && payload["state"]?.stringValue == "COMPLETE"
+                && integer("revision") && integer("supersedes_revision")
+                && payload["revision"]?.integerValue.map {
+                    $0 > 1 && payload["supersedes_revision"]?.integerValue == $0 - 1
+                } == true
+                && text("reason", maximum: 1_024, newlines: true) && evidence(.complete)
         default:
             valid = false
         }
@@ -779,6 +797,7 @@ enum ARCRoomCodec {
             let participant = try object(item, allowed: [
                 "id", "name", "phase", "binding", "binding_generation", "qualification",
                 "last_poll_logical_us", "next_operation", "last_operation", "working_until_logical_us",
+                "automatic_recovery_attempts",
             ], required: ["id", "name", "phase", "binding_generation", "next_operation"],
                path: "room.participants[\(index)]")
             if let qualification = participant["qualification"] {
@@ -884,7 +903,7 @@ enum ARCEvidence {
             try text("artifact", maximum: 4_096)
             try text("inspection", maximum: 4_096)
             try require(object["inspected_at"]?.stringValue.map(ARCTime.isTimestamp) == true,
-                "inspected_at must be a valid UTC timestamp in YYYY-MM-DDTHH:MM:SS.ffffffZ form (exactly six fractional digits), for example 2026-09-09T00:20:44.909582Z.")
+                "inspected_at must be the actual inspection time in YYYY-MM-DDTHH:MM:SS.ffffffZ form (exactly six fractional digits).")
             try list("surfaces", range: 1...64)
             try list("defects", range: 0...32)
             let result = object["result"]?.stringValue ?? ""

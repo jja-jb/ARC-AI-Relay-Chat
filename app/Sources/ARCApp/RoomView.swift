@@ -274,6 +274,12 @@ private struct ParticipantRow: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
+            if let recovery = ARCConnectionRecoveryPresentation.message(for: participant) {
+                Label(recovery, systemImage: participant.phase == .failed ? "info.circle" : "arrow.triangle.2.circlepath")
+                    .font(.callout)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityLabel(recovery)
+            }
             if participant.phase == .qualified,
                participant.duty == .off,
                result.room.status != .timeUnavailable {
@@ -390,10 +396,12 @@ private struct ParticipantRow: View {
     }
 
     private var tryAgainButton: some View {
-        Button("Try Again") {
+        Button("Reconnect AI & Copy Instructions") {
             state.selectedParticipantID = participant.id
             state.tryAgain(for: participant)
         }
+        .buttonStyle(.borderedProminent)
+        .help("Restarts the access check and copies instructions to paste into this AI's existing chat. No room history is removed.")
         .disabled(result.room.status == .timeUnavailable || state.isBusy)
     }
 
@@ -448,6 +456,21 @@ private struct ParticipantRow: View {
             roomStatus: result.room.status,
             nowLogical: result.room.logicalUs
         )
+    }
+}
+
+enum ARCConnectionRecoveryPresentation {
+    static func message(for participant: ARCParticipantView) -> String? {
+        if participant.phase == .failed {
+            if participant.automaticRecoveryAttempts < 2 {
+                return "The AI missed its two-minute access check. ARC will automatically retry when this AI next checks in (up to two retries). If its chat has stopped, use Reconnect AI & Copy Instructions below and paste into the same chat."
+            }
+            return "The AI could not finish its access check after two automatic retries. Open its existing chat and make sure it can run scheduled check-ins. Then choose Reconnect AI & Copy Instructions below and paste there. Your room history is safe."
+        }
+        if participant.phase == .qualifying, participant.automaticRecoveryAttempts > 0 {
+            return "Reconnecting automatically — retry \(participant.automaticRecoveryAttempts) of 2. The AI must answer a fresh check and return at least 40 seconds later. No action is needed while its chat is running."
+        }
+        return nil
     }
 }
 
@@ -806,6 +829,8 @@ enum ARCActivityPresentation {
             return "Instructions for \(subjectName) were replaced."
         case "QUALIFICATION_RETRIED":
             return "ARC started a fresh access check for \(subjectName)."
+        case "QUALIFICATION_RECOVERED":
+            return "\(subjectName) returned; ARC automatically restarted its access check."
         case "AI_RETIRED":
             return "\(subjectName) was retired."
         case "PRODUCER_CHANGED":
@@ -850,6 +875,8 @@ enum ARCActivityPresentation {
             let workState = payload["state"]?.stringValue?.lowercased() ?? "updated"
             let owner = actorName(event.actor, participants: participants)
             return "\(owner) marked \(subjectName) \(workState)."
+        case "WORK_CORRECTED":
+            return "\(actorName(event.actor, participants: participants)) corrected the evidence for \(subjectName). Earlier evidence remains in Room History."
         case "WORK_REASSIGNED":
             let ownerID = payload["owner"]?.stringValue ?? event.recipient
             let owner = ownerID.map {

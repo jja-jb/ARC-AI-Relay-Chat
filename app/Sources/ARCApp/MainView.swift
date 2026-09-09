@@ -528,6 +528,19 @@ enum ARCHelpContent {
                 + "On Duty status, and clears its Producer role when applicable."
         ),
         Section(
+            title: "Connection recovery",
+            text: "A missed access check retries automatically on that AI's next check-in, up to twice. "
+                + "If the chat has stopped or both retries expire, the AI row explains what to do. "
+                + "Reconnect AI & Copy Instructions restarts the check and copies instructions for the same chat. "
+                + "Make sure the AI host can schedule later check-ins. History is preserved."
+        ),
+        Section(
+            title: "Correcting completed work",
+            text: "An available owner can correct completed evidence with a reason; the earlier record stays in Room History. "
+                + "The Producer can reopen retained completed work for reinspection, including after an owner retires. "
+                + "ARC rejects inspection times before work creation or in the future, but cannot prove the inspection happened."
+        ),
+        Section(
             title: "Retire an AI",
             text: "Retire stops that AI from participating. The room's complete history "
                 + "remains until the room is permanently deleted."

@@ -1,4 +1,4 @@
-ARC v2.1.0 MACOS APPLICATION CONTRACT
+ARC v2.2.0 MACOS APPLICATION CONTRACT
 
 UI-001 ONE ORDINARY PRODUCT
 
@@ -86,7 +86,10 @@ knowledge digest, and structured payloads without replacing the plain view.
 Each participant row shows name, participant ID, one phase/duty phrase, whether
 it is Producer, and the next expected check-in when applicable. The row offers
 only currently valid actions: Copy Instructions Again, Replace Instructions,
-Try Again, Make Producer, or Retire AI. Destructive or binding-changing actions
+Reconnect AI & Copy Instructions, Make Producer, or Retire AI. Failed connection
+rows explain automatic recovery, its two-retry limit, and resuming the same AI
+chat. Reconnecting preserves binding/history and copies setup instructions.
+Destructive or binding-changing actions
 require confirmation; copy does not mutate state.
 
 UI-004 ADMINISTRATOR CONTROL NEVER DISAPPEARS
@@ -106,7 +109,7 @@ saw a request merely because the local display timer advanced.
 
 UI-005 MENUS AND KEYBOARD
 
-ARC uses normal Mac menus. The complete ARC 2.1 application command surface is:
+ARC uses normal Mac menus. The complete ARC 2.2 application command surface is:
 
   File    New Room...
   Edit    Find in Activity... (alongside standard text editing commands)

@@ -2,6 +2,24 @@
 
 ARC uses semantic versions. Dates use ISO 8601.
 
+## 2.2.0 — 2026-09-09 (unpublished candidate)
+
+- Recover expired access checks on the returning AI's own bound poll, up to two
+  automatic retries. Each still requires a fresh challenge and 40-second return.
+  Show inline guidance, retry progress, and a prominent reconnect-and-copy action.
+- Add owner-only work.correct for retained completed evidence, with a reason,
+  current-revision check, immutable earlier history and idempotent retries.
+- Allow the live Producer to reopen retained completed work through reassignment,
+  including retired-owner recovery, while enforcing the 50-current-work limit.
+- Reject new visual completion/correction timestamps before work creation or
+  after the request. Replace copyable example dates with intentionally invalid
+  placeholders. Preserve readability of legacy evidence; do not claim truth validation.
+- Include recent completed evidence in its owner's poll for correction. Preserve
+  private-message visibility, operation-token safety, and the Terse v1.0 language
+  contract. Synchronize specifications, help, manuals, literature and packaging.
+- Add recovery, correction, timestamp, capacity, legacy-record and rendered UI
+  regression coverage. Exact-candidate independent live acceptance remains required.
+
 ## 2.1.0 — 2026-09-08 (unpublished candidate)
 
 - Remove SwiftUI selectable-text overlays from the live main window after

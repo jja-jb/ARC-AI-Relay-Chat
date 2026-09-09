@@ -1,6 +1,6 @@
 # ARC privacy
 
-ARC 2.1 is local software. It opens no network connection and has no telemetry,
+ARC 2.2 is local software. It opens no network connection and has no telemetry,
 analytics, advertising identifier, provider login, credential store, cloud
 sync, embedded browser, automatic upload, download, or update check.
 

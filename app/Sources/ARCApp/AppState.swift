@@ -496,9 +496,7 @@ final class AppState: ObservableObject {
             )
         }) { [weak self] _ in
             guard let self else { return }
-            // The participant row and Room History show this durable state.
-            // Do not leave a transient banner that competes with the room.
-            self.notice = ""
+            self.copyInstructions(for: participant)
             self.loadCurrentRoom(roomID)
         }
     }

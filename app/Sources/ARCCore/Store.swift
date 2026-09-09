@@ -296,6 +296,7 @@ public final class ARCStore: @unchecked Sendable {
             value.binding = ARCText.randomUUID()
             value.bindingGeneration += 1
             value.phase = .invited
+            value.automaticRecoveryAttempts = nil
             value.qualification = nil
             value.lastPollLogicalUs = nil
             value.workingUntilLogicalUs = nil
@@ -340,10 +341,11 @@ public final class ARCStore: @unchecked Sendable {
                 return (ARCRevisionResult(roomRevision: document.room.revision), false)
             }
             guard document.participants[index].phase == .failed else {
-                throw ARCError(.wrongState, "Try Again is available after a qualification failure.")
+                throw ARCError(.wrongState, "Reconnect AI is available after an expired access check.")
             }
             let logical = try self.mutationTime(&document)
             document.participants[index].phase = .qualifying
+            document.participants[index].automaticRecoveryAttempts = nil
             document.participants[index].qualification = ARCQualificationRecord(
                 challenge: ARCText.challenge(), startedLogicalUs: logical,
                 firstPollLogicalUs: nil, answerLogicalUs: nil
@@ -616,8 +618,10 @@ public final class ARCStore: @unchecked Sendable {
                 $0.state != .complete && ($0.owner == id || callerIsLiveProducer)
             }
             let recentCompletedWork: [ARCWorkRecord]
-            if callerIsLiveProducer {
-                recentCompletedWork = document.work.filter { $0.state == .complete }
+            if participant.phase == .qualified {
+                recentCompletedWork = document.work.filter {
+                    $0.state == .complete && (callerIsLiveProducer || $0.owner == id)
+                }
                     .sorted {
                         $0.updatedLogicalUs == $1.updatedLogicalUs
                             ? $0.id < $1.id : $0.updatedLogicalUs > $1.updatedLogicalUs
@@ -747,7 +751,8 @@ extension ARCStore {
             binding: includeBinding ? participant.binding : nil,
             bindingGeneration: participant.bindingGeneration,
             schedule: schedule(participant, now: now),
-            lastCheckIn: participant.lastPollLogicalUs.map(ARCTime.timestamp)
+            lastCheckIn: participant.lastPollLogicalUs.map(ARCTime.timestamp),
+            automaticRecoveryAttempts: participant.automaticRecoveryAttempts ?? 0
         )
     }
 
@@ -1172,7 +1177,20 @@ extension ARCStore {
                 )
             }
         case .failed:
-            break
+            // Recover only when this exact bound AI actually returns. Timers and
+            // other participants cannot consume its new two-minute window.
+            let attempts = document.participants[index].automaticRecoveryAttempts ?? 0
+            if attempts < 2 {
+                document.participants[index].automaticRecoveryAttempts = attempts + 1
+                document.participants[index].phase = .qualifying
+                document.participants[index].qualification = ARCQualificationRecord(
+                    challenge: ARCText.challenge(), startedLogicalUs: now,
+                    firstPollLogicalUs: now, answerLogicalUs: nil)
+                try appendQualificationStart(to: &document, participantIndex: index,
+                    logical: now, kind: "QUALIFICATION_RECOVERED", actor: "arc",
+                    operation: operation, knowledge: knowledge)
+                changed = true
+            }
         case .retired:
             throw ARCError(.retired, "This AI participant is retired.")
         }
@@ -1474,6 +1492,9 @@ extension ARCStore {
                 throw ARCError(.wrongState, "That work-state change is not allowed.")
             }
             try ARCEvidence.validate(evidence, state: state, mode: current.evidenceMode)
+            if state == .complete {
+                try validateInspectionTime(evidence, work: current, now: now)
+            }
             document.work[index].state = state
             document.work[index].evidence = evidence
             document.work[index].revision += 1
@@ -1489,6 +1510,30 @@ extension ARCStore {
             )
             return (nil, workID)
 
+        case .workCorrect(let workID, let revision, let reason, let evidence):
+            try requireAvailable(caller, now: now)
+            guard let index = document.work.firstIndex(where: { $0.id == workID }) else {
+                throw ARCError(.notFound, "ARC could not find that retained work item.")
+            }
+            let current = document.work[index]
+            guard current.owner == caller.id, current.state == .complete,
+                  current.revision == revision else {
+                throw ARCError(.wrongState, "Only the current owner can correct retained COMPLETE work at its current revision; poll first.")
+            }
+            try ARCEvidence.validate(evidence, state: .complete, mode: current.evidenceMode)
+            try validateInspectionTime(evidence, work: current, now: now)
+            document.work[index].evidence = evidence
+            document.work[index].revision += 1
+            document.work[index].updatedAt = ARCTime.timestamp(now)
+            document.work[index].updatedLogicalUs = now
+            try appendEvent(to: &document, logical: now, kind: "WORK_CORRECTED",
+                actor: caller.id, subject: workID, payload: .object([
+                    "state": .string("COMPLETE"), "evidence": evidence,
+                    "reason": .string(reason), "supersedes_revision": .integer(revision),
+                    "revision": .integer(document.work[index].revision),
+                ]), operation: operation, knowledge: knowledge)
+            return (nil, workID)
+
         case .workReassign(
             let workID, let revision, let ownerID, let reason, let generation
         ):
@@ -1498,9 +1543,12 @@ extension ARCStore {
             guard let index = document.work.firstIndex(where: { $0.id == workID }) else {
                 throw ARCError(.notFound, "ARC could not find that work item.")
             }
-            guard document.work[index].revision == revision,
-                  document.work[index].state != .complete else {
+            guard document.work[index].revision == revision else {
                 throw ARCError(.wrongState, "That work item cannot be reassigned from this view.")
+            }
+            if document.work[index].state == .complete,
+               document.work.lazy.filter({ $0.state != .complete }).count >= ARCConstants.maximumCurrentWorkItems {
+                throw ARCError(.limitExceeded, "Reopening this item would exceed the 50 current work item limit.")
             }
             guard let owner = document.participants.first(where: { $0.id == ownerID }) else {
                 throw ARCError(.notFound, "ARC could not find the new work owner.")
@@ -1522,6 +1570,17 @@ extension ARCStore {
                 ]), operation: operation, knowledge: knowledge
             )
             return (nil, workID)
+        }
+    }
+
+    private func validateInspectionTime(_ evidence: ARCJSONValue, work: ARCWorkRecord, now: Int64) throws {
+        guard work.evidenceMode == .visual else { return }
+        // Canonical fixed-width UTC timestamps compare lexically without losing
+        // microseconds to floating-point Date conversion. Legacy records remain
+        // readable; this stronger check applies only to new completion/correction.
+        guard let inspected = evidence.objectValue?["inspected_at"]?.stringValue,
+              inspected >= work.createdAt, inspected <= ARCTime.timestamp(now) else {
+            throw ARCError(.invalidArgument, "Work evidence: inspected_at must be at or after work creation and no later than this request. Perform the inspection and record its actual UTC time; do not copy an example.")
         }
     }
 

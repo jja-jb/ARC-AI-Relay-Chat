@@ -1,6 +1,6 @@
 # ARC.app source
 
-ARC.app is the native SwiftUI interface for ARC 2.1. The root `Package.swift`
+ARC.app is the native SwiftUI interface for ARC 2.2. The root `Package.swift`
 owns the complete product graph; there is no app-local package.
 
 The application target:

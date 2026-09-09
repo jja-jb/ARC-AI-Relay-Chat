@@ -10,11 +10,11 @@ final class ARCDevToolTests: XCTestCase {
             ("10_specs/platform_support/000-shared-constitution.txt", "Specifications 000 through 013"),
             ("README.md", "Specifications 000 through 013"),
             ("ARCHITECTURE.md", "full governing Terse v1.0 specification, 013"),
-            ("man/arc.1", "ARC 2.1.0"),
+            ("man/arc.1", "ARC 2.2.0"),
             ("man/arc.1", "IDs 000 through 013"),
             ("man/arc.1", "message.broadcast"),
-            ("INSTALL.md", "# Install ARC 2.1"),
-            ("RELEASE_CHECKLIST.md", "# ARC 2.1 release checklist"),
+            ("INSTALL.md", "# Install ARC 2.2"),
+            ("RELEASE_CHECKLIST.md", "# ARC 2.2 release checklist"),
             ("brand/arc-product-brief.html", "Terse v1.0 is governing specification 013")
         ]
         for (path, expected) in checks {
@@ -28,8 +28,12 @@ final class ARCDevToolTests: XCTestCase {
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let bytes = try Data(contentsOf: source.appendingPathComponent(ARCReleaseSupport.terseSpecification))
         XCTAssertEqual(KnowledgeContainer.hex(KnowledgeContainer.sha256(bytes)),
-            "64215c61f0b05599f7be03188b704def594b60df054ed269b813367d32db6aea")
+            "cce23937fc0dfb838009f486d9ed99bd20ba7666750e7ac8b6d219e04979b424")
         let specification = String(decoding: bytes, as: UTF8.self)
+        // The ARC association changes, never the released Terse v1.0 contract.
+        let priorAssociation = specification.replacingOccurrences(of: "part of ARC v2.2", with: "part of ARC v2.1")
+        XCTAssertEqual(KnowledgeContainer.hex(KnowledgeContainer.sha256(Data(priorAssociation.utf8))),
+            "64215c61f0b05599f7be03188b704def594b60df054ed269b813367d32db6aea")
         for section in ["4.14 Explicit focus", "4.15 A receiver", "13.10 Enumerating",
             "14.14 One thought", "19. Entering a room", "Appendix A", "Appendix B", "Appendix C"] {
             XCTAssertTrue(specification.contains(section), section)

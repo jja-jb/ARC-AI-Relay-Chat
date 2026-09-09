@@ -1,5 +1,12 @@
 # ARC room file
 
+ARC 2.2 reads prior room/1 records without rewriting historical evidence.
+It adds optional participant automatic_recovery_attempts (0–2; absent means 0)
+and QUALIFICATION_RECOVERED / WORK_CORRECTED events. Earlier ARC executables
+reject these extensions: do not downgrade a room after using 2.2 features.
+Corrections supersede a completed evidence revision; reopening returns retained
+work to OPEN. Neither operation erases earlier events. See specifications 004/011.
+
 Each ARC room is one private, human-readable file:
 
 ```text

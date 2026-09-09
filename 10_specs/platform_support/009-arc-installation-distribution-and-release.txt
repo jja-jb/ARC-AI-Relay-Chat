@@ -1,8 +1,8 @@
-ARC v2.1.0 INSTALLATION, DISTRIBUTION, AND RELEASE CONTRACT
+ARC v2.2.0 INSTALLATION, DISTRIBUTION, AND RELEASE CONTRACT
 
 IR-001 ONE NATIVE PRODUCT
 
-ARC v2.1.0 is built from one root Swift package. Its shipping products are:
+ARC v2.2.0 is built from one root Swift package. Its shipping products are:
 
   ARC     the SwiftUI Mac application, linked directly with ARCCore;
   arc     the native command for AI participants.
@@ -36,7 +36,7 @@ It describes every regular file under:
   Contents/Resources/install/bin/arc
   Contents/Resources/install/current/
 
-The ARC 2.1 shipped payload contains exactly these twenty files:
+The ARC 2.2 shipped payload contains exactly these twenty files:
 
   bin/arc
   ARC_AI.arc-kb
@@ -62,7 +62,7 @@ manifest entry. Installation never enumerates or changes `rooms/`.
 The complete repository-owned Terse v1.0 specification at
 languages/terse/001-terse-language-specification.txt is installed byte-for-byte
 as a separate plain-text file, not as a new Profile 1 knowledge-container member.
-It includes ARC 2.0 and 2.1 reviewed corrections; it is not a claim that the original
+It includes ARC 2.0 and 2.2 reviewed corrections; it is not a claim that the original
 operator-supplied version 6 was unchanged. The earlier text remains in the
 earlier source tag. Its sidecar
 contains its lowercase SHA-256 plus LF; both files belong to the signed manifest
@@ -104,8 +104,8 @@ canonical relative names with no empty, dot, hidden, or link segment. A
 `current/` data path maps exactly to the same suffix below
 `Resources/install/current/`; `current/bin/arc` maps only to
 `Resources/install/bin/arc`. Total bytes and entry count are bounded. Every
-source must be a regular file with the stated bytes and mode. ARC 2.1.0's
-bundled manifest declares 2.1.0 and must match the app bundle's version.
+source must be a regular file with the stated bytes and mode. ARC 2.2.0's
+bundled manifest declares 2.2.0 and must match the app bundle's version.
 Acceptance of 1.x identities preserves verified prior-installation ownership
 for upgrades; it does not select older code for the new app. Unsupported major
 versions and malformed identities are refused.
@@ -163,20 +163,20 @@ ARC is distributed under the exact checked-in Hummingbird License. LICENSE is
 the controlling legal text. LICENSE-SUMMARY.md is explanatory only. NOTICE.md
 identifies ARC and its copyright holder without changing the license.
 
-ARC v2.1.0 links only ARC-owned code and system macOS frameworks and libraries.
+ARC v2.2.0 links only ARC-owned code and system macOS frameworks and libraries.
 No third-party payload or separate third-party notice file belongs in the
 candidate. If that fact changes, publication pauses until the legal and source
 record is made complete.
 
 IR-009 PUBLIC RELEASE ASSETS
 
-The sealed public release contains exactly these assets for VERSION `2.1.0`:
+The sealed public release contains exactly these assets for VERSION `2.2.0`:
 
-  ARC-2.1.0.dmg
-  ARC-2.1.0-source.tar.gz
+  ARC-2.2.0.dmg
+  ARC-2.2.0-source.tar.gz
   ARC_AI_Relay_Chat_Literature.pdf
-  ARC-2.1.0-MANIFEST.json
-  ARC-2.1.0-DVT-REPORT.txt
+  ARC-2.2.0-MANIFEST.json
+  ARC-2.2.0-DVT-REPORT.txt
   RELEASE-METADATA.json
   SHA256SUMS
 
@@ -219,4 +219,5 @@ The release is published only from a clean, protected revision after CI and
 external DVT pass. The release page names the version, compatibility, checksum
 verification, installation, material changes, known externally verified
 limitations, and links to source and evidence. Publication itself is a human
-maintainer action; build tooling does not push, create a release, or upload.
+maintainer action; build tooling does not push or publish a release. The
+explicit signing/notarization workflow uploads the app and DMG to Apple.

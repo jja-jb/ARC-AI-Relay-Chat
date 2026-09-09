@@ -1,4 +1,4 @@
-ARC v2.1.0 NATIVE COMMAND AND MACHINE INTERFACE CONTRACT
+ARC v2.2.0 NATIVE COMMAND AND MACHINE INTERFACE CONTRACT
 
 CLI-001 PURPOSE AND SINGLE IMPLEMENTATION
 
@@ -18,7 +18,7 @@ or message changes the root, executable, or verified knowledge identity.
 
 CLI-002 COMPLETE GRAMMAR
 
-The complete ARC 2.1 grammar (using arc.protocol/1) is:
+The complete ARC 2.2 grammar (using arc.protocol/1) is:
 
   arc version
   arc help
@@ -36,7 +36,7 @@ short options, positional alternatives, response files, help topics, aliases,
 abbreviations, hidden compatibility commands, or option values read from stdin.
 Unknown or extra input is INVALID_ARGUMENT.
 
-`version` writes exactly `ARC 2.1.0` plus LF. `help` writes the verified
+`version` writes exactly `ARC 2.2.0` plus LF. `help` writes the verified
 help/arc-help.txt member. `spec list` writes the stable titles for three-digit
 IDs 000 through 013. `spec read ID` writes the corresponding verified text.
 IDs 000 through 012 use the knowledge container. ID 013 returns the complete
@@ -135,6 +135,7 @@ ParticipantView is exactly:
   binding_generation    positive integer
   schedule              ScheduleView
   last_check_in         UTC timestamp or null
+  automatic_recovery_attempts integer 0 through 2 (older views may omit; read as 0)
 
 No machine ParticipantView contains a binding. ScheduleView is exactly:
 
@@ -211,8 +212,9 @@ The result is exactly:
   events                        zero through 50 visible EventViews
   next_after                    nonnegative sequence
   more                          boolean
-  work                          relevant current WorkViews; a live Producer also
-                                receives up to 16 most-recent COMPLETE WorkViews
+  work                          relevant current WorkViews; qualified owners and
+                                the live Producer also receive up to 16 most-recent
+                                relevant COMPLETE WorkViews
   operation                     current single-use operation UUID
   earlier_activity_unavailable  boolean
   communication                 current ARC-owned communication guidance
@@ -348,13 +350,27 @@ valid UTC calendar date), as defined by REC-011. Evidence refusals identify
 the invalid field or required key set and expected constraint. The accepted update
 increments work revision and appends WORK_UPDATED.
 
+Correct completed evidence:
+
+  {"type":"work.correct","work":WORK,"revision":INTEGER,
+   "reason":TEXT,"evidence":OBJECT}
+
+The current available owner may correct retained COMPLETE work at the current
+revision, supplying a nonblank reason (up to 1024 UTF-8 bytes) and full evidence
+of the original mode. State remains COMPLETE. Revision increments; WORK_CORRECTED
+preserves supersedes_revision, reason and corrected evidence without erasing history.
+New VISUAL completion/correction refuses inspected_at before work creation or
+after the request logical time; legacy records remain readable. A plausible date
+is not proof of a real inspection. The normal token/replay rules apply.
+
 Reassign work:
 
   {"type":"work.reassign","work":WORK,"revision":INTEGER,"owner":AI,
    "reason":TEXT,"producer_generation":INTEGER}
 
 The caller must be the current live Producer at that generation. Work must be
-non-COMPLETE at its current revision and the new owner On Duty. The operation
+retained at its current revision and the new owner On Duty. Reopening COMPLETE
+is refused if it would exceed 50 non-COMPLETE records. The operation
 sets the owner, state OPEN, evidence `{}`, generation, and next revision and
 appends WORK_REASSIGNED.
 

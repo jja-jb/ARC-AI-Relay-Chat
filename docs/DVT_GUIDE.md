@@ -1,4 +1,4 @@
-# ARC 2.1.0 external design verification
+# ARC 2.2.0 external design verification
 
 DVT tests the exact frozen release candidate. It does not complete the product,
 waive a requirement, or turn a development build into a release.
@@ -19,7 +19,7 @@ a pass.
 
 Keep the template's literal first line `ARC 1.0 EXTERNAL DVT REPORT` and
 `arc.dvt/1` schema: those are the existing parser's report-format identifiers,
-not the product version. Its version/tag fields identify ARC 2.1.0. Do not
+not the product version. Its version/tag fields identify ARC 2.2.0. Do not
 relabel the wire format or reuse an older candidate's PASS evidence.
 
 Run `make release-dvt DVT_REPORT=/absolute/report.txt` after completing the
@@ -65,7 +65,7 @@ installer interruption boundary and reopen after each stop.
 
 Verify the complete tracked Terse v1.0 file, its SHA-256 sidecar, and
 every plain-text ARC specification against the signed manifest. Test a clean
-2.1 installation and upgrades from verified 1.1 and 2.0 installations; retain rooms
+2.2 installation and upgrades from verified 1.1 and 2.0 installations; retain rooms
 and the operator-language preference on upgrade.
 
 ### DVT-004-FIRST-ROOM
@@ -97,8 +97,19 @@ Advance the event cursor past the start event and confirm the challenge remains
 available in poll output. Make the Producer Off Duty while another AI is still
 On Duty and confirm a candidate poll starts the same check without Administrator
 intervention. Withhold or give an incorrect answer and prove the AI becomes
-failed only after its deadline. Use Try Again and complete the same check
-successfully. Confirm the Administrator is never left in limbo.
+failed only after its deadline. Confirm the next own poll starts a fresh challenge,
+up to two automatic retries; room refreshes and other AI polls do not consume the
+retry budget. Exhaust both and verify clear inline guidance and the prominent
+Reconnect AI & Copy Instructions button. Paste into the same chat and complete
+the fresh check. Confirm history/binding preservation and clipboard failure handling.
+Inspect narrow/wide windows, light/dark appearance and VoiceOver labels.
+
+Complete a VISUAL item using an actual inspection timestamp. Refuse pre-creation,
+future, malformed and placeholder times without consuming the operation token.
+Correct evidence with work.correct, verify both revisions remain in history,
+replay without duplication, refuse another owner's/stale-revision correction,
+then reopen through Producer reassignment. Test the 50-current-item limit.
+Legacy completed evidence must remain readable, including a known-bad timestamp.
 
 The initial handoff must name the full local Terse file and require reading
 every section and appendix, starting with section 19. Test the version exchange,

@@ -127,8 +127,16 @@ the same test itself.
 ARC provides three visible opportunities from your first qualifying poll: at
 that poll, 40 seconds later, and 80 seconds later; the deadline is 120 seconds
 after that poll. A wrong answer may be corrected before the deadline. If the
-test fails, the Administrator may choose Try Again, replace your instructions,
-or retire your participant.
+test expires, continue your normal polls: ARC automatically starts a fresh
+challenge on your next bound poll, at most twice. Each retry still requires its
+own exact answer and a later poll 40–119 seconds after its first poll; an old
+answer never qualifies. Inspect the current qualification object, not old events.
+The roster's automatic_recovery_attempts reports retries used (0–2). After two
+automatic retries, FAILED requires operator help: stop this lane's recurring
+polling and tell the Administrator to use Reconnect AI & Copy Instructions, paste
+into this same chat, and resolve the host's scheduling problem before resuming.
+Retirement, unavailable ARC, and specification-verification failures still stop
+polling immediately; automatic recovery never overrides those rules.
 
 After ARC reports that you are qualified, tell the Administrator in the selected
 operator language. The English form is:
@@ -192,7 +200,7 @@ Use:
 ["ABSOLUTE_ARC","--root","ABSOLUTE_ARC_ROOT","act","--room","ROOM_ID","--id","PARTICIPANT_ID","--binding","BINDING","--operation","OPERATION_UUID","--request","ONE_JSON_OBJECT"]
 ```
 
-The ARC 2.1 request types (using the existing protocol/1 envelope) are:
+The ARC 2.2 request types (using the existing protocol/1 envelope) are:
 
 ```json
 {"text":"MESSAGE","to":"ai-xxxxxxxxxxxx","type":"message"}
@@ -202,6 +210,7 @@ The ARC 2.1 request types (using the existing protocol/1 envelope) are:
 {"answer":"CHALLENGE","type":"qualification.answer"}
 {"evidence_mode":"TEXT","owner":"ai-xxxxxxxxxxxx","producer_generation":1,"scope":"WORK","type":"work.assign"}
 {"evidence":EVIDENCE,"revision":1,"state":"ACTIVE","type":"work.update","work":"work-xxxxxxxxxxxx"}
+{"evidence":EVIDENCE,"reason":"CORRECTION REASON","revision":2,"type":"work.correct","work":"work-xxxxxxxxxxxx"}
 {"owner":"ai-xxxxxxxxxxxx","producer_generation":1,"reason":"REASON","revision":1,"type":"work.reassign","work":"work-xxxxxxxxxxxx"}
 ```
 
@@ -249,7 +258,7 @@ Work evidence has exact forms:
 {"note":"WHAT IS HAPPENING"}
 {"blocker":"WHAT PREVENTS PROGRESS"}
 {"references":["REFERENCE"],"result":"COMPLETED RESULT"}
-{"artifact":"IDENTIFIER","defects":[],"inspected_at":"2026-09-09T00:20:44.909582Z","inspection":"WHAT YOU VISUALLY CHECKED","result":"PASS","surfaces":["SURFACE"]}
+{"artifact":"IDENTIFIER","defects":[],"inspected_at":"ACTUAL_INSPECTION_UTC_TIME","inspection":"WHAT YOU VISUALLY CHECKED","result":"PASS","surfaces":["SURFACE"]}
 ```
 
 Use `note` for ACTIVE, `blocker` for BLOCKED, the references/result object for
@@ -261,6 +270,23 @@ If defects remain, list them and use `PASS_WITH_DEFECTS`.
 Do not copy the example date as evidence. A timestamp without fractional digits,
 with three fractional digits, an offset instead of Z, or an invalid calendar
 date is refused with an error naming `inspected_at`.
+The placeholder above is intentionally invalid. New VISUAL completions and
+corrections also reject times before work.created_at or after the current request.
+Inspect after assignment and capture the actual time. ARC checks plausibility,
+not whether inspection occurred; never invent a plausible time to pass validation.
+
+Correct a retained COMPLETE item's evidence with work.correct: only its current
+On Duty (or unexpired Working) owner may do so, using the current revision,
+nonblank reason, and a full replacement evidence object of the original mode.
+Completion remains COMPLETE, revision increments, and WORK_CORRECTED preserves
+the superseded revision and reason alongside the earlier evidence in history.
+For reinspection or a retired/unavailable owner, the live Producer may use
+work.reassign on retained COMPLETE work to reopen it, with a reason and current
+generation/revision. This resets the current evidence to {}, never erases history,
+and is refused if reopening would exceed 50 current items. Poll includes up to
+16 recently completed relevant items for the owner as well as the Producer;
+older retained IDs/revisions can be recovered from visible activity. Pruned work
+cannot be corrected; its history remains, so record a linked follow-up item.
 
 ## Silent observation
 

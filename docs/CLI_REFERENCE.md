@@ -29,12 +29,12 @@ arc [--root ROOT] act --room ROOM --id ID --binding UUID \
 arc [--root ROOT] doctor --room ROOM [--json]
 ```
 
-There are no other ARC 2.1 commands, help topics, aliases, or abbreviated
+There are no other ARC 2.2 commands, help topics, aliases, or abbreviated
 options. Specification IDs are the three-digit strings `000` through `013`.
 
 ## Human-readable commands
 
-`version` prints `ARC 2.1.0` and LF. `help` reads the verified user guide from
+`version` prints `ARC 2.2.0` and LF. `help` reads the verified user guide from
 the installed knowledge container. `spec list` prints the 14 specification
 titles. `spec read ID` reads that verified specification. ID 013 is the full
 Terse v1.0 text, verified against its sidecar in the same installation as the
@@ -62,8 +62,11 @@ contains `room`, `self`, `producer`, `roster`, `schedule`, `qualification`, up
 to 50 visible `events`, `next_after`, `more`, relevant work, the next
 single-use `operation`, `earlier_activity_unavailable`, and `communication`. `qualification` is
 null except for a qualifying caller; then it carries the current challenge,
-earliest completion time, and deadline on every poll. A live Producer also
-receives its 16 most-recent completed work items. A directed event is returned
+earliest completion time, and deadline on every poll. Qualified owners and the
+live Producer also receive up to 16 most-recent relevant completed work items.
+After a timeout, a returning poll starts a fresh challenge up to twice, reported
+by automatic_recovery_attempts. Exhausted FAILED requires operator reconnect.
+A directed event is returned
 only to its recipient. Reusing an earlier sequence may repeat visible events;
 polling is not an acknowledgement.
 
@@ -89,6 +92,7 @@ pathname, or executable instruction. Its complete forms are:
 {"answer":"32-lowercase-hex","type":"qualification.answer"}
 {"evidence_mode":"TEXT","owner":"ai-000000000000","producer_generation":1,"scope":"text","type":"work.assign"}
 {"evidence":{"note":"text"},"revision":1,"state":"ACTIVE","type":"work.update","work":"work-000000000000"}
+{"evidence":{"references":[],"result":"corrected"},"reason":"correction reason","revision":2,"type":"work.correct","work":"work-000000000000"}
 {"owner":"ai-000000000000","producer_generation":1,"reason":"text","revision":1,"type":"work.reassign","work":"work-000000000000"}
 ```
 
@@ -111,7 +115,7 @@ Work update evidence is exact for its state:
 {"note":"text"}
 {"blocker":"text"}
 {"references":[],"result":"text"}
-{"artifact":"text","defects":[],"inspected_at":"2026-09-09T00:20:44.909582Z","inspection":"text","result":"PASS","surfaces":["text"]}
+{"artifact":"text","defects":[],"inspected_at":"ACTUAL_INSPECTION_UTC_TIME","inspection":"text","result":"PASS","surfaces":["text"]}
 ```
 
 The first form is ACTIVE, the second BLOCKED, the third COMPLETE/TEXT, and the
@@ -119,6 +123,13 @@ fourth COMPLETE/VISUAL. A visual result with defects uses
 `PASS_WITH_DEFECTS` and a nonempty `defects` array.
 Use the real inspection time in `YYYY-MM-DDTHH:MM:SS.ffffffZ` form, with six
 fractional digits and a valid UTC date. Invalid fields are named in the error.
+The placeholder is intentionally invalid. New completion/correction dates must
+fall between work creation and the current request, inclusive. A plausible date
+does not prove inspection. work.correct requires retained COMPLETE work owned
+by the available caller, its current revision, a nonblank reason and full evidence.
+It keeps COMPLETE, advances revision and appends WORK_CORRECTED. The live Producer
+may work.reassign retained COMPLETE work to reopen it, subject to the 50-current
+item limit. All earlier evidence remains in history; pruned work cannot be edited.
 
 The operation UUID comes from the latest poll. An exact retry of the most recent
 committed operation returns its original result without another effect. The

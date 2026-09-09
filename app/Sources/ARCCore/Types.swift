@@ -1,7 +1,7 @@
 import Foundation
 
 public enum ARCConstants {
-    public static let version = "2.1.0"
+    public static let version = "2.2.0"
     public static let roomFormat = "arc.room/1"
     public static let roomProtocol = "arc.protocol/1"
     public static let maximumRoomBytes = 8 * 1_024 * 1_024
@@ -280,11 +280,12 @@ public struct ARCParticipantView: Codable, Hashable, Identifiable, Sendable {
     public let bindingGeneration: Int64
     public let schedule: ARCScheduleView
     public let lastCheckIn: String?
+    public let automaticRecoveryAttempts: Int
 
     public init(
         id: String, name: String, phase: ARCParticipantPhase, duty: ARCDuty,
         isProducer: Bool, binding: String?, bindingGeneration: Int64,
-        schedule: ARCScheduleView, lastCheckIn: String?
+        schedule: ARCScheduleView, lastCheckIn: String?, automaticRecoveryAttempts: Int = 0
     ) {
         self.id = id
         self.name = name
@@ -295,11 +296,12 @@ public struct ARCParticipantView: Codable, Hashable, Identifiable, Sendable {
         self.bindingGeneration = bindingGeneration
         self.schedule = schedule
         self.lastCheckIn = lastCheckIn
+        self.automaticRecoveryAttempts = automaticRecoveryAttempts
     }
 
     enum CodingKeys: String, CodingKey {
         case id, name, phase, duty, isProducer, bindingGeneration
-        case schedule, lastCheckIn
+        case schedule, lastCheckIn, automaticRecoveryAttempts
     }
 
     public init(from decoder: Decoder) throws {
@@ -313,6 +315,7 @@ public struct ARCParticipantView: Codable, Hashable, Identifiable, Sendable {
         bindingGeneration = try container.decode(Int64.self, forKey: .bindingGeneration)
         schedule = try container.decode(ARCScheduleView.self, forKey: .schedule)
         lastCheckIn = try container.decode(String?.self, forKey: .lastCheckIn)
+        automaticRecoveryAttempts = try container.decodeIfPresent(Int.self, forKey: .automaticRecoveryAttempts) ?? 0
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -327,6 +330,7 @@ public struct ARCParticipantView: Codable, Hashable, Identifiable, Sendable {
         try container.encode(bindingGeneration, forKey: .bindingGeneration)
         try container.encode(schedule, forKey: .schedule)
         try container.encode(lastCheckIn, forKey: .lastCheckIn)
+        try container.encode(automaticRecoveryAttempts, forKey: .automaticRecoveryAttempts)
     }
 
     public func plainState(roomStatus: ARCRoomStatus) -> String {
@@ -337,7 +341,7 @@ public struct ARCParticipantView: Codable, Hashable, Identifiable, Sendable {
         case .invited: return "Waiting to connect"
         case .waitingForProducer: return "Waiting for the Producer"
         case .qualifying: return "Checking ARC access"
-        case .failed: return "ARC access check failed"
+        case .failed: return automaticRecoveryAttempts < 2 ? "Waiting to reconnect" : "Connection needs your help"
         case .retired: return "Retired"
         case .qualified: return duty == .working ? "Working" : duty == .on ? "On Duty" : "Off Duty"
         }
@@ -719,6 +723,7 @@ public enum ARCActionRequest: Hashable, Sendable {
     case workUpdate(
         work: String, revision: Int64, state: ARCWorkState, evidence: ARCJSONValue
     )
+    case workCorrect(work: String, revision: Int64, reason: String, evidence: ARCJSONValue)
     case workReassign(
         work: String, revision: Int64, owner: String, reason: String,
         producerGeneration: Int64
