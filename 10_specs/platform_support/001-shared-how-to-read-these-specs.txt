@@ -1,8 +1,8 @@
-ARC v2.3.0 HOW TO READ THE DETERMINING SPECIFICATIONS
+ARC v2.4.0 HOW TO READ THE DETERMINING SPECIFICATIONS
 
 READ-001 DETERMINING SET
 
-The determining ARC v2.3.0 set comprises fourteen specifications, numbered
+The determining ARC v2.4.0 set comprises fourteen specifications, numbered
 000 through 013. They are read together:
 
   000  product constitution and decision rule
@@ -20,7 +20,7 @@ The determining ARC v2.3.0 set comprises fourteen specifications, numbered
   012  sealed AI knowledge container and text round trip
   013  full Terse v2.0 language contract (canonical file under languages/terse/)
 
-This set describes software version 2.3.0. Product version is distinct from
+This set describes software version 2.4.0. Product version is distinct from
 the data, interface, and language identifiers below. The /1 data and interface
 versions remain unchanged; Terse advances from formal 1.0 to 2.0:
 
@@ -114,4 +114,4 @@ A release is complete only when every public control, command, state, schema,
 error, background action, knowledge member, and recovery path maps to one source
 implementation and at least one verification case. A prototype behavior that is
 not in this set is removed. A requirement without code and evidence is not an
-unfinished v2.3.0 feature; it means the candidate is not ARC v2.3.0.
+unfinished v2.4.0 feature; it means the candidate is not ARC v2.4.0.

@@ -7,6 +7,93 @@ import XCTest
 @testable import ARCApp
 
 final class ARCClientTests: XCTestCase {
+    /// Mirrors the failed -> automatically retrying lane beside two qualified
+    /// peers in the 2.3 crash report. Exercise real AppKit/SwiftUI layout, not
+    /// only the strings, and cross viewport boundaries as card heights change.
+    @MainActor
+    func testRecoveryTransitionsWithHistoryRemainLayoutStable() async throws {
+        let root = temporaryRoot("arc-recovery-history-layout")
+        defer { removeTemporaryRoot(root) }
+        let state = AppState(client: TestClient(rootURL: root), installation: TestInstallation())
+        try await waitUntil { state.installationReady && !state.isBusy }
+        let roomID = "room-012345abcdef"
+        state.rooms = [ARCRoomListItem(id: roomID, name: "Recovery layout", health: .current, failure: nil)]
+        state.selectedRoomID = roomID
+        func result(_ revision: Int) -> ARCRoomOpenResult {
+            let phase: ARCParticipantPhase = [.qualifying, .failed, .qualifying, .qualified][revision % 4]
+            let peers = (0..<(revision == 40 ? ARCConstants.maximumParticipants : 3)).map { index in
+                ARCParticipantView(id: "ai-" + String(format: "%012d", index),
+                    name: index < 3 ? ["Claude", "Grok", "Codex Astra"][index] : "Capacity participant \(index)",
+                    phase: index == 1 ? phase : .qualified,
+                    duty: index == 1 && phase != .qualified ? .notApplicable : .on,
+                    isProducer: index == 0, binding: nil, bindingGeneration: 1,
+                    schedule: ARCScheduleView(kind: index == 1 ? .qualification : .duty,
+                        status: .waiting, nextRequestLogicalUs: 60_000_000, deadlineLogicalUs: 180_000_000),
+                    lastCheckIn: "2026-09-09T12:52:50Z", automaticRecoveryAttempts: index == 1 ? 1 : 0)
+            }
+            return ARCRoomOpenResult(room: testRoom(id: roomID, name: "Recovery layout", revision: Int64(revision)),
+                producer: ARCProducerView(id: peers[0].id, name: peers[0].name, generation: 1, live: true),
+                participants: peers, work: [])
+        }
+        state.roomResult = result(0)
+        state.activity = (1...60).reversed().map { sequence in
+            ARCEventView(sequence: Int64(sequence), at: "2026-09-09T12:52:50Z", logicalUs: Int64(sequence),
+                kind: "QUALIFICATION_STARTED", actor: "arc", recipient: nil, subject: "ai-000000000001",
+                payload: .object(["automatic_recovery_attempts": .integer(1)]),
+                operationId: "test-\(sequence)", knowledgeSha256: String(repeating: "a", count: 64))
+        }
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1100, height: 760),
+            styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer { window.close() }
+        let hosting = NSHostingView(rootView: MainView().environmentObject(state))
+        window.contentView = hosting
+        window.orderFront(nil)
+        let observer = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 650),
+            styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+        observer.isReleasedWhenClosed = false
+        defer { observer.close() }
+        let transcript = NSHostingView(rootView: ActivityWindowView().environmentObject(state))
+        observer.contentView = transcript
+        let start = ProcessInfo.processInfo.systemUptime
+        for revision in 0..<80 {
+            if revision % 4 == 0 { observer.makeKeyAndOrderFront(nil) }
+            if revision % 4 == 2 { observer.orderOut(nil); window.makeKeyAndOrderFront(nil) }
+            observer.setContentSize(NSSize(width: revision % 2 == 0 ? 520 : 900, height: 500))
+            state.roomResult = result(revision)
+            state.showDetails = revision % 8 >= 4
+            state.textSizeIndex = revision % 3 == 0 ? 8 : 2
+            window.setContentSize(NSSize(width: revision % 2 == 0 ? 960 : 1200, height: 760))
+            try await Task.sleep(nanoseconds: 30_000_000)
+            hosting.layoutSubtreeIfNeeded()
+            transcript.layoutSubtreeIfNeeded()
+            func scrolls(_ view: NSView) -> [NSScrollView] {
+                (view as? NSScrollView).map { [$0] } ?? view.subviews.flatMap(scrolls)
+            }
+            for scroll in scrolls(hosting) {
+                guard let document = scroll.documentView else { continue }
+                let fraction = CGFloat(revision % 5) / 4
+                scroll.contentView.scroll(to: NSPoint(x: 0,
+                    y: fraction * max(0, document.bounds.height - scroll.contentSize.height)))
+                scroll.reflectScrolledClipView(scroll.contentView)
+            }
+            try await Task.sleep(nanoseconds: 30_000_000)
+        }
+        XCTAssertLessThan(ProcessInfo.processInfo.systemUptime - start, 30)
+        XCTAssertEqual(state.roomResult?.participants.count, 3)
+        XCTAssertEqual(state.activity.count, 60)
+        if let path = ProcessInfo.processInfo.environment["ARC_ROOM_TEST_SNAPSHOTS"] {
+            let directory = URL(fileURLWithPath: path, isDirectory: true)
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            for (name, view) in [("recovery-main", hosting as NSView), ("recovery-observer", transcript as NSView)] {
+                let bitmap = try XCTUnwrap(view.bitmapImageRepForCachingDisplay(in: view.bounds))
+                view.cacheDisplay(in: view.bounds, to: bitmap)
+                try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))
+                    .write(to: directory.appendingPathComponent("\(name).png"))
+            }
+        }
+    }
+
     @MainActor
     func testConnectionRecoveryGuidanceIsExplicitAndRendersBothAppearances() async throws {
         func ai(_ phase: ARCParticipantPhase, _ attempts: Int) -> ARCParticipantView {
@@ -70,6 +157,9 @@ final class ARCClientTests: XCTestCase {
         let copy = try String(contentsOf: source.appendingPathComponent("CopyableText.swift"), encoding: .utf8)
         XCTAssertTrue(copy.contains(".accessibilityAction(named: \"Copy Text\")"))
         XCTAssertTrue(copy.contains(".contextMenu"))
+        let room = try String(contentsOf: source.appendingPathComponent("RoomView.swift"), encoding: .utf8)
+        XCTAssertFalse(room.contains("LazyVStack"), "Room sections and history must not reintroduce lazy phase churn")
+        XCTAssertFalse(room.contains(".onAppear"), "History reads must be initiated by navigation, not layout")
     }
 
     @MainActor
@@ -1068,7 +1158,7 @@ final class ARCInstallationTests: XCTestCase {
         try writeBundle(bundle, specificationText: "version two\n", launcherText: "launcher", releaseVersion: "2.0.0")
         try installation.ensureInstalled(rootURL: root)
         XCTAssertEqual(try String(contentsOf: ARCCommunication.specificationURL(rootURL: root), encoding: .utf8), "version two\n")
-        for version in ["2.1.0", "2.2.0", "2.3.0"] {
+        for version in ["2.1.0", "2.2.0", "2.3.0", "2.4.0"] {
             try writeBundle(bundle, specificationText: "version two\n", launcherText: "launcher", releaseVersion: version)
             try installation.ensureInstalled(rootURL: root)
             XCTAssertEqual(try String(contentsOf: ARCCommunication.specificationURL(rootURL: root), encoding: .utf8), "version two\n")

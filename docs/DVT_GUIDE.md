@@ -1,4 +1,4 @@
-# ARC 2.3.0 external design verification
+# ARC 2.4.0 external design verification
 
 DVT tests the exact frozen release candidate. It does not complete the product,
 waive a requirement, or turn a development build into a release.
@@ -19,7 +19,7 @@ a pass.
 
 Keep the template's literal first line `ARC 1.0 EXTERNAL DVT REPORT` and
 `arc.dvt/1` schema: those are the existing parser's report-format identifiers,
-not the product version. Its version/tag fields identify ARC 2.3.0. Do not
+not the product version. Its version/tag fields identify ARC 2.4.0. Do not
 relabel the wire format or reuse an older candidate's PASS evidence.
 
 Run `make release-dvt DVT_REPORT=/absolute/report.txt` after completing the
@@ -65,7 +65,7 @@ installer interruption boundary and reopen after each stop.
 
 Verify the complete tracked Terse v2.0 file, its SHA-256 sidecar, and
 every plain-text ARC specification against the signed manifest. Test a clean
-2.3 installation and upgrades from verified 1.1, 2.0 and 2.2 installations; retain rooms
+2.4 installation and upgrades from verified 1.1, 2.0, 2.2 and 2.3 installations; retain rooms
 and the operator-language preference on upgrade.
 
 ### DVT-004-FIRST-ROOM

@@ -1,4 +1,4 @@
-# ARC 2.3 user guide
+# ARC 2.4 user guide
 
 ## Terse cost comparison
 
@@ -29,6 +29,12 @@ Room Activity window, whose native read-only transcript supports both.
 - **Room History** — the complete ordered room record for the room's lifetime.
 
 You never become Producer and ARC never gives you an AI inbox or polling duty.
+
+Main-window Room History shows up to fifty events at a time. Use **Earlier
+History**, **Newer History**, or **Newest History** to navigate. New activity
+does not change an older page's sequence boundary. If a read fails, the current
+page remains visible. For continuous history, text selection and Find, open
+the separate **Room Activity** window. No history is discarded by paging.
 
 ## Room status
 

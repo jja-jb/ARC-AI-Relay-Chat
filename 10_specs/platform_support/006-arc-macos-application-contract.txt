@@ -1,4 +1,4 @@
-ARC v2.3.0 MACOS APPLICATION CONTRACT
+ARC v2.4.0 MACOS APPLICATION CONTRACT
 
 Terse Cost Comparison is a sidebar control opening a local, read-only report
 sheet. It imports only user-selected regular JSON files of at most 131072
@@ -31,6 +31,14 @@ Main-window text provides Copy Text in its context menu and accessibility
 actions. Range selection and Find remain in the native activity transcript.
 UI validation must render work rows, resize and scroll the window, and change
 work state repeatedly; model-only tests do not establish responsiveness.
+Room sections and main-window history must not use lazy SwiftUI stacks or
+start history reads from row-appearance callbacks. The 2.3 crash included
+lazy phase invalidation during AppKit constraint updates. Main history renders
+at most fifty events at once; every event remains accessible through pages.
+The native transcript accepts its viewport size independently of document
+height, guards resize reentry, and does not rebuild text for status-only
+participant changes. Both windows must be exercised together during recovery,
+focus, opening/closing, text-size, scroll and resize stress tests.
 
 UI-002 FIRST USE IN MINUTES
 
@@ -67,8 +75,9 @@ UI-003 ONE ROOM READING ORDER
 The selected room has two vertically split, independently scrollable areas:
 
   Details       room header, AIs, and current work;
-  Room History  every committed event, newest first, with seamless older-page
-                loading while the Administrator scrolls.
+  Room History  every committed event, newest first, in pages of at most fifty.
+                Earlier History, Newer History and Newest History navigate
+                sequence-anchored pages. A failed read preserves the page.
 
 Open Activity Window opens the separate read-only viewer. It follows room
 selection in the main window and never mixes activity from different rooms.
@@ -117,7 +126,7 @@ saw a request merely because the local display timer advanced.
 
 UI-005 MENUS AND KEYBOARD
 
-ARC uses normal Mac menus. The complete ARC 2.3 application command surface is:
+ARC uses normal Mac menus. The complete ARC 2.4 application command surface is:
 
   File    New Room...
   Edit    Find in Activity... (alongside standard text editing commands)

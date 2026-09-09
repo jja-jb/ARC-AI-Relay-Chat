@@ -193,6 +193,13 @@ struct ActivityTranscript: NSViewRepresentable {
         context.coordinator.update(self, in: view)
     }
 
+    // A transcript's document height is not the window's desired height.
+    // Keep SwiftUI's sizing proposal independent of live text layout.
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: NSScrollView, context: Context) -> CGSize? {
+        CGSize(width: proposal.width.flatMap { $0.isFinite ? $0 : nil } ?? 520,
+               height: proposal.height.flatMap { $0.isFinite ? $0 : nil } ?? 360)
+    }
+
     @MainActor
     final class Coordinator: NSObject {
         private(set) var textView: NSTextView!
@@ -201,6 +208,7 @@ struct ActivityTranscript: NSViewRepresentable {
         private var starts: [Int64: Int] = [:]
         private var updating = false
         private var needsInitialScroll = false
+        private(set) var contentBuildCount = 0
 
         func makeScrollView() -> NSScrollView {
             let scroll = ARCTranscriptScrollView()
@@ -232,6 +240,8 @@ struct ActivityTranscript: NSViewRepresentable {
             textView = text
             scroll.viewportResized = { [weak self, weak scroll] in
                 guard let self, let scroll, !self.updating, self.previous != nil else { return }
+                self.updating = true
+                defer { self.updating = false }
                 self.textView.layoutManager?.ensureLayout(for: self.textView.textContainer!)
                 self.textView.sizeToFit()
                 if self.needsInitialScroll || self.previous?.followLive == true {
@@ -266,7 +276,8 @@ struct ActivityTranscript: NSViewRepresentable {
                 needsInitialScroll = scroll.contentSize.width <= 0 || scroll.contentSize.height <= 0
             }
             let contentChanged = roomChanged || old?.events != input.events
-                || old?.participants != input.participants || old?.fontSize != input.fontSize
+                || old?.participants.mapValues(\.name) != input.participants.mapValues(\.name)
+                || old?.fontSize != input.fontSize
             let enabledFollow = input.followLive && old?.followLive == false
             guard contentChanged || enabledFollow else { return }
             updating = true
@@ -280,6 +291,7 @@ struct ActivityTranscript: NSViewRepresentable {
             let oldFirst = orderedEvents.first?.sequence
             let oldNewest = orderedEvents.last?.sequence
             if contentChanged {
+                contentBuildCount += 1
                 orderedEvents = input.events.sorted { $0.sequence < $1.sequence }
                 let output = NSMutableAttributedString(string: "")
                 starts = [:]

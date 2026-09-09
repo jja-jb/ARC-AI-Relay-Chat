@@ -1,4 +1,4 @@
-ARC v2.3.0 EVENT, MESSAGE, AND WORK CONTRACT
+ARC v2.4.0 EVENT, MESSAGE, AND WORK CONTRACT
 
 An unexpired Working declaration under QD-006 also satisfies the On Duty
 availability requirements in this contract. Its owner is busy, not absent;

@@ -3,7 +3,7 @@
 TERSE
 ===========================================================================
 
-Status: Terse v2.0, release candidate, 9 September 2026; part of ARC v2.3
+Status: Terse v2.0, release candidate, 9 September 2026; part of ARC v2.4
 Vocabulary contract: integer 2 (the wire identifier for Terse v2.0)
 Earlier development drafts predate formal versioning, regardless of their labels.
 Normative language: MUST, MUST NOT, SHOULD, SHOULD NOT, MAY (sec 1)

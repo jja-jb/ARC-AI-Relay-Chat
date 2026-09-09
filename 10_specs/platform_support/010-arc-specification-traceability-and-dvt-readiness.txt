@@ -1,8 +1,8 @@
-ARC v2.3.0 TRACEABILITY AND DESIGN-VERIFICATION CONTRACT
+ARC v2.4.0 TRACEABILITY AND DESIGN-VERIFICATION CONTRACT
 
 TV-001 COMPLETE MEANS PRESENT AND TESTED
 
-A v2.3.0 candidate contains every behavior required by specifications 000 through
+A v2.4.0 candidate contains every behavior required by specifications 000 through
 012 and the separately bundled Terse contract under QD-001 and IR-003.
 There is no postponed required behavior, hidden unlock, simulated production
 path, or conditional feature. Verification shows that the complete candidate

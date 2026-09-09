@@ -1,4 +1,8 @@
-# ARC 2.3 release checklist
+# ARC 2.4 release checklist
+
+- [ ] Complete the two-window recovery/resize/scroll/focus and history-page
+  acceptance plan in `docs/ARC_2_4_TEST_REVIEW.md` on the frozen candidate.
+  No repeated-constraint warnings or unresponsive window are acceptable.
 
 - Verify bounded returning-poll recovery and the explicit reconnect/copy control.
 - Verify completed evidence correction, immutable history, reopening capacity,
@@ -37,7 +41,7 @@ does not replace it.
 ## Mac candidate
 
 - [ ] App and `arc` are arm64-only.
-- [ ] Bundle identifier is `org.jonnybass.arc`; version is `2.3.0`.
+- [ ] Bundle identifier is `org.jonnybass.arc`; version is `2.4.0`.
 - [ ] Privacy manifest declares no collection/tracking and the exact approved
       file-metadata and elapsed-time reasons.
 - [ ] Install manifest contains only regular native command, knowledge,

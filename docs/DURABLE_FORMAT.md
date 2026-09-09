@@ -1,11 +1,11 @@
 # ARC room file
 
-ARC 2.3 reads prior room/1 records without rewriting historical evidence.
-It adds optional participant automatic_recovery_attempts (0–2; absent means 0)
+ARC 2.4 reads prior room/1 records without rewriting historical evidence.
+It retains optional participant automatic_recovery_attempts (0–2; absent means 0)
 and QUALIFICATION_RECOVERED / WORK_CORRECTED events. Earlier ARC executables
 reject these extensions: do not downgrade a room after using newer features.
 
-ARC 2.3 adds TERSE_MESSAGE with exactly packet, binding_generation,
+ARC 2.4 retains TERSE_MESSAGE with exactly packet, binding_generation,
 target_binding_generation and specification_sha256 in its payload. It is
 addressed, private, and carries no work authority. Declarations and contexts
 are reconstructed from the same event history, not an extra durable store.

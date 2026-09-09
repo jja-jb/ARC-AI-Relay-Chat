@@ -34,12 +34,12 @@ arc [--root ROOT] terse status --room ROOM --id AI --binding UUID
 arc [--root ROOT] terse read --room ROOM --id AI --binding UUID --sequence N
 ```
 
-There are no other ARC 2.3 commands, help topics, aliases, or abbreviated
+There are no other ARC 2.4 commands, help topics, aliases, or abbreviated
 options. Specification IDs are the three-digit strings `000` through `013`.
 
 ## Human-readable commands
 
-`version` prints `ARC 2.3.0` and LF. `help` reads the verified user guide from
+`version` prints `ARC 2.4.0` and LF. `help` reads the verified user guide from
 the installed knowledge container. `spec list` prints the 14 specification
 titles. `spec read ID` reads that verified specification. ID 013 is the full
 Terse v2.0 text, verified against its sidecar in the same installation as the

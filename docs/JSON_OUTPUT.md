@@ -42,7 +42,7 @@ Exit status is 0, 2, 3, or 4 as described in
 
 ## Request rules
 
-ARC 2.3 adds terse.send with exactly type, to, packet; specification 013
+ARC 2.4 supports terse.send with exactly type, to, packet; specification 013
 sections 20–26 govern packet and helper output shapes. It retains work.correct
 with exactly type, work, revision, reason, evidence;
 see CLI_REFERENCE.md for authority, timestamp and audit rules. Participant views

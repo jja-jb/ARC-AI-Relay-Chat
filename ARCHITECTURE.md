@@ -1,4 +1,4 @@
-# ARC 2.3 architecture
+# ARC 2.4 architecture
 
 ARC has one small native architecture:
 

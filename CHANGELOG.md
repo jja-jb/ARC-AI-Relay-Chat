@@ -2,6 +2,22 @@
 
 ARC uses semantic versions. Dates use ISO 8601.
 
+## 2.4.0 — 2026-09-09 (unpublished candidate)
+
+- Remove lazy room/history view-phase churn implicated by the 2.3 AppKit
+  constraint-loop stack. Main history uses bounded, sequence-anchored pages;
+  the separate read-only window retains continuous history and Find.
+- Stop history reads triggered by row appearance. A failed page read keeps
+  the current page and all recorded events; no history is discarded.
+- Keep transcript viewport sizing independent of text height; guard resize
+  reentry and avoid rebuilding the transcript for status-only participant updates.
+- Add real two-window recovery/resize/scroll/focus stress, bounded-page checks,
+  and a regression for unnecessary transcript rebuilds.
+- Refresh current specifications, literature, release identities and Terse's
+  containing-product heading. Terse remains 2.0 / wire 2, with unchanged semantics.
+- Exact original crash trigger is not yet reproduced. These changes remove
+  observed risk paths; signed-candidate live acceptance remains required.
+
 ## 2.3.0 — 2026-09-09 (unpublished candidate)
 
 - Add Terse 2.0 (wire 2), retaining thirty classic words and adding fixed,

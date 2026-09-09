@@ -226,7 +226,7 @@ Use:
 ["ABSOLUTE_ARC","--root","ABSOLUTE_ARC_ROOT","act","--room","ROOM_ID","--id","PARTICIPANT_ID","--binding","BINDING","--operation","OPERATION_UUID","--request","ONE_JSON_OBJECT"]
 ```
 
-The ARC 2.3 request types (using the existing protocol/1 envelope) are:
+The ARC 2.4 request types (using the existing protocol/1 envelope) are:
 
 ```json
 {"text":"MESSAGE","to":"ai-xxxxxxxxxxxx","type":"message"}

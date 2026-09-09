@@ -10,11 +10,11 @@ final class ARCDevToolTests: XCTestCase {
             ("10_specs/platform_support/000-shared-constitution.txt", "Specifications 000 through 013"),
             ("README.md", "Specifications 000 through 013"),
             ("ARCHITECTURE.md", "full governing Terse v2.0 specification, 013"),
-            ("man/arc.1", "ARC 2.3.0"),
+            ("man/arc.1", "ARC 2.4.0"),
             ("man/arc.1", "IDs 000 through 013"),
             ("man/arc.1", "message.broadcast"),
-            ("INSTALL.md", "# Install ARC 2.3"),
-            ("RELEASE_CHECKLIST.md", "# ARC 2.3 release checklist"),
+            ("INSTALL.md", "# Install ARC 2.4"),
+            ("RELEASE_CHECKLIST.md", "# ARC 2.4 release checklist"),
             ("brand/arc-product-brief.html", "Terse v2.0 is governing specification 013")
         ]
         for (path, expected) in checks {
@@ -28,7 +28,7 @@ final class ARCDevToolTests: XCTestCase {
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let bytes = try Data(contentsOf: source.appendingPathComponent(ARCReleaseSupport.terseSpecification))
         XCTAssertEqual(KnowledgeContainer.hex(KnowledgeContainer.sha256(bytes)),
-            "0a260c87e34a9318513d6049c4e297e695205b89cc58a5640adf73b492d29235")
+            "fdd93c6be7892ac2269472c7213b34a20f013b5b93afb95688ae90106d4552b2")
         let provenance = try String(contentsOf: source.appendingPathComponent("languages/terse/README.md"), encoding: .utf8)
         XCTAssertTrue(provenance.contains("`" + KnowledgeContainer.hex(KnowledgeContainer.sha256(bytes)) + "`"),
             "Terse's documented current digest must match the exact packaged source bytes")

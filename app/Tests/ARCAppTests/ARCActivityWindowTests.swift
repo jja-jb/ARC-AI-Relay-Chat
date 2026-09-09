@@ -4,6 +4,57 @@ import XCTest
 @testable import ARCApp
 
 final class ARCActivityWindowTests: XCTestCase {
+    func testHistoryPagesAreBoundedStableAndDoNotSkipOnFailedLoad() {
+        let events = (1...150).reversed().map { event($0) }
+        var page = ARCHistoryPage()
+        XCTAssertEqual(page.events(in: events).map(\.sequence), Array((101...150).reversed()).map(Int64.init))
+        page.earlier(in: events)
+        XCTAssertEqual(page.events(in: events).map(\.sequence), Array((51...100).reversed()).map(Int64.init))
+        let updated = [event(151)] + events
+        XCTAssertEqual(page.events(in: updated).first?.sequence, 100)
+        page.earlier(in: events)
+        XCTAssertEqual(page.events(in: events).last?.sequence, 1)
+        XCTAssertFalse(page.hasEarlier(in: events, nextBefore: nil))
+        page.earlier(in: events)
+        XCTAssertEqual(page.events(in: events).first?.sequence, 50)
+        page.newer()
+        XCTAssertEqual(page.events(in: events).first?.sequence, 100)
+        page.newer()
+        XCTAssertTrue(page.isNewest)
+        XCTAssertEqual(page.events(in: updated).first?.sequence, 151)
+        let loaded = Array(events.prefix(50))
+        XCTAssertTrue(page.needsEarlierLoad(in: loaded))
+        XCTAssertTrue(page.hasEarlier(in: loaded, nextBefore: 101))
+        page.earlier(in: loaded) // failed/unfinished disk read must not advance
+        XCTAssertTrue(page.isNewest)
+    }
+
+    @MainActor
+    func testDutyUpdatesDoNotRebuildTranscriptButNameChangesDo() {
+        let coordinator = ActivityTranscript.Coordinator()
+        let scroll = coordinator.makeScrollView()
+        scroll.frame = NSRect(x: 0, y: 0, width: 520, height: 360)
+        func participant(_ phase: ARCParticipantPhase, name: String = "Grok") -> ARCParticipantView {
+            ARCParticipantView(id: "ai-1", name: name, phase: phase, duty: .notApplicable,
+                isProducer: false, binding: nil, bindingGeneration: 1,
+                schedule: ARCScheduleView(kind: .none, status: .none,
+                    nextRequestLogicalUs: nil, deadlineLogicalUs: nil), lastCheckIn: nil)
+        }
+        for phase in [ARCParticipantPhase.qualifying, .failed, .qualifying, .qualified] {
+            var value = input(1...50)
+            value = ActivityTranscript(roomID: value.roomID, events: value.events,
+                participants: ["ai-1": participant(phase)], fontSize: 13,
+                followLive: false, canLoadEarlier: false, loadEarlier: {})
+            coordinator.update(value, in: scroll)
+        }
+        XCTAssertEqual(coordinator.contentBuildCount, 1)
+        coordinator.update(ActivityTranscript(roomID: "test-room", events: input(1...50).events,
+            participants: ["ai-1": participant(.qualified, name: "Renamed AI")], fontSize: 13,
+            followLive: false, canLoadEarlier: false, loadEarlier: {}), in: scroll)
+        XCTAssertEqual(coordinator.contentBuildCount, 2)
+        XCTAssertTrue(coordinator.textView.string.contains("Renamed AI"))
+    }
+
     func testParticipantColorsAndEventLabelsAreStable() {
         XCTAssertEqual(ARCTranscriptPresentation.colorIndex(for: "ai-1"),
             ARCTranscriptPresentation.colorIndex(for: "ai-1"))

@@ -1,4 +1,4 @@
-ARC v2.3.0 AI INSTRUCTIONS, QUALIFICATION, DUTY, AND POLLING CONTRACT
+ARC v2.4.0 AI INSTRUCTIONS, QUALIFICATION, DUTY, AND POLLING CONTRACT
 
 QD-001 ONE GENERIC AI GUIDE
 
@@ -59,7 +59,7 @@ entire active lifetime, not only while work is assigned, and requires an
 immediate stop and removal of recurring automations after RETIRED or when
 ARC is unavailable. No provider-specific inference is needed.
 
-The launcher is the single signed native ARC 2.3 executable installed by ARC,
+The launcher is the single signed native ARC 2.4 executable installed by ARC,
 using arc.protocol/1, and it
 reads ARC's validated knowledge container, the separately verified local Terse
 file, and the app-wide operator-language preference. A room records its format and protocol;
@@ -72,7 +72,7 @@ The Terse communication block names the absolute installed file at
 current/languages/terse/001-terse-language-specification.txt beneath the exact ARC
 root. It instructs the AI to begin with section 19, then read every section and
 appendix before participation. A summary or vocabulary list is not a substitute.
-ARC 2.3 bundles governing Terse v2.0 specification 013 from the tracked
+ARC 2.4 bundles governing Terse v2.0 specification 013 from the tracked
 repository file. Its wire vocabulary identifier is the integer 2.
 Matching word spellings alone do not establish matching meanings across
 contract versions; the full language file defines the exchange and repair rules.

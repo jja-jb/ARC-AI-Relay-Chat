@@ -1,4 +1,4 @@
-# ARC 2.3.0 traceability
+# ARC 2.4.0 traceability
 
 Terse 2.0 specification 013 sections 20–26 map to ARCTerseTests and the
 Terse/ledger/score helpers in ARCCore. TERSE_MESSAGE uses the existing durable
@@ -15,7 +15,15 @@ public behavior fails `source-check`.
 
 ## Local regression additions — September 2026
 
-ARC 2.3: QD-005/QD-008 and UI-003 are covered by
+ARC 2.4: UI-001/UI-003 map to
+`testRecoveryTransitionsWithHistoryRemainLayoutStable`,
+`testHistoryPagesAreBoundedStableAndDoNotSkipOnFailedLoad`, and
+`testDutyUpdatesDoNotRebuildTranscriptButNameChangesDo`. These exercise the
+two-window recovery stress path, bounded non-lazy history and status-only
+transcript updates. ARC_2_4_TEST_REVIEW.md records the crash evidence and limits:
+the original exception has not been reproduced by the synthetic tests.
+
+Retained from ARC 2.3: QD-005/QD-008 and UI-003 are covered by
 testAutomaticRecoveryIsBoundedFreshAndRestartsOnlyOnOwnPoll and
 testConnectionRecoveryGuidanceIsExplicitAndRendersBothAppearances. MW-005/MW-007,
 CLI-008 and REC-010 are covered by
@@ -43,9 +51,9 @@ Development-root isolation is covered by
 standard root and ignore development overrides. The bounded manual interface
 smoke check is recorded in ARC_2_1_TEST_REVIEW.md.
 
-The source specification set is synchronized to ARC 2.3.0 behavior. Room,
+The source specification set is synchronized to ARC 2.4.0 behavior. Room,
 protocol, qualification, knowledge Profile 1, and report schema identifiers
-retain their own versions; they do not become /2 because the product is 2.3.
+retain their own versions; they do not become /2 because the product is 2.4.
 The complete Terse v2.0 source remains in languages/terse/ as governing ARC
 specification 013, mapped through QD-001 / IR-003 and CLI-002. Its separate
 signed file preserves the Profile 1 format. The full verified text is exposed

@@ -1,4 +1,4 @@
-ARC v2.3.0 NATIVE COMMAND AND MACHINE INTERFACE CONTRACT
+ARC v2.4.0 NATIVE COMMAND AND MACHINE INTERFACE CONTRACT
 
 CLI-001 PURPOSE AND SINGLE IMPLEMENTATION
 
@@ -18,7 +18,7 @@ or message changes the root, executable, or verified knowledge identity.
 
 CLI-002 COMPLETE GRAMMAR
 
-The complete ARC 2.3 grammar (using arc.protocol/1) is:
+The complete ARC 2.4 grammar (using arc.protocol/1) is:
 
   arc version
   arc help
@@ -49,7 +49,7 @@ short options, positional alternatives, response files, help topics, aliases,
 abbreviations, hidden compatibility commands, or option values read from stdin.
 Unknown or extra input is INVALID_ARGUMENT.
 
-`version` writes exactly `ARC 2.3.0` plus LF. `help` writes the verified
+`version` writes exactly `ARC 2.4.0` plus LF. `help` writes the verified
 help/arc-help.txt member. `spec list` writes the stable titles for three-digit
 IDs 000 through 013. `spec read ID` writes the corresponding verified text.
 IDs 000 through 012 use the knowledge container. ID 013 returns the complete

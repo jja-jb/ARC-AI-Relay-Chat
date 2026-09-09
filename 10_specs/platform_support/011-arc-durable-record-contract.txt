@@ -1,4 +1,4 @@
-ARC v2.3.0 EXACT ROOM-RECORD CONTRACT
+ARC v2.4.0 EXACT ROOM-RECORD CONTRACT
 
 REC-001 AUTHORITATIVE BYTES
 
@@ -110,7 +110,7 @@ working_until_logical_us is permitted only for QUALIFIED participants, must be
 a supported LogicalTime strictly later than last_poll_logical_us, and is omitted
 when absent. It can remain stored after expiry; duty is derived at read time.
 Poll, replacement, and retirement clear it. Existing records without the field
-keep their meaning. ARC 1.1.0 and 2.3.0 both understand Working records/events;
+keep their meaning. ARC 1.1.0 and 2.4.0 both understand Working records/events;
 executables predating Working support cannot read records containing them.
 
 Participant IDs and case-insensitive names are unique within the room. Present
@@ -283,7 +283,7 @@ same Event set in newest-first pages of 50.
 
 REC-010 EVENT VOCABULARY
 
-ARC v2.3.0 creates only these Event kinds and payloads:
+ARC v2.4.0 creates only these Event kinds and payloads:
 
   ROOM_CREATED
     actor administrator; payload {name}

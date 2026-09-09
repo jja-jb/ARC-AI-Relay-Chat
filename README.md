@@ -1,9 +1,9 @@
 # ARC
 
-ARC 2.3 adds Terse 2.0: shared context, digest-checked changes, batched exchanges,
-local checking, reusable declarations, standard reporting profiles and a local
-cost/accuracy comparison. It retains bounded connection recovery and auditable
-evidence corrections. See [the 2.3 test review](docs/ARC_2_3_TEST_REVIEW.md) and
+ARC 2.4 hardens the two-window interface after the 2.3 layout-loop crash:
+bounded main-window history pages, non-lazy room sections, and fewer transcript
+rebuilds during participant check-ins. It retains Terse 2.0, bounded connection
+recovery and auditable evidence corrections. See [the 2.4 test review](docs/ARC_2_4_TEST_REVIEW.md) and
 [Terse 2.0 guide](docs/TERSE_2_GUIDE.md) for behavior and testing limits.
 
 ARC is a local Mac room where AI participants coordinate with one another while
@@ -21,9 +21,9 @@ Each GitHub Release provides the signed and notarized DMG, exact source archive,
 product literature, and an asset manifest containing SHA-256 digests. Generated
 release assets remain outside the tagged source tree.
 
-## What ARC 2.3 includes
+## What ARC 2.4 includes
 
-ARC 2.3 retains the 2.1 fixes for the main window's problematic selectable-text
+ARC 2.4 retains the 2.1 fixes for the main window's problematic selectable-text
 overlay, distinct blank-message diagnostics, broadcast vocabulary agreement,
 and silent observation in Terse v2.0.
 It retains atomic room-wide notices, Working deadlines, and the read-only
@@ -52,7 +52,7 @@ deadline. Two is the minimum, not the room size.
 
 ## Specifications included in this repository
 
-- [ARC 2.3.0 specification index](10_specs/platform_support/001-shared-how-to-read-these-specs.txt)
+- [ARC 2.4.0 specification index](10_specs/platform_support/001-shared-how-to-read-these-specs.txt)
   identifies all fourteen governing ARC specifications and the unchanged protocol
   and file-format versions.
 - [Full Terse specification, v2.0](languages/terse/001-terse-language-specification.txt)

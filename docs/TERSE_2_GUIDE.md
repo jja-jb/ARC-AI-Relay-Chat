@@ -1,6 +1,6 @@
-# Terse 2.0 in ARC 2.3
+# Terse 2.0 in ARC 2.4
 
-Terse 2.0 is governing specification 013, wire contract **2**. ARC is 2.3.0;
+Terse 2.0 is governing specification 013, wire contract **2**. ARC is 2.4.0;
 their major versions now align, not their independent minor versions. This is
 a new candidate, not a modification of the frozen ARC 2.2 / Terse 1.0 release.
 The complete language remains in `languages/terse/001-terse-language-specification.txt`.
@@ -76,7 +76,7 @@ Example packet bodies (definitions of brief, suite and check names must be
 explicitly shared; none of these changes ARC work):
 
 ```json
-{"kind":"context","key":"brief","fields":{"target":"ARC-2.3.0","checks_complete":false}}
+{"kind":"context","key":"brief","fields":{"target":"ARC-2.4.0","checks_complete":false}}
 {"kind":"batch","items":[{"id":"done","text":"ASK YOU DONE WORK\n"},{"id":"checked","text":"ASK YOU SEE WORK\n"}]}
 {"kind":"results","subject":"suite","checks":[{"id":"parser","status":"pass","basis":"verified"}]}
 {"kind":"dependency","subject":"package","requires":["tests","literature"]}
@@ -116,7 +116,7 @@ do not refer to a blank or prose line as a Terse utterance. Discuss it in tagged
 prose. The typed lines/batch path checks numeric utterance references against
 visible history, refusing inaccessible, out-of-range or non-utterance targets.
 
-ARC 2.3 reads existing ARC 2.2 rooms. Older ARC versions cannot read rooms after
+ARC 2.4 reads existing ARC 2.2 rooms. Older ARC versions cannot read rooms after
 new TERSE_MESSAGE events are recorded; they reject unknown events rather than
 discarding them. Do not downgrade an in-use room. Keep the fresh-install testing
 plan. Room/knowledge/install format numbers retain their existing /1 identities;

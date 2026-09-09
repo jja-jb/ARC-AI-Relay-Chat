@@ -18,7 +18,10 @@ struct RoomView: View {
     var body: some View {
         VSplitView {
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 18) {
+                // These are a small, bounded set of sections, not virtual rows.
+                // Lazy phase changes appear in the 2.3 crash's layout stack;
+                // keep these bounded sections outside that update path.
+                VStack(alignment: .leading, spacing: 18) {
                     RoomHeader(result: result)
                     Divider()
                     ParticipantsSection(result: result)
@@ -31,13 +34,7 @@ struct RoomView: View {
             }
             .frame(minHeight: 340)
 
-            ScrollView {
-                ActivitySection(result: result)
-                    .padding(22)
-                    .frame(maxWidth: 920, alignment: .leading)
-                    .frame(maxWidth: .infinity, alignment: .top)
-            }
-            .frame(minHeight: 220)
+            ActivitySection(result: result).frame(minHeight: 220)
         }
         .id(result.room.id)
         .onChange(of: result.room.status) { oldStatus, newStatus in
@@ -699,43 +696,73 @@ private struct ActivitySection: View {
     @EnvironmentObject private var state: AppState
     @Environment(\.openWindow) private var openWindow
     let result: ARCRoomOpenResult
+    @State private var page = ARCHistoryPage()
+    @State private var awaitingEarlierPage = false
+
+    private var visibleEvents: [ARCEventView] { page.events(in: state.activity) }
 
     private var participants: [String: ARCParticipantView] {
         Dictionary(result.participants.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            ViewThatFits(in: .horizontal) {
-                HStack {
-                    Text("Room History").font(.title2.bold())
-                    Spacer()
-                    openActivityButton
-                }
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Room History").font(.title2.bold())
-                    openActivityButton
-                }
-            }
-            if state.activity.isEmpty {
-                Text("No room activity yet.")
-                    .foregroundStyle(.secondary)
-            } else {
-                LazyVStack(spacing: 10) {
-                    ForEach(state.activity) { event in
-                        ActivityRow(event: event, participants: participants)
-                            .onAppear {
-                                if event.sequence == state.activity.last?.sequence,
-                                   state.nextActivityBefore != nil {
-                                    state.loadEarlierActivity()
-                                }
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    ViewThatFits(in: .horizontal) {
+                        HStack {
+                            Text("Room History").font(.title2.bold())
+                            Spacer()
+                            openActivityButton
+                        }
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Room History").font(.title2.bold())
+                            openActivityButton
+                        }
+                    }
+                    if state.activity.isEmpty {
+                        Text("No room activity yet.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        // Bound the native view tree without lazy view-phase mutations
+                        // or starting a read from an appearance/layout callback.
+                        VStack(spacing: 10) {
+                            ForEach(visibleEvents) { event in
+                                ActivityRow(event: event, participants: participants)
                             }
+                        }
+                        HStack {
+                            if !page.isNewest {
+                                Button("Newest History") { page = ARCHistoryPage() }
+                                Button("Newer History") { page.newer() }
+                            }
+                            if page.hasEarlier(in: state.activity, nextBefore: state.nextActivityBefore) {
+                                Button("Earlier History") {
+                                    if page.needsEarlierLoad(in: state.activity) {
+                                        awaitingEarlierPage = true
+                                        state.loadEarlierActivity()
+                                    } else {
+                                        page.earlier(in: state.activity)
+                                    }
+                                }
+                                .disabled(state.isBusy)
+                            }
+                        }
+                        .controlSize(.small)
+                        Text("Up to 50 events per page. The Activity window provides continuous history and Find.")
+                            .font(.caption).foregroundStyle(.secondary)
                     }
                 }
-                if state.nextActivityBefore != nil {
-                    Button("Show Earlier History") { state.loadEarlierActivity() }
-                        .disabled(state.isBusy)
-                }
+                .id("history-page-top")
+                .padding(22)
+                .frame(maxWidth: 920, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .top)
+            }
+            .onChange(of: page) { _, _ in proxy.scrollTo("history-page-top", anchor: .top) }
+            .onChange(of: state.isBusy) { _, busy in
+                guard !busy, awaitingEarlierPage else { return }
+                awaitingEarlierPage = false
+                page.earlier(in: state.activity)
             }
         }
     }
@@ -745,6 +772,36 @@ private struct ActivitySection: View {
             openWindow(id: ARCActivityWindow.id)
         }
     }
+}
+
+/// Sequence-anchored pages remain stable when live events arrive. Loading an
+/// older disk page is separate from navigation, so a failed read never blanks
+/// the current page or skips records.
+struct ARCHistoryPage: Equatable {
+    private var boundaries: [Int64] = []
+    var isNewest: Bool { boundaries.isEmpty }
+
+    func events(in events: [ARCEventView]) -> [ARCEventView] {
+        Array(events.lazy.filter { event in
+            boundaries.last.map { event.sequence < $0 } ?? true
+        }.prefix(ARCConstants.eventPageSize))
+    }
+
+    func needsEarlierLoad(in all: [ARCEventView]) -> Bool {
+        guard let last = events(in: all).last else { return true }
+        return !all.contains { $0.sequence < last.sequence }
+    }
+
+    func hasEarlier(in all: [ARCEventView], nextBefore: Int64?) -> Bool {
+        !needsEarlierLoad(in: all) || nextBefore != nil
+    }
+
+    mutating func earlier(in all: [ARCEventView]) {
+        guard !needsEarlierLoad(in: all), let last = events(in: all).last else { return }
+        boundaries.append(last.sequence)
+    }
+
+    mutating func newer() { if !boundaries.isEmpty { boundaries.removeLast() } }
 }
 
 private struct ActivityRow: View {

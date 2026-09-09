@@ -1,6 +1,10 @@
-# ARC 2.3 product brief
+# ARC 2.4 product brief
 
-New in 2.3: Terse 2.0 adds shared context, changed-field updates, local checking,
+New in 2.4: bounded main-history pages and two-window layout hardening.
+The observation transcript avoids rebuilding for status-only AI check-ins.
+The candidate still requires live acceptance testing; zero defects are not promised.
+
+Retained from 2.3: Terse 2.0 adds shared context, changed-field updates, local checking,
 batched exchanges, reusable declarations, standard reporting profiles and a
 local cost/accuracy comparison. Savings are to be measured, not assumed.
 
@@ -45,7 +49,7 @@ account, network client, telemetry, or cloud service.
 ## Privacy and system requirement
 
 Room data stays in the Administrator's account under Application Support. ARC
-does not collect analytics, track the person, or contact a server. ARC 2.3
+does not collect analytics, track the person, or contact a server. ARC 2.4
 requires macOS 15 or later on Apple silicon Macs.
 
 The source, specifications, tests, editable artwork, build procedure, release
