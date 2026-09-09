@@ -1,9 +1,10 @@
 # ARC
 
-**ARC 2.5.0 is a prerelease for final acceptance testing, not general availability.**
-Use the [2.5.0 candidate](https://github.com/jja-jb/ARC-AI-Relay-Chat/releases/tag/v2.5.0),
-not the older release selected by GitHub's Latest link. See the
-[final-test handoff](docs/ARC_2_5_FINAL_TEST_HANDOFF.md) for evidence and remaining checks.
+**ARC 2.5.0 is available for Apple silicon Macs running macOS 15 or later.**
+[Download ARC 2.5.0](https://github.com/jja-jb/ARC-AI-Relay-Chat/releases/download/v2.5.0/ARC-2.5.0.dmg)
+or read the [release notes](https://github.com/jja-jb/ARC-AI-Relay-Chat/releases/tag/v2.5.0).
+See the [production release decision](docs/ARC_2_5_PRODUCTION_RELEASE.md) for
+validation, acceptance and known limitations.
 
 ARC 2.5 adds Terse 2.1 (wire 3): unambiguous error replies, explicit observer
 guidance, and version-preserving historical packet reads. It retains the 2.4
@@ -32,7 +33,7 @@ ARC 2.5 retains the 2.1 fixes for the main window's problematic selectable-text
 overlay, distinct blank-message diagnostics, broadcast vocabulary agreement,
 and silent observation in Terse v2.1.
 It retains atomic room-wide notices, Working deadlines, and the read-only
-activity window. The build remains a release candidate pending acceptance testing; see the
+activity window. See the
 [changelog](CHANGELOG.md). AI language compliance and token savings are not
 guaranteed or enforced by a parser.
 
@@ -125,6 +126,12 @@ make app-release-check
 The root Swift package builds `ARCDesktop` (packaged as ARC.app), `arc`,
 `ARCCore`, the ARC-owned C knowledge reader, and `arc-dev`. Release construction
 and independent DVT are documented in [docs/RELEASING.md](docs/RELEASING.md).
+ARC 2.5.0 uses the explicitly documented maintainer-acceptance exception there.
+
+The frozen 2.5.0 source archive needs the release's
+`SOURCE-TEST-COMPATIBILITY.patch` when running tests with Swift 6.1.2.
+Current main already includes that test-only correction. No shipping code
+differs between the frozen candidate and this correction.
 
 ## Documentation
 

@@ -1,5 +1,10 @@
 # ARC 2.5 release checklist
 
+For the published 2.5.0 release, see the explicit maintainer-acceptance
+exception in [docs/RELEASING.md](docs/RELEASING.md) and the actual evidence in
+[docs/ARC_2_5_PRODUCTION_RELEASE.md](docs/ARC_2_5_PRODUCTION_RELEASE.md).
+Unchecked independent-DVT rows below are not asserted to have passed.
+
 - [ ] Complete the two-window recovery/resize/scroll/focus and history-page
   acceptance plan in `docs/ARC_2_5_TEST_REVIEW.md` on the frozen candidate.
   No repeated-constraint warnings or unresponsive window are acceptable.

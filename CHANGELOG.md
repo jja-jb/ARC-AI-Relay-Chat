@@ -2,7 +2,11 @@
 
 ARC uses semantic versions. Dates use ISO 8601.
 
-## 2.5.0 — 2026-09-09 (unpublished candidate)
+## 2.5.0 — 2026-09-09
+
+- Promote the tested, unchanged signed installer to general availability on
+  maintainer acceptance. See docs/ARC_2_5_PRODUCTION_RELEASE.md for evidence,
+  the documented release-process exception and known source-test limitation.
 
 - Introduce Terse 2.1 / wire 3 as required for a normative contract change.
   Error replies name the failed token or section, never an ambiguous numeric

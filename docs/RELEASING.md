@@ -1,5 +1,22 @@
 # Releasing ARC 2.5
 
+## ARC 2.5.0 maintainer-acceptance exception
+
+The maintainer approved general availability after reporting completion of
+human-facing testing and reviewing the AI-room results and disclosed source-test
+limitation. For this release only, the decision and limits are recorded in
+[ARC_2_5_PRODUCTION_RELEASE.md](ARC_2_5_PRODUCTION_RELEASE.md).
+This is not a claim that the independent fifteen-row DVT procedure below passed.
+No DVT PASS report or canonical release-seal metadata is fabricated.
+
+The four frozen candidate assets and the existing compatibility patch remain
+unchanged. Additional PRODUCTION-ACCEPTANCE.md and PRODUCTION-METADATA.json
+record the actual acceptance basis, source provenance and asset hashes;
+SHA256SUMS covers every other attached asset. These are a separately identified
+maintainer-acceptance record, not the arc.dvt/1 or release-seal format.
+The published annotated tag is not moved. Future corrections use a new version.
+The normal independent-DVT process below remains available for future releases.
+
 This procedure freezes and records an already complete product. It uploads
 the app and DMG to Apple for notarization, but does not publish a release,
 push repository changes, or create a tag.
