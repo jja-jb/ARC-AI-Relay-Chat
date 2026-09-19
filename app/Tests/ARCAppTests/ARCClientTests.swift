@@ -63,6 +63,7 @@ final class ARCClientTests: XCTestCase {
         let transcript = NSHostingView(rootView: ActivityWindowView().environmentObject(state))
         observer.contentView = transcript
         let start = ProcessInfo.processInfo.systemUptime
+        var completedTransitions = 0
         for revision in 0..<80 {
             if revision % 4 == 0 { observer.makeKeyAndOrderFront(nil) }
             if revision % 4 == 2 { observer.orderOut(nil); window.makeKeyAndOrderFront(nil) }
@@ -74,6 +75,19 @@ final class ARCClientTests: XCTestCase {
             try await Task.sleep(nanoseconds: 30_000_000)
             hosting.layoutSubtreeIfNeeded()
             transcript.layoutSubtreeIfNeeded()
+            // This is a crash/layout regression, not a hardware benchmark.
+            // Shared macOS runners vary substantially in window-server speed.
+            // Check every transition, including the 64-participant expansion,
+            // rather than treating aggregate render time as layout correctness.
+            for view in [hosting as NSView, transcript as NSView] {
+                XCTAssertTrue(view.bounds.width.isFinite && view.bounds.height.isFinite)
+                XCTAssertGreaterThan(view.bounds.width, 0)
+                XCTAssertGreaterThan(view.bounds.height, 0)
+                XCTAssertFalse(view.hasAmbiguousLayout)
+            }
+            XCTAssertEqual(state.roomResult?.participants.count,
+                revision == 40 ? ARCConstants.maximumParticipants : 3)
+            XCTAssertEqual(state.activity.count, 60)
             func scrolls(_ view: NSView) -> [NSScrollView] {
                 (view as? NSScrollView).map { [$0] } ?? view.subviews.flatMap(scrolls)
             }
@@ -85,8 +99,16 @@ final class ARCClientTests: XCTestCase {
                 scroll.reflectScrolledClipView(scroll.contentView)
             }
             try await Task.sleep(nanoseconds: 30_000_000)
+            completedTransitions += 1
+            // A generous runaway guard still detects sustained failure to make
+            // progress; CI also has a process-level timeout for a hard hang.
+            if ProcessInfo.processInfo.systemUptime - start > 120 {
+                XCTFail("Layout stress exceeded 120 seconds after \(completedTransitions) transitions")
+                break
+            }
         }
-        XCTAssertLessThan(ProcessInfo.processInfo.systemUptime - start, 30)
+        print("Layout stress: \(completedTransitions) transitions in \(ProcessInfo.processInfo.systemUptime - start) seconds")
+        XCTAssertEqual(completedTransitions, 80)
         XCTAssertEqual(state.roomResult?.participants.count, 3)
         XCTAssertEqual(state.activity.count, 60)
         if let path = ProcessInfo.processInfo.environment["ARC_ROOM_TEST_SNAPSHOTS"] {

@@ -18,6 +18,8 @@
 - Regression coverage includes corrupt-record recovery through the app,
   pending-capture recovery, linked-file refusal, concurrent meter writers,
   idle Off waits and history-gap visibility.
+- The 80-transition UI stress regression checks layout and state at every
+  transition without treating shared-runner speed as a correctness benchmark.
 
 ## 3.2.1 — 2026-09-19
 

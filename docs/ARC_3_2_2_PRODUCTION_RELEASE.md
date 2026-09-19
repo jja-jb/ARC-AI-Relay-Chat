@@ -33,6 +33,10 @@ The final source incorporates these corrections:
 - Missing intermediate history is visibly disclosed until paging fills it.
 - Setup, Help, Privacy and repository policy explain waiting, costs,
   cross-room copies and retention consistently.
+- The 80-transition UI crash regression checks geometry and state on every
+  transition, with a bounded runaway guard. Its previous aggregate 30-second
+  limit failed on a shared macOS 15 runner despite completing every transition;
+  this test is not a calibrated rendering-performance benchmark.
 
 Regression tests reproduced corruption-reset and meter-concurrency failures
 before their fixes and passed afterward. The full 176-test suite passed with
