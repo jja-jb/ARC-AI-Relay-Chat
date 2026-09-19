@@ -768,6 +768,10 @@ final class ARCClientTests: XCTestCase {
         XCTAssertFalse(handoff.contains("provider"))
         XCTAssertFalse(handoff.contains("repository"))
         XCTAssertTrue(handoff.contains("poll immediately"))
+        XCTAssertTrue(handoff.contains("prefer the guide's waiting poll"))
+        XCTAssertTrue(handoff.contains("changed=false handling"))
+        XCTAssertTrue(handoff.contains("fallback may use model"))
+        XCTAssertTrue(handoff.contains("Do not claim it is cost-free"))
         XCTAssertTrue(handoff.contains("at least 40 seconds after that first poll"))
         XCTAssertTrue(handoff.contains("one-minute cadence alone is not enough"))
         XCTAssertTrue(handoff.contains("you Off Duty 180 seconds after your last valid poll"))
@@ -852,6 +856,42 @@ final class ARCClientTests: XCTestCase {
 
         for topic in requiredTopics {
             XCTAssertTrue(help.contains(topic), "ARC Help is missing \(topic)")
+        }
+        XCTAssertFalse(help.contains("costs nothing"))
+        XCTAssertTrue(help.contains("Actual cost depends on your AI host"))
+    }
+
+    func testPrivacyExplainsCrossRoomCopiesAndExternalRetention() {
+        let privacy = ARCPrivacyContent.paragraphs.joined(separator: "\n")
+        for phrase in ["starts Off", "targeted messages", "Every AI invited",
+                       "no per-room opt-out", "not backfilled", "does not erase copies",
+                       "Kill and Reincarnate", "External AI hosts", "cannot erase",
+                       "not encrypted by ARC"] {
+            XCTAssertTrue(privacy.contains(phrase), "Privacy is missing \(phrase)")
+        }
+    }
+
+    @MainActor
+    func testPrivacyRendersInLightDarkAndLargeText() throws {
+        let output = URL(fileURLWithPath: "/private/tmp/arc-release-review-visuals")
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        for (name, scheme, size) in [
+            ("privacy-light", ColorScheme.light, DynamicTypeSize.large),
+            ("privacy-dark", ColorScheme.dark, DynamicTypeSize.large),
+            ("privacy-large-text", ColorScheme.light, DynamicTypeSize.accessibility3),
+        ] {
+            let host = NSHostingView(rootView: PrivacySheet()
+                .environment(\.colorScheme, scheme).dynamicTypeSize(size)
+                .frame(width: 620, height: 650)
+                .background(scheme == .dark ? Color.black : Color.white))
+            host.frame = NSRect(x: 0, y: 0, width: 620, height: 650)
+            host.appearance = NSAppearance(named: scheme == .dark ? .darkAqua : .aqua)
+            host.layoutSubtreeIfNeeded()
+            let bitmap = try XCTUnwrap(host.bitmapImageRepForCachingDisplay(in: host.bounds))
+            host.cacheDisplay(in: host.bounds, to: bitmap)
+            let png = try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))
+            XCTAssertGreaterThan(png.count, 10_000)
+            try png.write(to: output.appendingPathComponent(name + ".png"))
         }
     }
 
@@ -1165,7 +1205,7 @@ final class ARCInstallationTests: XCTestCase {
         try writeBundle(bundle, specificationText: "version two\n", launcherText: "launcher", releaseVersion: "2.0.0")
         try installation.ensureInstalled(rootURL: root)
         XCTAssertEqual(try String(contentsOf: ARCCommunication.specificationURL(rootURL: root), encoding: .utf8), "version two\n")
-        for version in ["2.1.0", "2.2.0", "2.3.0", "2.4.0", "2.5.0", "2.5.1"] {
+        for version in ["2.1.0", "2.2.0", "2.3.0", "2.4.0", "2.5.0", "2.5.1", "3.0.0", "3.2.0", "3.2.2"] {
             try writeBundle(bundle, specificationText: "version two\n", launcherText: "launcher", releaseVersion: version)
             try installation.ensureInstalled(rootURL: root)
             XCTAssertEqual(try String(contentsOf: ARCCommunication.specificationURL(rootURL: root), encoding: .utf8), "version two\n")
@@ -1173,7 +1213,7 @@ final class ARCInstallationTests: XCTestCase {
         let fresh = temporary.appendingPathComponent("fresh", isDirectory: true)
         try installation.ensureInstalled(rootURL: fresh)
         XCTAssertEqual(ARCCommunication.snapshot(rootURL: fresh).status, "ready")
-        for version in ["3.0.0", "2.0", "2.0.0-beta", "garbage"] {
+        for version in ["4.0.0", "2.0", "2.0.0-beta", "garbage"] {
             try writeBundle(bundle, specificationText: "invalid\n", launcherText: "launcher", releaseVersion: version)
             XCTAssertThrowsError(try installation.ensureInstalled(rootURL: root), version)
             XCTAssertEqual(try String(contentsOf: ARCCommunication.specificationURL(rootURL: root), encoding: .utf8), "version two\n")
@@ -1672,7 +1712,7 @@ final class ARCInstallationTests: XCTestCase {
             ofItemAtPath: launcher.path
         )
 
-        let descriptions = [
+        var descriptions = [
             ("current/ARC_AI.arc-kb", "Resources/install/current/ARC_AI.arc-kb", knowledge),
             (
                 "current/specifications/000-product.txt",
@@ -1685,6 +1725,16 @@ final class ARCInstallationTests: XCTestCase {
             ("current/" + ARCCommunication.digestRelativePath,
                 "Resources/install/current/" + ARCCommunication.digestRelativePath, terseDigest),
         ]
+        if releaseVersion.hasPrefix("3.") {
+            for name in ["initial-profile.json", "quinby-headshot.png", "provenance.json", "SPECIFICATION.md", "SPECIFICATION.sha256"] {
+                let relative = "current/quinby/" + name
+                let file = install.appendingPathComponent(relative)
+                try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try Data("test asset".utf8).write(to: file)
+                try FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: file.path)
+                descriptions.append((relative, "Resources/install/" + relative, file))
+            }
+        }
         let rows = try descriptions.map { path, source, file in
             let data = try Data(contentsOf: file)
             let attributes = try FileManager.default.attributesOfItem(atPath: file.path)

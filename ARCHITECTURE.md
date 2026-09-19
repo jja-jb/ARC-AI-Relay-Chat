@@ -1,4 +1,4 @@
-# ARC 2.5 architecture
+# ARC 3.2 architecture
 
 ARC has one small native architecture:
 
@@ -79,3 +79,24 @@ are required for Active. Available means On Duty or Working before its deadline.
 
 Exact fields, operations, limits, errors, and byte formats are in
 [specifications 000–013](10_specs/platform_support/001-shared-how-to-read-these-specs.txt).
+
+## Quinby's Corner in 3.0
+
+`QuinbyStore`, `QuinbyJournal`, and `QuinbyTypes` implement specification 014.
+One dedicated indexed append log contains Corner state, AI contributions, and
+all admitted ordinary-room observations; a replaceable summary is derived from
+its latest accepted summary record. The log is not capped at 8 MiB. Its framed
+checkpoints support bounded paging without loading lifetime history.
+
+Both ordinary app and CLI writes enter the same capture transaction in
+`RoomFile`. Lock order is ordinary room then Corner. A synchronized intent
+precedes source publication; recovery compares old/new source hashes before
+committing or cancelling hearing. Off and unavailable intervals never import
+missed activity. The separate SwiftUI Corner window uses the native store;
+the `quinby` CLI namespace has bound read/poll/act operations only.
+
+The human is a chat participant only in this special room. One available AI
+is sufficient. ARC randomly selects an AI for every voice/direction assignment
+and does no reasoning, provider calls, or summarization. See
+[specification 014](docs/QUINBYS_CORNER_SPECIFICATION.md) for exact exceptions
+to the ordinary-room architecture above.

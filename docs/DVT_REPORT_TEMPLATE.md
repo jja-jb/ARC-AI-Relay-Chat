@@ -1,7 +1,7 @@
 ARC 1.0 EXTERNAL DVT REPORT
 schema: arc.dvt/1
-version: 2.5.1
-tag: v2.5.1
+version: 3.2.2
+tag: v3.2.2
 revision: <40 lowercase hexadecimal characters>
 candidate_manifest_sha256: <64 lowercase hexadecimal characters>
 tester: <name and organization independent of implementation>

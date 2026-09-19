@@ -1,0 +1,26 @@
+{
+  "source_repository": "https://github.com/Jonny-Bass-Foundation/brightshelf-canon",
+  "source_branch": "main",
+  "source_revision": "a496458b93f8ee1eadd8cbc19626c1c24400a65a",
+  "source_revision_url": "https://github.com/Jonny-Bass-Foundation/brightshelf-canon/commit/a496458b93f8ee1eadd8cbc19626c1c24400a65a",
+  "source_verification": "Fetched origin/main from GitHub; local main equals origin/main at source_revision. Profile derived from that tree's quinby.html canon JSON; the derivation was first proven to reproduce the previously pinned profile digest. Portrait pulled through Git LFS and checked against its LFS object SHA-256.",
+  "source_profile": {
+    "path": "characters/quinby/quinby.html",
+    "url": "https://github.com/Jonny-Bass-Foundation/brightshelf-canon/blob/a496458b93f8ee1eadd8cbc19626c1c24400a65a/characters/quinby/quinby.html",
+    "sha256": "2bffecc9457c806bb3fba7c21d5108a87ec1b69b1b01d1c385bf6bff0d732620"
+  },
+  "files": [
+    {
+      "path": "initial-profile.json",
+      "sha256": "8e1a384d4453603366053d57672f110e7ea75c4a420768886c04abfedca047e4",
+      "derivation": "Exact name and canon field values extracted from the source HTML canon JSON; wrapped with the ARC seed format identifier."
+    },
+    {
+      "path": "quinby-headshot.png",
+      "sha256": "1406704a167ee75702b1990ced2ec755a645525088e501c2089e79d596bef55f",
+      "source_path": "characters/quinby/media/quinby-headshot.png",
+      "source_url": "https://github.com/Jonny-Bass-Foundation/brightshelf-canon/blob/a496458b93f8ee1eadd8cbc19626c1c24400a65a/characters/quinby/media/quinby-headshot.png",
+      "derivation": "Unmodified source PNG (Git LFS object)."
+    }
+  ]
+}

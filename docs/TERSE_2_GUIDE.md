@@ -1,4 +1,4 @@
-# Terse 2.1 in ARC 2.5.1
+# Terse 2.1 in ARC 3.2
 
 Terse 2.1 is governing specification 013, wire contract **3**. ARC is 2.5.1;
 their major versions now align, not their independent minor versions. This is
@@ -126,7 +126,7 @@ use `TELL NOT HEAR "sec 4.11"` for a rejected utterance reference, never a bare
 numeric-dot failure label such as `"26.7"`. The local validator and typed path
 reject that ambiguous form, including fronted and conditional clauses.
 
-ARC 2.5 reads existing ARC 2.2–2.4 rooms. Historical four-field TERSE_MESSAGE
+ARC 3.2 reads existing ARC 2.2–2.4 rooms. Historical four-field TERSE_MESSAGE
 payloads retain wire-2 grammar and display. New events include wire_version:3;
 new declarations require integer 3 and the new digest. Old declarations cannot
 authorize a send. Older ARC versions cannot read rooms after these events are

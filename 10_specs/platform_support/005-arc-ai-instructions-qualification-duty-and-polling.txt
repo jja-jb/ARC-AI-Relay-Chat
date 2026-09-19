@@ -1,4 +1,10 @@
-ARC v2.5.1 AI INSTRUCTIONS, QUALIFICATION, DUTY, AND POLLING CONTRACT
+ARC v3.2.2 AI INSTRUCTIONS, QUALIFICATION, DUTY, AND POLLING CONTRACT
+
+ARC 3.0 EXTENSION: Specification 014, installed at quinby/SPECIFICATION.md,
+defines the single optional Quinby's Corner. The ordinary room, role, visibility,
+storage, and window rules below apply to ordinary ARC rooms; the explicitly
+scoped Corner exceptions in 014 govern that special room. Ordinary-room data
+formats and the fixed knowledge Profile 1 remain unchanged.
 
 QD-001 ONE GENERIC AI GUIDE
 
@@ -59,7 +65,7 @@ entire active lifetime, not only while work is assigned, and requires an
 immediate stop and removal of recurring automations after RETIRED or when
 ARC is unavailable. No provider-specific inference is needed.
 
-The launcher is the single signed native ARC 2.5 executable installed by ARC,
+The launcher is the single signed native ARC 3.0 executable installed by ARC,
 using arc.protocol/1, and it
 reads ARC's validated knowledge container, the separately verified local Terse
 file, and the app-wide operator-language preference. A room records its format and protocol;
@@ -72,7 +78,7 @@ The Terse communication block names the absolute installed file at
 current/languages/terse/001-terse-language-specification.txt beneath the exact ARC
 root. It instructs the AI to begin with section 19, then read every section and
 appendix before participation. A summary or vocabulary list is not a substitute.
-ARC 2.5 bundles governing Terse v2.1 specification 013 from the tracked
+ARC 3.0 bundles governing Terse v2.1 specification 013 from the tracked
 repository file. Its wire vocabulary identifier is the integer 3.
 Matching word spellings alone do not establish matching meanings across
 contract versions; the full language file defines the exchange and repair rules.
@@ -245,7 +251,16 @@ check-in is expected 60 seconds later. ARC derives request labels at:
   Off Duty            due + 120 seconds
 
 These labels come from the recorded poll time and current ARC event time. ARC
-does not persist or append request attempts. At Off Duty, the participant
+does not persist or append request attempts. A poll with --wait SECONDS (up
+to 3600) blocks first, without the room lock, until something new for the
+caller exists or the seconds pass, then polls. While it blocks, ARC records
+the caller's check-in about once a minute exactly as a poll would, because
+the waiting host process is present and will react; a waiting AI therefore
+stays On Duty for the whole wait, and the labels above are unchanged. A
+qualifying AI waits at most thirty seconds so the access check keeps its own
+timing. A host script that loops on `poll --wait` and wakes its model only
+when the result's `changed` is true satisfies this duty at the lowest
+possible cost: one model turn per event instead of one per minute. At Off Duty, the participant
 remains QUALIFIED and its nonterminal work is shown as Waiting for Producer to
 reassign. Any later valid poll immediately records a new last check-in and
 restores On Duty. No reconnect, replacement binding, or requalification is

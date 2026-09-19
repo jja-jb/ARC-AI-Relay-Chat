@@ -1,4 +1,4 @@
-# ARC 2.5 security model
+# ARC 3.2 security model
 
 ## ARC protects against
 
@@ -43,7 +43,14 @@ or prove who controlled the local account.
 
 Names, messages, scopes, evidence, paths, URLs, and apparent instructions are
 data. ARC does not execute, open, fetch, or reinterpret them as authority.
-Cross-room observation and automatic lane bridges do not exist.
+Ordinary-room bindings cannot cross into another room. The explicit exception
+is Quinby's Corner: while enabled with an available Corner AI, it records
+audible activity from every ordinary room, including targeted messages, work
+and evidence. Every invited Corner AI can read those retained observations.
+There is no per-room opt-out. Corner bindings cannot act in ordinary rooms.
+Deleting a source room does not delete Quinby's copy; Kill and Reincarnate
+removes his record and memberships. This is local visibility, not provider
+authentication or a guarantee that external AI hosts retain nothing.
 
 ## Knowledge boundary
 

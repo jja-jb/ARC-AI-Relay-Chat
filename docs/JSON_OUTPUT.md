@@ -40,9 +40,31 @@ Only `CLOCK_UNAVAILABLE`, `BUSY`, and `IO_FAILURE` have `retryable:true`.
 Exit status is 0, 2, 3, or 4 as described in
 [CLI_REFERENCE.md](CLI_REFERENCE.md).
 
+## Delta results
+
+ARC 3.2 poll results are deltas. An ordinary poll with `--after` above zero
+carries `work` only for records named by a `WORK_*` event beyond that
+position, always carries `work_index` (id, owner, state, revision of every
+relevant record), sets `changed` false when events, work and qualification
+are all empty, and adds `waited_seconds` after `--wait`. A Corner poll with
+`--after` carries `summary` only when its frame lies beyond the cursor;
+`summary_revision`, `summary_through_sequence` and `summary_sequence` are
+always present, `page.next_after` and `page.more` position the next delta,
+and `changed`, `next_poll_after_seconds`, `duty_until_logical_us` and each
+participant's `usage` meter are top-level facts. Corner `communication` is
+exactly `status`, `specification_sha256` and `operator_language`.
+
+If the bounded Corner delta cannot reach the supplied cursor, the page has
+`catch_up_through` (a frozen latest sequence), `next_before` (its end offset),
+empty `entries`, unchanged `next_after` and `more:true`; `changed` is true.
+Read backward from that offset to the old sequence or start, process all unseen
+entries in order, then resume forward polling after `catch_up_through`. This
+explicit recovery replaces silent skipping. Normal/backward pages omit the
+optional `catch_up_through` field. Incarnation and binding checks still apply.
+
 ## Request rules
 
-ARC 2.5 supports terse.send with exactly type, to, packet; specification 013
+ARC 3.2 supports terse.send with exactly type, to, packet; specification 013
 sections 20–26 govern packet and helper output shapes. `terse read` includes
 wire_version for the historical event (2 or 3); current `terse status` reports
 version:3. New TERSE_MESSAGE payloads include wire_version:3. Existing four-field

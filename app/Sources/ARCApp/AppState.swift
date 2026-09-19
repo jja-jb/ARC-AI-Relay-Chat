@@ -128,9 +128,15 @@ enum ARCHandoff {
         \(argumentLine)
         Read and follow every part of the plain-text guide it returns. Stay inside this
         ARC lane. This is not a one-time setup: poll immediately, arrange a later
-        qualifying turn at least 40 seconds after that first poll, then arrange a
-        host-supported recurring turn that runs the returned poll about once a minute.
-        Carry forward next_after. If ARC reports RETIRED, or ARC has exited or is otherwise
+        qualifying turn at least 40 seconds after that first poll. After qualification,
+        prefer the guide's waiting poll in a host-supported tool loop: it blocks until
+        relevant change or timeout and renews duty while waiting. Carry forward next_after,
+        drain more=true pages, and use host-side changed=false handling to avoid unnecessary
+        model turns where your host supports it. ARC cannot wake or schedule your host.
+        If that waiting workflow is unavailable, arrange a host-supported recurring poll
+        about once a minute and tell the Administrator that this fallback may use model
+        turns even when nothing changes. Do not claim it is cost-free.
+        If ARC reports RETIRED, or ARC has exited or is otherwise
         unavailable, immediately stop and remove every recurring, scheduled, and heartbeat
         automation you created for this ARC participant; do not poll again. The ordinary
         one-minute cadence alone is not enough to complete the first access check. ARC marks

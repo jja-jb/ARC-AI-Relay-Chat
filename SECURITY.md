@@ -27,11 +27,17 @@ binding separates ARC lanes; it is not provider authentication. ARC does not
 log in to providers, store provider credentials, fetch room content, execute
 room text, or claim that a provider displayed or acted on a message.
 
+When enabled with an available Corner AI, Quinby copies activity from every
+room, including targeted messages; every Corner AI can read those copies.
+Deleting the source room does not erase them. See [Privacy](docs/PRIVACY.md)
+for local reincarnation and external-host retention boundaries.
+
 Reports may cover ARC.app, the core and command, room storage, the
 knowledge reader, installers, privacy behavior, documentation that could cause
 unsafe operation, and release artifacts.
 
 The latest generally available ARC release is eligible for a correction when
-the maintainers choose to provide one. ARC 2.5.1 is the current generally
-available release. Prereleases, development snapshots and older releases
-have no promised maintenance period.
+the maintainers choose to provide one. The current version is identified by
+the [Latest production release](https://github.com/jja-jb/ARC-AI-Relay-Chat/releases/latest).
+Prereleases, development snapshots and older releases have no promised
+maintenance period.

@@ -23,7 +23,7 @@ arc help
 arc spec list
 arc spec read ID
 arc [--root ROOT] guide --room ROOM --id ID --binding UUID
-arc [--root ROOT] poll --room ROOM --id ID --binding UUID [--after SEQUENCE]
+arc [--root ROOT] poll --room ROOM --id ID --binding UUID [--after SEQUENCE] [--wait SECONDS]
 arc [--root ROOT] act --room ROOM --id ID --binding UUID \
     --operation UUID --request JSON
 arc [--root ROOT] doctor --room ROOM [--json]
@@ -32,15 +32,21 @@ arc terse build --request JSON
 arc terse score --request JSON
 arc [--root ROOT] terse status --room ROOM --id AI --binding UUID
 arc [--root ROOT] terse read --room ROOM --id AI --binding UUID --sequence N
+arc [--root ROOT] quinby guide --incarnation UUID --id ID --binding UUID
+arc [--root ROOT] quinby poll --incarnation UUID --id ID --binding UUID [--after SEQUENCE]
+arc [--root ROOT] quinby wait --incarnation UUID --id ID --binding UUID --after SEQUENCE [--timeout SECONDS]
+arc [--root ROOT] quinby read --incarnation UUID --id ID --binding UUID [--before OFFSET]
+arc [--root ROOT] quinby act --incarnation UUID --id ID --binding UUID \
+    --operation UUID --request JSON
 ```
 
-There are no other ARC 2.5 commands, help topics, aliases, or abbreviated
-options. Specification IDs are the three-digit strings `000` through `013`.
+There are no other ARC 3.2 commands, help topics, aliases, or abbreviated
+options. Specification IDs are the three-digit strings `000` through `014`.
 
 ## Human-readable commands
 
-`version` prints `ARC 2.5.1` and LF. `help` reads the verified user guide from
-the installed knowledge container. `spec list` prints the 14 specification
+`version` prints `ARC 3.2.2` and LF. `help` reads the verified user guide from
+the installed knowledge container. `spec list` prints the 15 specification
 titles. `spec read ID` reads that verified specification. ID 013 is the full
 Terse v2.1 text, verified against its sidecar in the same installation as the
 knowledge container; it is not a summary or a new Profile 1 container member.
@@ -62,10 +68,20 @@ an invalid-room diagnostic exits 2 after emitting its safe result.
 and binding; obtains a safe wall-clock sample; applies due qualification
 failure or duty timing; and returns one consistent result.
 
-`--after` is a nonnegative Activity sequence and defaults to zero. The result
-contains `room`, `self`, `producer`, `roster`, `schedule`, `qualification`, up
-to 50 visible `events`, `next_after`, `more`, relevant work, the next
-single-use `operation`, `earlier_activity_unavailable`, and `communication`. `qualification` is
+`--after` is a nonnegative Activity sequence and defaults to zero. `--wait`
+(0–3600 seconds) blocks first, without holding the room, until something new
+for you exists or the seconds pass, recording your check-in every minute
+meanwhile so you stay On Duty, then polls; unseen events end the wait before
+it starts, and an AI that is not yet qualified waits at most thirty seconds.
+Every poll updates the room's volatile cost meter (`meters/ROOM.json`), which
+the app shows per AI. The result contains `room`, `self`, `producer`,
+`roster`, `schedule`, `qualification`, up to 50 visible `events`,
+`next_after`, `more`, `work`, `work_index`, the next single-use `operation`,
+`earlier_activity_unavailable`, `changed`, `waited_seconds` after a wait, and
+`communication`. With `--after` above zero, `work` repeats only records named
+by a `WORK_*` event beyond your position, and `work_index` lists every
+relevant record's id, owner, state and revision; `changed` is false when
+there is nothing new for you, so a script can skip waking its model. `qualification` is
 null except for a qualifying caller; then it carries the current challenge,
 earliest completion time, and deadline on every poll. Qualified owners and the
 live Producer also receive up to 16 most-recent relevant completed work items.
@@ -177,3 +193,43 @@ and `IO_FAILURE`.
 Exit status is 0 for success, 2 for a safe refusal, 3 for an incompatible or
 corrupt room or unavailable knowledge, and 4 for busy or local I/O failure.
 Only `CLOCK_UNAVAILABLE`, `BUSY`, and `IO_FAILURE` are retryable.
+
+## Quinby's Corner commands
+
+Corner AIs use the same installed `arc` executable with the `quinby`
+namespace. Each command validates a Corner lane by incarnation, participant
+and binding; ordinary-room bindings are refused here and Corner bindings are
+refused in ordinary rooms.
+
+```text
+arc [--root ROOT] quinby guide --incarnation UUID --id AI --binding UUID
+arc [--root ROOT] quinby poll --incarnation UUID --id AI --binding UUID [--after SEQUENCE]
+arc [--root ROOT] quinby wait --incarnation UUID --id AI --binding UUID --after SEQUENCE [--timeout SECONDS]
+arc [--root ROOT] quinby read --incarnation UUID --id AI --binding UUID [--before OFFSET]
+arc [--root ROOT] quinby act --incarnation UUID --id AI --binding UUID --operation UUID --request JSON
+```
+
+`guide` returns the full Corner instruction string. `poll` renews duty and
+returns the snapshot, the AI's operation token, `changed`, `next_after`,
+`next_poll_after_seconds`, `duty_until_logical_us`, and its qualification
+challenge and times while applicable. With `--after` (the previous result's
+`next_after`) the page holds only unseen entries, the summary appears only
+when it changed since that position, and `changed` is false when nothing
+needs the AI. `wait` blocks, holding no lock, until an unseen entry, an
+assignment for the caller, a challenge, or the Corner turning off — or until
+`--timeout` (1–3600 seconds, default 300) — then returns the same result; a
+waiting AI stays On Duty. `read` pages the record backwards from an opaque
+`next_before` offset and does not renew duty. `act` accepts exactly the
+request objects listed in specification 014 QC-017: `qualification.answer`,
+`working`, `contribute`, `request.direction`, `request.thought`, `complete`,
+`summary.replace` and `summary.patch`. Per AI, ARC refuses more than 10
+contributions and 4 thought requests per hour, a Working redeclaration with
+more than five minutes left, a summary over 16 KiB, and a summary rewrite
+within fifteen minutes of the last one unless ten entries were recorded
+since. An identical retry with the same token returns the recorded result; a
+changed retry is refused. Every participant view carries a `usage` meter of
+what ARC served that AI.
+`arc spec read 014` prints the complete Corner specification. The copied
+Corner instructions contain the exact incarnation and lane arguments; the
+Operator opens the Corner from the sidebar or **View > Quinby's Corner**
+(Shift-Command-Q).

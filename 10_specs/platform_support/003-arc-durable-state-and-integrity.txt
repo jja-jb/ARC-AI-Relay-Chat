@@ -1,4 +1,10 @@
-ARC v2.5.1 DURABLE STATE AND INTEGRITY CONTRACT
+ARC v3.2.2 DURABLE STATE AND INTEGRITY CONTRACT
+
+ARC 3.0 EXTENSION: Specification 014, installed at quinby/SPECIFICATION.md,
+defines the single optional Quinby's Corner. The ordinary room, role, visibility,
+storage, and window rules below apply to ordinary ARC rooms; the explicitly
+scoped Corner exceptions in 014 govern that special room. Ordinary-room data
+formats and the fixed knowledge Profile 1 remain unchanged.
 
 DS-001 ONE ROOM, ONE RECORD
 

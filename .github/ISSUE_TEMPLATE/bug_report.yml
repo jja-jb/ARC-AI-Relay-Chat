@@ -11,7 +11,7 @@ body:
     id: version
     attributes:
       label: ARC version
-      placeholder: ARC 2.5.0 prerelease
+      placeholder: Version and build shown in About ARC
     validations:
       required: true
   - type: dropdown
@@ -22,6 +22,7 @@ body:
         - Mac app
         - AI CLI
         - Room storage
+        - Quinby's Corner
         - Build or package
         - Documentation
     validations:

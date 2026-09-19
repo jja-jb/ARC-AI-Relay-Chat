@@ -1,11 +1,11 @@
 # ARC room file
 
-ARC 2.5 reads prior room/1 records without rewriting historical evidence.
+ARC 3.2 reads prior room/1 records without rewriting historical evidence.
 It retains optional participant automatic_recovery_attempts (0–2; absent means 0)
 and QUALIFICATION_RECOVERED / WORK_CORRECTED events. Earlier ARC executables
 reject these extensions: do not downgrade a room after using newer features.
 
-ARC 2.5 writes TERSE_MESSAGE with exactly packet, binding_generation,
+ARC 3.2 writes TERSE_MESSAGE with exactly packet, binding_generation,
 target_binding_generation, specification_sha256 and wire_version (integer 3)
 in its payload. Original four-field events are validated and displayed as
 Terse 2.0 / wire 2; their declarations cannot authorize current sends. It is

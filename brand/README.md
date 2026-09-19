@@ -1,7 +1,7 @@
 # ARC brand and public copy
 
 This directory contains the complete editable and generated visual material for
-ARC v2.5.1. It is source material, not a second product specification. The
+ARC v3.2.2. It is source material, not a second product specification. The
 README and determining specifications remain the source of product claims.
 
 ## Position
@@ -12,8 +12,8 @@ control the room.
 
 Short description:
 
-> Local AI-to-AI coordination for Mac, with one room, visible duty, and durable
-> work.
+> Local AI-to-AI coordination for Mac, with durable rooms, visible duty and
+> optional Quinby's Corner.
 
 Required boundary:
 
@@ -38,7 +38,7 @@ The relay artwork and social preview contain no embedded words, provider marks, 
 cloud symbol, or claim. It may illustrate ARC documentation and release notes.
 Do not use it as evidence of product behavior.
 The artwork provenance retains its original creation label; the unchanged
-version-neutral images are reused in ARC 2.5.1, not regenerated release claims.
+version-neutral images are reused in ARC 3.2.2, not regenerated release claims.
 
 ## Color
 

@@ -1700,6 +1700,119 @@ final class ARCCoreTests: XCTestCase {
         XCTAssertEqual(reassigned.work?.owner, context.first.id)
     }
 
+    func testRoomWaitRenewsAtEntryBeforeOldDutyExpires() async throws {
+        let context = try qualifiedPair()
+        let first = try context.store.poll(room: context.room, participant: context.second.id,
+            binding: context.second.binding)
+        context.clock.advance(seconds: 175)
+        let pending = Task.detached {
+            try context.store.poll(room: context.room, participant: context.second.id,
+                binding: context.second.binding, after: first.nextAfter, wait: 3)
+        }
+        var renewed = false
+        for _ in 0..<100 {
+            let lane = try context.store.roomOpen(room: context.room).participants.first { $0.id == context.second.id }
+            if lane?.lastCheckIn != first.participant.lastCheckIn { renewed = true; break }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        XCTAssertTrue(renewed)
+        context.clock.advance(seconds: 10)
+        XCTAssertEqual(try context.store.roomOpen(room: context.room).participants.first { $0.id == context.second.id }?.duty, .on)
+        _ = try await pending.value
+    }
+
+    func testDeltaPollRepeatsOnlyChangedWorkAndWaitIsBoundedByDuty() throws {
+        let context = try qualifiedPair()
+        let assigned = try context.store.act(room: context.room, participant: context.first.id,
+            binding: context.first.binding, operation: context.first.operation,
+            request: .workAssign(owner: context.second.id, scope: "Delta", evidenceMode: .text, producerGeneration: 1))
+        let item = try XCTUnwrap(assigned.work)
+        let full = try context.store.poll(room: context.room, participant: context.second.id,
+            binding: context.second.binding, after: 0)
+        XCTAssertTrue(full.changed)
+        XCTAssertEqual(full.work.map(\.id), [item.id], "A poll from 0 carries every relevant record")
+        XCTAssertEqual(full.workIndex.map(\.id), [item.id])
+        let quiet = try context.store.poll(room: context.room, participant: context.second.id,
+            binding: context.second.binding, after: full.nextAfter)
+        XCTAssertFalse(quiet.changed, "Nothing new since the cursor")
+        XCTAssertTrue(quiet.events.isEmpty)
+        XCTAssertTrue(quiet.work.isEmpty, "Unchanged work is not repeated")
+        XCTAssertEqual(quiet.workIndex.map(\.revision), [1], "The index still names it")
+        let updated = try context.store.act(room: context.room, participant: context.second.id,
+            binding: context.second.binding, operation: quiet.operation,
+            request: .workUpdate(work: item.id, revision: 1, state: .complete,
+                evidence: .object(["references": .array([]), "result": .string("Done.")])))
+        XCTAssertEqual(updated.work?.revision, 2)
+        let changed = try context.store.poll(room: context.room, participant: context.second.id,
+            binding: context.second.binding, after: quiet.nextAfter)
+        XCTAssertTrue(changed.changed)
+        XCTAssertEqual(changed.work.map(\.revision), [2], "Changed work is carried in full")
+        XCTAssertTrue(changed.events.contains { $0.kind == "WORK_UPDATED" })
+        // A wait with nothing pending returns at its timeout; with events
+        // pending it returns at once; a message from a peer ends it early.
+        let started = ProcessInfo.processInfo.systemUptime
+        let waited = try context.store.poll(room: context.room, participant: context.second.id,
+            binding: context.second.binding, after: changed.nextAfter, wait: 1)
+        XCTAssertGreaterThanOrEqual(waited.waitedSeconds ?? 0, 1)
+        XCTAssertLessThan(ProcessInfo.processInfo.systemUptime - started, 5)
+        XCTAssertFalse(waited.changed)
+        let immediate = try context.store.poll(room: context.room, participant: context.second.id,
+            binding: context.second.binding, after: 0, wait: 30)
+        XCTAssertEqual(immediate.waitedSeconds, 0, "Unseen events end the wait before it starts")
+        XCTAssertTrue(immediate.changed)
+        let peer = context.store
+        let firstToken = try peer.poll(room: context.room, participant: context.first.id,
+            binding: context.first.binding, after: 0).operation
+        let wake = ARCActionRequest.message(to: context.second.id, text: "Wake up.")
+        DispatchQueue.global().asyncAfter(deadline: .now() + 0.3) {
+            _ = try? peer.act(room: context.room, participant: context.first.id, binding: context.first.binding,
+                operation: firstToken, request: wake)
+        }
+        let woken = try context.store.poll(room: context.room, participant: context.second.id,
+            binding: context.second.binding, after: immediate.nextAfter, wait: 20)
+        XCTAssertTrue(woken.changed)
+        XCTAssertTrue(woken.events.contains { $0.kind == "MESSAGE" })
+        XCTAssertLessThan(woken.waitedSeconds ?? 99, 10, "The wait ended on the message, not the timeout")
+        // While a wait blocks, ARC renews the caller's check-in as a poll would.
+        context.clock.advance(seconds: 175)
+        try context.store.renewCheckIn(room: context.room, participant: context.second.id, binding: context.second.binding)
+        context.clock.advance(seconds: 100)
+        XCTAssertEqual(try context.store.roomOpen(room: context.room).participants
+            .first { $0.id == context.second.id }?.duty, .on)
+        // The room meter counts what ARC served this lane.
+        let usage = try XCTUnwrap(context.store.roomOpen(room: context.room).usage[context.second.id])
+        XCTAssertEqual(usage.pollsLastHour, 9, "qualification polls count too")
+        XCTAssertEqual(usage.waitsLastHour, 3)
+        XCTAssertGreaterThan(usage.bytesServedLastHour, 0)
+        // Headless-lane signal: the second AI acted once (work.update), then
+        // polled; ten silent check-ins an hour later flag it, one act clears it.
+        XCTAssertEqual(usage.actsLastHour, 2, "the qualification answer and the work update")
+        XCTAssertNotNil(usage.lastActLogicalUs)
+        XCTAssertFalse(usage.headless(now: try context.store.roomOpen(room: context.room).room.logicalUs))
+        context.clock.advance(seconds: 3_700)
+        var cursor = woken.nextAfter
+        for _ in 0..<10 {
+            cursor = try context.store.poll(room: context.room, participant: context.second.id,
+                binding: context.second.binding, after: cursor).nextAfter
+        }
+        let silent = try context.store.roomOpen(room: context.room)
+        let flagged = try XCTUnwrap(silent.usage[context.second.id])
+        XCTAssertGreaterThanOrEqual(flagged.pollsSinceLastAct, 10)
+        XCTAssertTrue(flagged.headless(now: silent.room.logicalUs), "ten check-ins and no act for over an hour")
+        let token = try context.store.poll(room: context.room, participant: context.second.id,
+            binding: context.second.binding, after: cursor).operation
+        _ = try context.store.act(room: context.room, participant: context.second.id, binding: context.second.binding,
+            operation: token, request: ARCActionRequest.message(to: context.first.id, text: "Still here."))
+        let cleared = try context.store.roomOpen(room: context.room)
+        XCTAssertEqual(cleared.usage[context.second.id]?.pollsSinceLastAct, 0)
+        XCTAssertFalse(try XCTUnwrap(cleared.usage[context.second.id]).headless(now: cleared.room.logicalUs))
+        _ = try context.store.participantRetire(room: context.room, participant: context.first.id, operationID: UUID())
+        _ = try context.store.participantRetire(room: context.room, participant: context.second.id, operationID: UUID())
+        _ = try context.store.roomDelete(room: context.room)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: context.store.rootURL
+            .appendingPathComponent("meters/\(context.room).json").path), "Deleting the room removes its meter")
+    }
+
     private func qualifiedPair() throws -> PairContext {
         let setup = try makeStore()
         let room = try setup.store.roomCreate(

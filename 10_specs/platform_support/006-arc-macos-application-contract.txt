@@ -1,4 +1,10 @@
-ARC v2.5.1 MACOS APPLICATION CONTRACT
+ARC v3.2.2 MACOS APPLICATION CONTRACT
+
+ARC 3.0 EXTENSION: Specification 014, installed at quinby/SPECIFICATION.md,
+defines the single optional Quinby's Corner. The ordinary room, role, visibility,
+storage, and window rules below apply to ordinary ARC rooms; the explicitly
+scoped Corner exceptions in 014 govern that special room. Ordinary-room data
+formats and the fixed knowledge Profile 1 remain unchanged.
 
 Terse Cost Comparison is a sidebar control opening a local, read-only report
 sheet. It imports only user-selected regular JSON files of at most 131072
@@ -101,7 +107,19 @@ words. Show Advanced Details reveals format, revision, IDs, generation, logical 
 knowledge digest, and structured payloads without replacing the plain view.
 
 Each participant row shows name, participant ID, one phase/duty phrase, whether
-it is Producer, and the next expected check-in when applicable. The row offers
+it is Producer, the next expected check-in when applicable, and a cost meter
+(polls, waits, acts and bytes ARC served that AI in the last hour, then
+lifetime polls and bytes) read from the volatile room meter file, never from
+the room record. Serialize room-meter read-modify-write operations across
+processes so simultaneous lanes do not overwrite one another's counts.
+Meters remain best effort and must not fail a room action when unavailable;
+they are not provider billing records.
+A qualified On Duty or Working row whose meter shows at
+least ten check-ins since its last accepted act, with that act (or its first
+check-in) over an hour old, carries the headless-lane warning "Checking in
+only: N polls but has not acted in H h (or has never acted). Its AI may not
+be running." — a fact about the record, shown so a poller running without
+its AI cannot pass for a working participant. The row offers
 only currently valid actions: Copy Instructions Again, Replace Instructions,
 Reconnect AI & Copy Instructions, Make Producer, or Retire AI. Failed connection
 rows explain automatic recovery, its two-retry limit, and resuming the same AI
@@ -126,13 +144,14 @@ saw a request merely because the local display timer advanced.
 
 UI-005 MENUS AND KEYBOARD
 
-ARC uses normal Mac menus. The complete ARC 2.5 application command surface is:
+ARC uses normal Mac menus. The complete ARC 3.2 application command surface is:
 
   File    New Room...
   Edit    Find in Activity... (alongside standard text editing commands)
   Room    Add AI; Rename Room...; Make Selected AI Producer;
           Retire Selected AI...; Diagnose Room...; Delete Room...
-  View    Open Activity Window; Show Advanced Details; Bigger Text; Smaller Text; Actual Size;
+  View    Quinby's Corner; Open Activity Window; Show Advanced Details; Bigger Text;
+          Smaller Text; Actual Size;
           Reveal ARC Data Location
   Help    ARC Help; Privacy
 
@@ -141,6 +160,10 @@ text. Command-Question-Mark opens help. A visible button exists for every
 essential action; keyboard shortcuts are conveniences, never the only path.
 Command-Shift-L opens the activity viewer; the normal close control or
 Command-W closes that window. Command-F finds text in the loaded transcript.
+Command-Shift-Q opens Quinby's Corner, which the sidebar also offers as a
+visible button. In that window's composer, Return sends and Shift-Return or
+Option-Return inserts a line break; the Send button remains the visible path.
+Specification 014 QC-006 and QC-014 define the composer and window rules.
 
 UI-006 PLAIN CONFIRMATIONS AND ERRORS
 
@@ -201,6 +224,12 @@ host.
 The activity viewer observes that same feed and timer, including while another
 window covers it. Opening it creates no additional polling loop or room-file
 reader. Closing only the viewer does not stop the main window's observation.
+The Corner window refreshes its own record on the same kind of small local
+timer and publishes only changed content. That refresh never disables a
+control and never discards an Operator action requested while it runs;
+specification 014 QC-014 states the exact rule. Each Contributing AI row
+shows the QC-014 cost meter (polls, waits, reads, acts and bytes served in
+the last hour, then lifetime polls and bytes) read from the same snapshot.
 
 UI-010 DIRECT CORE AND ONE RECORD
 

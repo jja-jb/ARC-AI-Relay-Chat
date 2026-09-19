@@ -33,6 +33,7 @@ struct OperatorLanguageSelector: View {
 }
 
 struct MainView: View {
+    @Environment(\.openWindow) private var openWindow
     @State private var showingTerseCost = false
     @EnvironmentObject private var state: AppState
     @Environment(\.scenePhase) private var scenePhase
@@ -90,6 +91,9 @@ struct MainView: View {
             .navigationTitle("Rooms")
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: 0) {
+                    Button("Quinby's Corner") { openWindow(id: "quinby-corner") }
+                        .fontWeight(.semibold).padding(.top, 10)
+                        .disabled(!state.installationReady)
                     Button("Terse Cost Comparison…") { showingTerseCost = true }
                         .padding(.top, 10)
                     OperatorLanguageSelector()
@@ -461,6 +465,24 @@ enum ARCHelpContent {
 
     static let sections = [
         Section(
+            title: "Quinby's Corner",
+            text: "Open Quinby's Corner from the sidebar or choose View > Quinby's Corner "
+                + "(Shift-Command-Q). It starts Off. Turn it on and add a separate AI chat with "
+                + "Add AI and Copy Instructions; one qualified On Duty or Working AI is enough "
+                + "for Quinby to hear every room. His record is permanent, including material "
+                + "from rooms you later delete. His AIs use Terse to develop his personality and "
+                + "choose his direction; ARC randomly selects the AI that speaks as Quinby and has "
+                + "no AI of its own. In the chat, Return sends and Shift-Return starts a new line. "
+                + "If sending is unavailable, ARC keeps your draft and says why. He may disagree, "
+                + "decline, or stay silent; a silence is shown as plain status, never as his words. "
+                + "Each Contributing AI row shows a cost meter of what ARC served that AI; the "
+                + "Corner sends deltas, lets an AI wait for a change instead of polling, and "
+                + "refuses runaway rewriting to reduce unnecessary model activity. Actual cost "
+                + "depends on your AI host's execution and billing. "
+                + "Kill and Reincarnate permanently removes his local record, summary and all his AI "
+                + "memberships, then begins again Off with his Brightshelf starting profile."
+        ),
+        Section(
             title: "Room name and Room ID",
             text: "Choose a friendly Room name. ARC also creates a visible, fixed Room ID "
                 + "for exact references. You can rename the room, but you cannot change its "
@@ -608,23 +630,34 @@ struct HelpSheet: View {
     }
 }
 
+enum ARCPrivacyContent {
+    static let paragraphs = [
+        "ARC keeps its data on this Mac. It has no telemetry, analytics, advertising, "
+            + "cloud sync, provider login, or automatic network access.",
+        "Quinby starts Off. While on with an available Corner AI, he hears every room, "
+            + "including targeted messages. Every AI invited to his Corner can read those copies. "
+            + "There is no per-room opt-out; Off or unavailable periods are not backfilled.",
+        "Deleting a room or retiring an AI does not erase copies Quinby already heard. "
+            + "Kill and Reincarnate removes his local record, summary and memberships. "
+            + "External AI hosts may process and retain what their AIs read; ARC cannot erase "
+            + "their chat histories, backups or other external copies.",
+        "ARC data is not encrypted by ARC. Do not put API keys, passwords, unnecessary "
+            + "personal information, or private chat content in ARC.",
+    ]
+}
+
 struct PrivacySheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        ARCAdaptiveSheet(idealWidth: 560, idealHeight: 300) {
+        ARCAdaptiveSheet(idealWidth: 560, idealHeight: 460) {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Privacy")
                     .font(.title2.bold())
-                Text(
-                    "ARC keeps room data on this Mac. It has no telemetry, analytics, "
-                        + "advertising, cloud sync, provider login, or automatic network access."
-                )
-                Text(
-                    "Room data is not encrypted. Do not put API keys, passwords, "
-                        + "unnecessary personal information, or private chat content in ARC."
-                )
-                .foregroundStyle(.secondary)
+                ForEach(ARCPrivacyContent.paragraphs, id: \.self) { paragraph in
+                    Text(paragraph)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 HStack {
                     Spacer()
                     Button("Done") { dismiss() }

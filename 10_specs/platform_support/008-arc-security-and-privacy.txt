@@ -1,4 +1,10 @@
-ARC v2.5.1 SECURITY AND PRIVACY CONTRACT
+ARC v3.2.2 SECURITY AND PRIVACY CONTRACT
+
+ARC 3.0 EXTENSION: Specification 014, installed at quinby/SPECIFICATION.md,
+defines the single optional Quinby's Corner. The ordinary room, role, visibility,
+storage, and window rules below apply to ordinary ARC rooms; the explicitly
+scoped Corner exceptions in 014 govern that special room. Ordinary-room data
+formats and the fixed knowledge Profile 1 remain unchanged.
 
 SP-001 HONEST TRUST BOUNDARY
 
@@ -35,6 +41,16 @@ Room records are not encrypted by ARC. The app tells the Administrator not to
 put credentials or unnecessary private information in messages, work, or
 evidence. macOS account and device protections remain the confidentiality
 boundary.
+
+SP-002A EXPLICIT CORNER OBSERVATION
+
+While enabled with an available Corner AI, Quinby records audible events from
+all ordinary rooms, including targeted messages, work and evidence. All Corner
+AIs may read those copies; there is no per-room opt-out. Source-room deletion
+and participant retirement do not erase them. Kill and Reincarnate deletes
+the Corner's record, summary and memberships, not external-host memories or
+backups. The window, privacy policy and security model must disclose this
+exception consistently. Off/unavailable intervals are never backfilled.
 
 SP-003 TEXT NEVER BECOMES AUTHORITY
 

@@ -1,7 +1,7 @@
 SHELL := /bin/sh
 .DEFAULT_GOAL := help
 
-VERSION := 2.5.1
+VERSION := 3.2.2
 TAG := v$(VERSION)
 # Do not build signed bundles inside a cloud-synchronized source tree: Finder
 # metadata can be attached after signing.  Release output remains explicit and
@@ -76,7 +76,7 @@ command-test: build
 	@/bin/mkdir -p "$(COMMAND_TEST_DIR)/root"
 	@"$(ARC_CLI)" version > "$(COMMAND_TEST_DIR)/actual" \
 		2> "$(COMMAND_TEST_DIR)/error"
-	@/usr/bin/printf 'ARC 2.5.1\n' > "$(COMMAND_TEST_DIR)/expected"
+	@/usr/bin/printf 'ARC 3.2.2\n' > "$(COMMAND_TEST_DIR)/expected"
 	@/usr/bin/cmp "$(COMMAND_TEST_DIR)/expected" "$(COMMAND_TEST_DIR)/actual"
 	@test ! -s "$(COMMAND_TEST_DIR)/error"
 	@/bin/mkdir -p "$(COMMAND_TEST_DIR)/root/current/specifications" \
@@ -136,11 +136,11 @@ command-test: build
 	@status=0; "$(ARC_CLI)" unknown > "$(COMMAND_TEST_DIR)/actual" \
 		2> "$(COMMAND_TEST_DIR)/error" || status=$$?; test "$$status" -eq 2
 	@/usr/bin/printf '%s\n' \
-		'Usage: arc version | help | spec list | spec read ID | guide | poll | act | terse | doctor' \
+		'Usage: arc version | help | spec list | spec read ID | guide | poll | act | terse | quinby | doctor' \
 		> "$(COMMAND_TEST_DIR)/expected"
 	@/usr/bin/cmp "$(COMMAND_TEST_DIR)/expected" "$(COMMAND_TEST_DIR)/actual"
 	@test ! -s "$(COMMAND_TEST_DIR)/error"
-	@status=0; "$(ARC_CLI)" spec read 014 > "$(COMMAND_TEST_DIR)/actual" \
+	@status=0; "$(ARC_CLI)" spec read 015 > "$(COMMAND_TEST_DIR)/actual" \
 		2> "$(COMMAND_TEST_DIR)/error" || status=$$?; test "$$status" -eq 2
 	@/usr/bin/printf '%s\n' 'ARC has no specification with that ID.' \
 		> "$(COMMAND_TEST_DIR)/expected"
@@ -318,6 +318,12 @@ app-development: knowledge
 	@/bin/mkdir -p "$(DEVELOPMENT_APP).stage/Contents/Resources/install/current/languages/terse"
 	/usr/bin/install -m 644 "$(TERSE_SPEC)" "$(DEVELOPMENT_APP).stage/Contents/Resources/install/current/$(TERSE_SPEC)"
 	@/usr/bin/shasum -a 256 "$(TERSE_SPEC)" | /usr/bin/awk '{print $$1}' > "$(DEVELOPMENT_APP).stage/Contents/Resources/install/current/languages/terse/TERSE.sha256"
+	@/bin/mkdir -p "$(DEVELOPMENT_APP).stage/Contents/Resources/install/current/quinby"
+	/usr/bin/install -m 644 "docs/quinbys-corner/initial-profile.json" "$(DEVELOPMENT_APP).stage/Contents/Resources/install/current/quinby/initial-profile.json"
+	/usr/bin/install -m 644 "docs/quinbys-corner/quinby-headshot.png" "$(DEVELOPMENT_APP).stage/Contents/Resources/install/current/quinby/quinby-headshot.png"
+	/usr/bin/install -m 644 "docs/quinbys-corner/provenance.json" "$(DEVELOPMENT_APP).stage/Contents/Resources/install/current/quinby/provenance.json"
+	/usr/bin/install -m 644 "docs/QUINBYS_CORNER_SPECIFICATION.md" "$(DEVELOPMENT_APP).stage/Contents/Resources/install/current/quinby/SPECIFICATION.md"
+	@/usr/bin/shasum -a 256 "docs/QUINBYS_CORNER_SPECIFICATION.md" | /usr/bin/awk '{print $$1}' > "$(DEVELOPMENT_APP).stage/Contents/Resources/install/current/quinby/SPECIFICATION.sha256"
 	@digest=`/bin/cat "$(KNOWLEDGE_SHA)"`; \
 		"$(ARC_DEV)" install-manifest \
 			--contents "$(DEVELOPMENT_APP).stage/Contents" --version "$(VERSION)" \
@@ -369,6 +375,12 @@ app-release: knowledge
 	@/bin/mkdir -p "$(RELEASE_APP).stage/Contents/Resources/install/current/languages/terse"
 	/usr/bin/install -m 644 "$(TERSE_SPEC)" "$(RELEASE_APP).stage/Contents/Resources/install/current/$(TERSE_SPEC)"
 	@/usr/bin/shasum -a 256 "$(TERSE_SPEC)" | /usr/bin/awk '{print $$1}' > "$(RELEASE_APP).stage/Contents/Resources/install/current/languages/terse/TERSE.sha256"
+	@/bin/mkdir -p "$(RELEASE_APP).stage/Contents/Resources/install/current/quinby"
+	/usr/bin/install -m 644 "docs/quinbys-corner/initial-profile.json" "$(RELEASE_APP).stage/Contents/Resources/install/current/quinby/initial-profile.json"
+	/usr/bin/install -m 644 "docs/quinbys-corner/quinby-headshot.png" "$(RELEASE_APP).stage/Contents/Resources/install/current/quinby/quinby-headshot.png"
+	/usr/bin/install -m 644 "docs/quinbys-corner/provenance.json" "$(RELEASE_APP).stage/Contents/Resources/install/current/quinby/provenance.json"
+	/usr/bin/install -m 644 "docs/QUINBYS_CORNER_SPECIFICATION.md" "$(RELEASE_APP).stage/Contents/Resources/install/current/quinby/SPECIFICATION.md"
+	@/usr/bin/shasum -a 256 "docs/QUINBYS_CORNER_SPECIFICATION.md" | /usr/bin/awk '{print $$1}' > "$(RELEASE_APP).stage/Contents/Resources/install/current/quinby/SPECIFICATION.sha256"
 	@digest=`/bin/cat "$(KNOWLEDGE_SHA)"`; \
 		"$(ARC_DEV)" install-manifest \
 			--contents "$(RELEASE_APP).stage/Contents" --version "$(VERSION)" \

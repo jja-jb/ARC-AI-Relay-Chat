@@ -45,8 +45,21 @@ extension ARCError {
 
 struct ARCClient: ARCClientProtocol, Sendable {
     #if DEBUG || ARC_VISUAL_TESTING
-    private static let isolatedDevelopmentRoot = FileManager.default.temporaryDirectory
-        .appendingPathComponent("arc-development-" + UUID().uuidString, isDirectory: true)
+    // The system temporary directory is under /var, a symlink to /private/var,
+    // and installation refuses linked path components on purpose. Foundation's
+    // resolvingSymlinksInPath() deliberately leaves /var and /tmp alone, so use
+    // realpath(3); otherwise a development launch without ARC_DEVELOPMENT_ROOT
+    // fails with "could not safely use its local installation folder".
+    private static let isolatedDevelopmentRoot: URL = {
+        let temporary = FileManager.default.temporaryDirectory.path
+        var resolved = temporary
+        if let real = realpath(temporary, nil) {
+            resolved = String(cString: real)
+            free(real)
+        }
+        return URL(fileURLWithPath: resolved, isDirectory: true)
+            .appendingPathComponent("arc-development-" + UUID().uuidString, isDirectory: true)
+    }()
     #endif
 
     static var defaultRoot: URL {

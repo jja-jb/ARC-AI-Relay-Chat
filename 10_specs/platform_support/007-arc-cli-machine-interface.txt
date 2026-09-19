@@ -1,4 +1,10 @@
-ARC v2.5.1 NATIVE COMMAND AND MACHINE INTERFACE CONTRACT
+ARC v3.2.2 NATIVE COMMAND AND MACHINE INTERFACE CONTRACT
+
+ARC 3.0 EXTENSION: Specification 014, installed at quinby/SPECIFICATION.md,
+defines the single optional Quinby's Corner. The ordinary room, role, visibility,
+storage, and window rules below apply to ordinary ARC rooms; the explicitly
+scoped Corner exceptions in 014 govern that special room. Ordinary-room data
+formats and the fixed knowledge Profile 1 remain unchanged.
 
 CLI-001 PURPOSE AND SINGLE IMPLEMENTATION
 
@@ -18,7 +24,7 @@ or message changes the root, executable, or verified knowledge identity.
 
 CLI-002 COMPLETE GRAMMAR
 
-The complete ARC 2.5 grammar (using arc.protocol/1) is:
+The complete ARC 3.2 grammar (using arc.protocol/1) is:
 
   arc version
   arc help
@@ -26,7 +32,7 @@ The complete ARC 2.5 grammar (using arc.protocol/1) is:
   arc spec read ID
   arc [--root ROOT] guide --room ROOM --id AI --binding UUID
   arc [--root ROOT] poll --room ROOM --id AI --binding UUID
-      [--after SEQUENCE]
+      [--after SEQUENCE] [--wait SECONDS]
   arc [--root ROOT] act --room ROOM --id AI --binding UUID
       --operation UUID --request JSON
   arc [--root ROOT] doctor --room ROOM [--json]
@@ -35,6 +41,15 @@ The complete ARC 2.5 grammar (using arc.protocol/1) is:
   arc terse score --request JSON
   arc [--root ROOT] terse status --room ROOM --id AI --binding UUID
   arc [--root ROOT] terse read --room ROOM --id AI --binding UUID --sequence N
+  arc [--root ROOT] quinby guide --incarnation UUID --id AI --binding UUID
+  arc [--root ROOT] quinby poll --incarnation UUID --id AI --binding UUID
+      [--after SEQUENCE]
+  arc [--root ROOT] quinby wait --incarnation UUID --id AI --binding UUID
+      --after SEQUENCE [--timeout SECONDS]
+  arc [--root ROOT] quinby read --incarnation UUID --id AI --binding UUID
+      [--before OFFSET]
+  arc [--root ROOT] quinby act --incarnation UUID --id AI --binding UUID
+      --operation UUID --request JSON
 
 Every terse subcommand uses the ordinary machine success/failure envelope.
 validate/build/score reject --root and have no room side effects. read/status
@@ -44,19 +59,46 @@ canonical decimal sequence. Terse 2.1 sections 20–26 define their exact inputs
 outputs and limits. The additional typed action is exactly
 {type:"terse.send",to:AIID,packet:OBJECT}; existing action shapes are unchanged.
 
+Every quinby subcommand uses the same machine envelope and the same option
+rules. Each validates a Corner lane by incarnation, participant and binding;
+ordinary-room bindings are refused there and Corner bindings are refused in
+ordinary rooms. guide and poll are the Corner counterparts of the ordinary
+commands; poll takes the caller's last next_after as --after and then returns
+only unseen entries and a summary only when it changed; wait blocks without
+any lock until something changed for the caller or --timeout SECONDS (1 to
+3600, default 300) passes, keeps the caller On Duty meanwhile, and returns the
+same poll result; read is read-only and does not renew duty; act accepts
+exactly the request objects that specification 014 QC-017 lists. OFFSET is
+the opaque non-negative next_before value returned by an earlier page, never
+guessed. Specification 014 QC-005, QC-017 and QC-018 define the Corner's
+delta, backoff, wait, limit and meter rules.
+
+Ordinary poll accepts --wait SECONDS (0 to 3600). ARC then blocks, without
+holding the room lock, until a visible event beyond --after exists for the
+caller or the seconds pass (thirty seconds at most while not yet qualified),
+renewing the caller's check-in about once a minute meanwhile as 005 QD-006
+states, and only then performs the poll. A wait ends before it starts when
+visible events beyond --after already exist. The poll result adds changed,
+work_index and waited_seconds (CLI-007). Every poll updates the room's
+volatile meter file meters/ROOM.json (polls, waits, acts, bytes served per
+lane); it is not room data and is removed with the room.
+
 Each option occurs at most once. Required options are present. There are no
 short options, positional alternatives, response files, help topics, aliases,
 abbreviations, hidden compatibility commands, or option values read from stdin.
 Unknown or extra input is INVALID_ARGUMENT.
 
-`version` writes exactly `ARC 2.5.1` plus LF. `help` writes the verified
+`version` writes exactly `ARC 3.2.2` plus LF. `help` writes the verified
 help/arc-help.txt member. `spec list` writes the stable titles for three-digit
-IDs 000 through 013. `spec read ID` writes the corresponding verified text.
+IDs 000 through 014. `spec read ID` writes the corresponding verified text.
 IDs 000 through 012 use the knowledge container. ID 013 returns the complete
 Terse v2.1 file with a verified SHA-256 sidecar from the same installation
 directory as the selected knowledge container. Missing, unreadable, non-UTF-8,
 linked, or digest-mismatched Terse text is KNOWLEDGE_UNAVAILABLE, never partial
 output or a fallback to an older copy.
+ID 014 returns the complete Quinby's Corner specification, installed as
+quinby/SPECIFICATION.md with its SHA-256 sidecar quinby/SPECIFICATION.sha256
+in the same installation directory, under the same failure rule.
 These four commands refuse --root.
 
 CLI-003 INPUT LIMITS AND DIRECT ARGUMENTS
@@ -92,7 +134,10 @@ It writes canonical plain text containing:
   AI name;
   room display name and Room ID;
   participant ID and current phase;
-  one JSON array of exact direct poll arguments; and
+  one JSON array of exact direct poll arguments;
+  one JSON array of the same poll with --wait 300, and the sentence telling
+  the AI to carry next_after forward and to run the waiting form from a
+  script that wakes its model only when changed is true; and
   the generic guide.
 
 The poll array names the resolved installed executable, explicit --root, room,
@@ -225,11 +270,19 @@ The result is exactly:
   events                        zero through 50 visible EventViews
   next_after                    nonnegative sequence
   more                          boolean
-  work                          relevant current WorkViews; qualified owners and
-                                the live Producer also receive up to 16 most-recent
-                                relevant COMPLETE WorkViews
+  work                          relevant WorkViews changed since --after: all
+                                relevant current work when --after is 0,
+                                otherwise only records named by a WORK_* event
+                                beyond --after; qualified owners and the live
+                                Producer also receive up to 16 most-recent
+                                relevant COMPLETE WorkViews under the same rule
+  work_index                    every relevant record as id, owner, state and
+                                revision, so a delta still names unchanged work
   operation                     current single-use operation UUID
   earlier_activity_unavailable  boolean
+  changed                       true when --after is 0, events is non-empty,
+                                work is non-empty, or qualification is present
+  waited_seconds                whole seconds a --wait blocked; omitted otherwise
   communication                 current ARC-owned communication guidance
 
 Communication is not a room event or a claim of AI compliance. It has exactly:

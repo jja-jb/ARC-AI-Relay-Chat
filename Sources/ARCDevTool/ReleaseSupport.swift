@@ -64,7 +64,7 @@ enum ARCReleaseSupport {
         output: URL
     ) throws {
         guard version.range(
-            of: #"^[12]\.[0-9]+\.[0-9]+$"#,
+            of: #"^[123]\.[0-9]+\.[0-9]+$"#,
             options: .regularExpression
         ) != nil, isSHA256(knowledgeSHA256) else {
             throw DevToolError.message("install manifest identity is invalid")
@@ -82,6 +82,7 @@ enum ARCReleaseSupport {
             "legal/LICENSE",
             "legal/NOTICE.md",
             terseSpecification, terseDigest,
+            "quinby/initial-profile.json", "quinby/quinby-headshot.png", "quinby/provenance.json", "quinby/SPECIFICATION.md", "quinby/SPECIFICATION.sha256",
         ] + KnowledgeContainer.canonicalSources
             .filter { $0.logical.hasPrefix("specifications/") }
             .map(\.logical))
@@ -259,7 +260,10 @@ enum ARCReleaseSupport {
         try checkTraceability(root)
         try checkBrandAssets(root)
         try checkPrivacyManifest(root.appending(path: "app/Sources/ARCApp/PrivacyInfo.xcprivacy"))
-        try checkInfoPlist(root.appending(path: "app/Info.plist"), version: "2.5.1")
+        guard let versionLine = makefile.split(separator: "\n").first(where: { $0.hasPrefix("VERSION := ") }) else {
+            throw DevToolError.message("source version is missing")
+        }
+        try checkInfoPlist(root.appending(path: "app/Info.plist"), version: String(versionLine.dropFirst(11)))
     }
 
     static func checkApp(_ app: URL, version: String, release: Bool) throws {
@@ -307,6 +311,7 @@ enum ARCReleaseSupport {
         let expectedCurrent = Set([
             "ARC_AI.arc-kb", "ARC_AI.sha256", "legal/LICENSE", "legal/NOTICE.md",
             terseSpecification, terseDigest,
+            "quinby/initial-profile.json", "quinby/quinby-headshot.png", "quinby/provenance.json", "quinby/SPECIFICATION.md", "quinby/SPECIFICATION.sha256",
         ] + KnowledgeContainer.canonicalSources
             .filter { $0.logical.hasPrefix("specifications/") }
             .map(\.logical))
