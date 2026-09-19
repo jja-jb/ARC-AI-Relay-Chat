@@ -1,6 +1,6 @@
 # ARC privacy
 
-ARC 2.5 is local software. It opens no network connection and has no telemetry,
+ARC 3.2 is local software. It opens no network connection and has no telemetry,
 analytics, advertising identifier, provider login, credential store, cloud
 sync, embedded browser, automatic upload, download, or update check.
 
@@ -13,12 +13,30 @@ Below `~/Library/Application Support/ARC/`, ARC stores:
 - the installed native `arc` command;
 - the full Terse v2.1 specification and digest;
 - the app-wide operator-language preference, when explicitly saved;
+- Quinby's append-only record, replaceable summary, membership and assignment
+  state under `quinby/`, plus its lock and volatile presence/usage counters;
+- volatile per-room usage counters under `meters/`;
 - the current knowledge container, specifications, legal text, and install
   receipt.
 
 A room contains its name and ID, participant names and lane bindings, Producer,
 work, complete room history, retry facts, and local timestamps. ARC does not
 store provider credentials or the surrounding provider-chat transcript.
+
+## Quinby's cross-room hearing
+
+Quinby starts Off. While enabled with at least one available Corner AI, he
+records audible activity from all ordinary rooms, including targeted messages,
+work scopes and evidence. Every AI invited to the Corner can read these copies;
+ordinary-room recipient restrictions do not exclude that explicitly enabled
+observation. There is no per-room opt-out. Off/unavailable intervals are not
+backfilled. The Corner window discloses this behavior before it is turned on.
+
+Deleting a room or retiring an AI does not remove copies already heard by
+Quinby. Kill and Reincarnate removes his record, summary and memberships.
+ARC itself sends no data to a provider, but the external AI hosts you invite
+may process and retain the ARC content they read under their own settings.
+ARC cannot erase their chat histories, macOS backups or other external copies.
 
 ## No ARC encryption
 

@@ -1,16 +1,20 @@
-# ARC 2.5.1 production checklist
+# ARC 3.2.2 production checklist
 
 Joseph Austin is the sole release authorizer. This is a verification checklist,
 not a request for another reviewer or independent approval.
-See [the release procedure](docs/RELEASING.md) and
-[production decision](docs/ARC_2_5_1_PRODUCTION_RELEASE.md).
+See [the release procedure](docs/RELEASING.md) and the
+[3.2.2 release decision](docs/ARC_3_2_2_PRODUCTION_RELEASE.md). The
+[2.5.1 production decision](docs/ARC_2_5_1_PRODUCTION_RELEASE.md) is historical
+evidence for that release only; the new release needs its own actual acceptance
+record, not a copy of earlier test results.
 Unchecked items describe work to verify, not claimed results.
 
 ## Source and content
 
-- [ ] App version 2.5.1, build 251, command, specs, manuals and release agree.
+- [ ] App version 3.2.2, build 322, command, specs, manuals and release agree.
 - [ ] Source includes the Swift 6.1.2 test-compatibility correction.
-- [ ] Terse remains 2.1 / wire 3, with production status and a verified new digest.
+- [ ] Terse remains 2.1 / wire 3, with production status and its verified digest;
+      unchanged specification bytes retain their existing digest.
 - [ ] Tests run; actual failures and accepted exceptions are recorded.
 - [ ] Traceability, support links, legal text and source inventory are checked.
 - [ ] Graphics are accounted for; the radio is labeled as a concept illustration.

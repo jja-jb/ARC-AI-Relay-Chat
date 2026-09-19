@@ -72,10 +72,14 @@ struct ARCCommand {
             } else if subcommand == "read", arguments.count == 2,
                       let id = Int(arguments[1]),
                       arguments[1] == String(format: "%03d", id) {
-                guard (0...13).contains(id) else {
+                guard (0...14).contains(id) else {
                     throw ARCError(.notFound, "ARC has no specification with that ID.")
                 }
                 let knowledge = try ARCKnowledgeFile.openDefault(rootURL: root)
+                if id == 14 {
+                    writeText(withFinalLF(try QuinbyStore.specification(rootURL: root)))
+                    return
+                }
                 if id == 13 {
                     writeText(withFinalLF(try ARCCommunication.specificationText(
                         installationURL: knowledge.containerURL.deletingLastPathComponent())))
@@ -107,7 +111,7 @@ struct ARCCommand {
             let options = try parseOptions(
                 arguments,
                 required: ["--room", "--id", "--binding"],
-                optional: ["--after"]
+                optional: ["--after", "--wait"]
             )
             let after: Int64
             if let rawAfter = options["--after"] {
@@ -117,11 +121,19 @@ struct ARCCommand {
                 }
                 after = value
             } else { after = 0 }
+            var wait = 0
+            if let rawWait = options["--wait"] {
+                guard let value = Int(rawWait), value >= 0, value <= 3_600, String(value) == rawWait else {
+                    throw ARCError(.invalidArgument, "--wait must be a whole number of seconds up to 3600.")
+                }
+                wait = value
+            }
             let result = try ARCStore(rootURL: root).poll(
                 room: options["--room"]!,
                 participant: options["--id"]!,
                 binding: options["--binding"]!,
-                after: after
+                after: after,
+                wait: wait
             )
             writeSuccess(result)
 
@@ -138,6 +150,52 @@ struct ARCCommand {
                 requestJSON: Data(options["--request"]!.utf8)
             )
             writeSuccess(result)
+
+        case "quinby":
+            guard let subcommand = arguments.first else { throw usage() }
+            let rest = Array(arguments.dropFirst())
+            let required: Set<String> = ["--incarnation", "--id", "--binding"]
+            var options: [String: String] = [:]
+            let store = QuinbyStore(rootURL: root)
+            func sequence(_ key: String) throws -> Int64? {
+                guard let raw = options[key] else { return nil }
+                guard let value = Int64(raw), value >= 0, String(value) == raw else {
+                    throw ARCError(.invalidArgument, "\(key) must be a nonnegative integer.")
+                }
+                return value
+            }
+            switch subcommand {
+            case "guide":
+                options = try parseOptions(rest, required: required)
+                writeSuccess(try store.guide(incarnation: options["--incarnation"]!, participant: options["--id"]!, binding: options["--binding"]!))
+            case "poll":
+                options = try parseOptions(rest, required: required, optional: ["--after"])
+                writeSuccess(try store.poll(incarnation: options["--incarnation"]!, participant: options["--id"]!,
+                    binding: options["--binding"]!, after: try sequence("--after")))
+            case "wait":
+                options = try parseOptions(rest, required: required.union(["--after"]), optional: ["--timeout"])
+                var timeout = 300
+                if let raw = options["--timeout"] {
+                    guard let value = Int(raw), value >= 1, value <= 3_600, String(value) == raw else {
+                        throw ARCError(.invalidArgument, "--timeout must be a whole number of seconds from 1 to 3600.")
+                    }
+                    timeout = value
+                }
+                writeSuccess(try store.wait(incarnation: options["--incarnation"]!, participant: options["--id"]!,
+                    binding: options["--binding"]!, after: try sequence("--after")!, timeout: timeout))
+            case "read":
+                options = try parseOptions(rest, required: required, optional: ["--before"])
+                var before: Int64?
+                if let raw = options["--before"] {
+                    guard let value = Int64(raw), value >= 0, String(value) == raw else { throw usage() }
+                    before = value
+                }
+                writeSuccess(try store.read(incarnation: options["--incarnation"]!, participant: options["--id"]!, binding: options["--binding"]!, before: before))
+            case "act":
+                options = try parseOptions(rest, required: required.union(["--operation", "--request"]))
+                writeSuccess(try store.act(incarnation: options["--incarnation"]!, participant: options["--id"]!, binding: options["--binding"]!, operation: options["--operation"]!, json: Data(options["--request"]!.utf8)))
+            default: throw usage()
+            }
 
         case "terse":
             guard let subcommand = arguments.first else { throw usage() }
@@ -223,6 +281,7 @@ struct ARCCommand {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.withoutEscapingSlashes]
         let pollJSON = String(decoding: try encoder.encode(poll), as: UTF8.self)
+        let waitJSON = String(decoding: try encoder.encode(poll + ["--wait", "300"]), as: UTF8.self)
         let helpJSON = String(decoding: try encoder.encode([executable, "help"]), as: UTF8.self)
         let specListJSON = String(
             decoding: try encoder.encode([executable, "spec", "list"]), as: UTF8.self
@@ -248,6 +307,10 @@ struct ARCCommand {
         Use direct argument arrays, never a shell command. Your poll arguments are:
         \(pollJSON)
 
+        Your waiting poll arguments (block up to five minutes for a change, renewing duty meanwhile, then poll) are:
+        \(waitJSON)
+        After the first poll, replace the 0 after --after with the next_after of the previous result. Run the waiting form from a script or host tool and wake your model only when the result's changed is true.
+
         Your exact offline help arguments are:
         \(helpJSON)
 
@@ -262,7 +325,7 @@ struct ARCCommand {
         var values = raw
         if values.first == "--root", values.count >= 3 { values.removeFirst(2) }
         guard let command = values.first else { return false }
-        return command == "poll" || command == "act" || command == "terse"
+        return command == "poll" || command == "act" || command == "terse" || command == "quinby"
             || (command == "doctor" && values.contains("--json"))
     }
 
@@ -299,7 +362,7 @@ struct ARCCommand {
     private static func usage() -> ARCError {
         ARCError(
             .invalidArgument,
-            "Usage: arc version | help | spec list | spec read ID | guide | poll | act | terse | doctor"
+            "Usage: arc version | help | spec list | spec read ID | guide | poll | act | terse | quinby | doctor"
         )
     }
 
@@ -318,6 +381,7 @@ struct ARCCommand {
     011  Durable record
     012  AI knowledge container
     013  Terse v2.1 (full language specification)
+    014  Quinby's Corner
     """ + "\n"
 }
 

@@ -1,6 +1,17 @@
-# Install ARC 2.5.1
+# Install ARC 3.2.2
 
-ARC 2.5.1 can read earlier room/1 records, including historical Terse wire-2 packets.
+ARC 3.2.2 can read earlier room/1 records, including historical Terse wire-2 packets.
+
+Quinby's Corner uses a separate record format. ARC 3.0/3.1 Corner records are
+left unchanged and cannot be opened by 3.2.2; ordinary rooms remain usable.
+To start a new Corner, use Kill and Reincarnate, which explicitly deletes its
+old history and memberships. Preserve an external copy first if that history
+matters. This is not a migration or an automatic reset.
+
+After updating an existing Corner, copy its instructions again so each host
+reads the current guide, including the explicit history catch-up procedure.
+This does not replace bindings or erase history. A fresh installation starts
+with no rooms or participants and Quinby Off.
 New Terse events carry wire_version:3; new agreement uses Terse 2.1 and its digest.
 Once a room records the new packet fields, earlier executables reject it. Do not downgrade
 that room; keep a backup before upgrading if you need rollback. The existing
@@ -66,7 +77,7 @@ make check
 make app-development-check
 ```
 
-The development app is written under `/private/tmp/arc-build-2.5.1/development/`.
+The development app is written under `/private/tmp/arc-build-3.2.2/development/`.
 It uses a fresh temporary root unless `ARC_DEVELOPMENT_ROOT` explicitly names
 an absolute test root. Building alone installs nothing. A development launch
 installs support files only in that chosen test root; release builds ignore

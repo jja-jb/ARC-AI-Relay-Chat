@@ -11,6 +11,9 @@ public final class ARCStore: @unchecked Sendable {
     private let clock: ARCClock
     private let explicitKnowledgeSHA256: String?
     private let maximumEventBytes: Int
+    /// How often a blocking `poll --wait` renews the caller's check-in.
+    /// Tests shorten it; production keeps the one-minute duty cadence.
+    var waitRenewalSeconds: Double = 60
     public init(rootURL: URL = ARCStore.defaultRootURL, clock: ARCClock = .system) {
         self.rootURL = rootURL.standardized
         self.clock = clock
@@ -573,6 +576,7 @@ public final class ARCStore: @unchecked Sendable {
             document.participants.allSatisfy { $0.phase == .retired }
                 || self.canDeleteFullRoom(document, now: self.readTime(document))
         }
+        ARCMeter.remove(root: rootURL, room: room)
         return ARCDeleteResult(deleted: true)
     }
 
@@ -600,14 +604,15 @@ public final class ARCStore: @unchecked Sendable {
     }
 
     public func poll(
-        room: String, participant id: String, binding: String, after: Int64 = 0
+        room: String, participant id: String, binding: String, after: Int64 = 0, wait: Int = 0
     ) throws -> ARCPollResult {
         try requireParticipantID(id)
         guard ARCText.isLowerUUID(binding), after >= 0 else {
             throw ARCError(.invalidArgument, "The binding or Activity position is invalid.")
         }
+        let waited = wait > 0 ? try waitForRoomChange(room: room, participant: id, binding: binding, after: after, seconds: wait) : nil
         let knowledge = try knowledgeSHA256()
-        return try files().update(room) { document in
+        let result: ARCPollResult = try files().update(room) { document in
             guard let index = document.participants.firstIndex(where: { $0.id == id }) else {
                 throw ARCError(.notFound, "ARC could not find that AI participant in this room.")
             }
@@ -655,33 +660,107 @@ public final class ARCStore: @unchecked Sendable {
             } else {
                 recentCompletedWork = []
             }
-            let relevantWork = (currentWork + recentCompletedWork).sorted {
+            let relevantRecords = (currentWork + recentCompletedWork).sorted {
                 $0.updatedLogicalUs == $1.updatedLogicalUs
                     ? $0.id < $1.id : $0.updatedLogicalUs < $1.updatedLogicalUs
-            }.map(self.workView)
+            }
+            // A delta poll repeats only work changed since the caller's
+            // position; the index still names every relevant record.
+            let touched = Set(visibleEvents.filter { $0.kind.hasPrefix("WORK_") }.compactMap(\.subject))
+            let relevantWork = relevantRecords
+                .filter { after == 0 || touched.contains($0.id) }
+                .map(self.workView)
+            let workIndex = relevantRecords.map {
+                ARCWorkIndexEntry(id: $0.id, owner: $0.owner, state: $0.state, revision: $0.revision)
+            }
             let ownView = self.participantView(participant, document: document, now: logical)
             let earliestRetainedSequence = document.activity.first?.sequence ?? high + 1
+            let qualification = self.qualificationView(participant)
             return (ARCPollResult(
                 room: self.roomView(document, now: logical, knowledge: knowledge),
                 participant: ownView,
                 producer: self.producerView(document, now: logical),
                 roster: allViews,
                 schedule: ownView.schedule,
-                qualification: self.qualificationView(participant),
+                qualification: qualification,
                 events: events,
                 nextAfter: nextAfter,
                 more: eventPage.count > 50,
                 work: relevantWork,
+                workIndex: workIndex,
                 operation: participant.nextOperation,
                 earlierActivityUnavailable: earliestRetainedSequence > after + 1,
-                communication: ARCCommunication.snapshot(rootURL: self.rootURL)
+                communication: ARCCommunication.snapshot(rootURL: self.rootURL),
+                changed: after == 0 || !events.isEmpty || !relevantWork.isEmpty || qualification != nil,
+                waitedSeconds: waited
             ), changed)
         }
+        ARCMeter.note(root: rootURL, room: room, participant: id, now: result.room.logicalUs,
+                      polls: 1, waits: wait > 0 ? 1 : 0, bytes: ARCMeter.servedBytes(result))
+        return result
     }
 }
 
 extension ARCStore {
     private func files() throws -> ARCFileStore { try ARCFileStore(rootURL: rootURL) }
+
+    /// Blocks, without holding the room lock, until something new for this AI
+    /// exists or `seconds` pass. While it blocks it renews the caller's
+    /// check-in about once a minute, so a waiting AI never lets its duty lapse:
+    /// its host process is present and will react. Qualifying AIs wait at most
+    /// thirty seconds so the fixed access check keeps its own timing.
+    private func waitForRoomChange(
+        room: String, participant id: String, binding: String, after: Int64, seconds: Int
+    ) throws -> Int {
+        let url = try files().roomURL(room)
+        /// True when the caller has something to see; also the bound for a
+        /// participant that is not yet qualified.
+        func news() throws -> (ready: Bool, qualified: Bool) {
+            try files().read(room) { (document: ARCRoomDocument) -> (Bool, Bool) in
+                guard let participant = document.participants.first(where: { $0.id == id }) else {
+                    throw ARCError(.notFound, "ARC could not find that AI participant in this room.")
+                }
+                try self.validateBinding(participant, binding: binding)
+                let unseen = document.activity.contains { $0.sequence > after && ($0.recipient == nil || $0.recipient == id) }
+                return (unseen || participant.phase == .qualifying || participant.phase == .failed, participant.phase == .qualified)
+            }
+        }
+        let first = try news()
+        if first.ready { return 0 }
+        let limit = min(Double(seconds), first.qualified ? 3_600 : 30)
+        guard limit > 0 else { return 0 }
+        if first.qualified { try renewCheckIn(room: room, participant: id, binding: binding) }
+        let started = ProcessInfo.processInfo.systemUptime
+        var renewed = started
+        while true {
+            let elapsed = ProcessInfo.processInfo.systemUptime - started
+            if elapsed >= limit { return Int(elapsed.rounded()) }
+            if first.qualified, ProcessInfo.processInfo.systemUptime - renewed >= waitRenewalSeconds {
+                try renewCheckIn(room: room, participant: id, binding: binding)
+                renewed = ProcessInfo.processInfo.systemUptime
+            }
+            let slice = min(limit - elapsed, max(0.05, waitRenewalSeconds - (ProcessInfo.processInfo.systemUptime - renewed)), 30)
+            _ = ARCFileWatch.waitForChange(at: url.path, seconds: slice)
+            if try news().ready { return Int((ProcessInfo.processInfo.systemUptime - started).rounded()) }
+        }
+    }
+
+    /// The check-in half of a poll, used while a wait blocks: records the
+    /// caller's presence exactly as a poll would, without reading anything.
+    func renewCheckIn(room: String, participant id: String, binding: String) throws {
+        let knowledge = try knowledgeSHA256()
+        try files().update(room) { (document: inout ARCRoomDocument) -> (value: Void, commit: Bool) in
+            guard let index = document.participants.firstIndex(where: { $0.id == id }) else {
+                throw ARCError(.notFound, "ARC could not find that AI participant in this room.")
+            }
+            try self.validateBinding(document.participants[index], binding: binding)
+            let logical = try self.mutationTime(&document)
+            var changed = try self.applyDueQualificationFailures(&document, now: logical, knowledge: knowledge)
+            changed = try self.applyPoll(&document, participantIndex: index, now: logical, knowledge: knowledge) || changed
+            if changed { self.finishMutation(&document, logical: logical) }
+            return ((), changed)
+        }
+    }
 
     private func knowledgeSHA256() throws -> String {
         if let explicitKnowledgeSHA256 {
@@ -820,7 +899,8 @@ extension ARCStore {
                 )
             },
             work: document.work.filter { $0.state != .complete }.map(workView),
-            canDeleteWithoutRetirement: canDeleteFullRoom(document, now: now)
+            canDeleteWithoutRetirement: canDeleteFullRoom(document, now: now),
+            usage: ARCMeter.usage(root: rootURL, room: document.room.id, now: now ?? document.room.lastClockLogicalUs)
         )
     }
 
@@ -1342,7 +1422,10 @@ public extension ARCStore {
             }
         }
         switch outcome {
-        case .success(let result): return result
+        case .success(let result):
+            ARCMeter.note(root: rootURL, room: room, participant: id,
+                          now: (try? ARCTime.logicalUS(clock.now())) ?? 0, acts: 1)
+            return result
         case .failure(let error): throw error
         }
     }

@@ -136,6 +136,10 @@ struct ARCInstallation: ARCInstallationProtocol, Sendable {
         guard requiredTerse.isSubset(of: Set(manifest.entries.map(\.path))) else {
             throw ARCInstallationError.bundleIncomplete
         }
+        if manifest.version.hasPrefix("3.") {
+            let required = Set(["initial-profile.json", "quinby-headshot.png", "provenance.json", "SPECIFICATION.md", "SPECIFICATION.sha256"].map { "current/quinby/" + $0 })
+            guard required.isSubset(of: Set(manifest.entries.map(\.path))) else { throw ARCInstallationError.bundleIncomplete }
+        }
 
         if !force, try installedFilesMatch(
             root: root,
@@ -182,7 +186,7 @@ struct ARCInstallation: ARCInstallationProtocol, Sendable {
         guard manifest.schema == 1,
               manifest.product == "ARC",
               manifest.version.range(
-                  of: #"^[12]\.[0-9]+\.[0-9]+$"#,
+                  of: #"^[123]\.[0-9]+\.[0-9]+$"#,
                   options: .regularExpression
               ) != nil,
               isSHA256(manifest.knowledgeSha256),

@@ -16,6 +16,12 @@ struct ARCApplication: App {
             ARCMenuCommands(state: state)
         }
 
+        Window("Quinby's Corner", id: "quinby-corner") {
+            QuinbyWindowView().environmentObject(state)
+        }
+        .defaultSize(width: 820, height: 840)
+        .defaultLaunchBehavior(.suppressed)
+
         Window("Room Activity", id: ARCActivityWindow.id) {
             ActivityWindowView()
                 .environmentObject(state)
@@ -78,6 +84,9 @@ private struct ARCMenuCommands: Commands {
         }
 
         CommandGroup(after: .toolbar) {
+            Button("Quinby's Corner") { openWindow(id: "quinby-corner") }
+                .keyboardShortcut("q", modifiers: [.command, .shift])
+                .disabled(!state.installationReady)
             Button("Open Activity Window") { openWindow(id: ARCActivityWindow.id) }
                 .keyboardShortcut("l", modifiers: [.command, .shift])
             Divider()

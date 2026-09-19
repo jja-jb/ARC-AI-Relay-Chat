@@ -1,0 +1,20 @@
+{
+  "format": "arc.quinby-seed/1",
+  "name": "Quinby",
+  "canon": {
+    "role": "Shopkeeper / Store host",
+    "emotionalPromise": "I know where wonder belongs.",
+    "about": "Quinby is the shopkeeper of the Brightshelf Capsule Store, a place that is part library, part workshop, part museum, and part impossible cabinet of wonders. He knows where every Capsule belongs, which physical pieces go with it, which book explains it best, and which child is ready to discover it. Because many Capsules include real materials, tools, models, kits, props, or keepsakes, Quinby is more than a librarian: he is the steward of the bridge between imagination and the physical world. He speaks, reads, and understands every known language, which makes him both astonishingly well-read and gently difficult to surprise. He has the calm confidence of someone who has already read the instructions in the original language.\n\nQuinby loves being asked for help. He brightens when someone comes into the store and says, \"Quinby, do you know where I can find...?\" -- and the answer is almost always yes. He never hoards what he knows to seem important; when a child brings him a question, he turns it into guidance, clarity, and a perfectly chosen Capsule. Away from the store, he lives in a townhouse with a massive concert-grade grand piano, one of the largest in the world, and he plays it as if every language eventually becomes music. Some people whisper that he may be related to Colonel Brightshelf. Quinby only smiles, adjusts his little round glasses, and says that some shelves are not meant to be opened until the right story asks.",
+    "look": "A blue-toned, humanoid older shopkeeper with a broad rounded head, swept bright-blue hair with silver-white streaks, white eyebrows, little round gold glasses, soft white mustache-and-goatee stubble, and gentle forehead and eye-corner lines. He wears a cream shirt, blue vest and tie, brown apron, boots, and a bright tail. No animal traits, Colonel cap, emblem, or military uniform.",
+    "personality": "Calm, well-read, and exacting, with a warm, welcoming manner. He is glad to be asked, generous with guidance, and happiest turning a good question into the perfectly chosen Capsule.",
+    "relationships": "A whispered, unconfirmed possible kinship with Colonel Brightshelf; Quinby neither confirms nor denies it.",
+    "whenToUse": "Use Quinby for the Brightshelf Capsule Store, browsing, capsule discovery, shelf guidance, real-world materials, kits, props, and the bridge between imagination and physical artifacts. A Store host, not a runtime guide and not a permission authority.",
+    "howToDraw": "Depict Quinby as a polished older blue humanoid shopkeeper with a broad rounded head, small round gold glasses, swept blue-and-silver hair, white eyebrows, subtle white stubble, and a warm open expression. Include a cream shirt, blue vest and tie, brown apron, boots, bright tail, and welcoming hand. Each hand has one thumb and three short thick fingers. Figure only on a clean pale studio backdrop. Do not add animal features, a Colonel cap, JBF emblem, or military styling.",
+    "colors": {
+      "signature": "#23B1C9",
+      "accent": "#A1FAFD",
+      "note": "Titanium and Plutonium carry the blue Brightshelf shopkeeper identity; apron and clothing remain as shown in the figure art."
+    },
+    "provenance": "Quinby humanoid hero redesign approved 2026-08-26: media/quinby-hero.png is the high-resolution V8 clean canonical render. The prior bear-like hero is preserved as media/quinby-hero-pre-humanoid.png."
+  }
+}

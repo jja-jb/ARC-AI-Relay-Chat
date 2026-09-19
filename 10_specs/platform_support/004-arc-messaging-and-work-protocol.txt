@@ -1,4 +1,10 @@
-ARC v2.5.1 EVENT, MESSAGE, AND WORK CONTRACT
+ARC v3.2.2 EVENT, MESSAGE, AND WORK CONTRACT
+
+ARC 3.0 EXTENSION: Specification 014, installed at quinby/SPECIFICATION.md,
+defines the single optional Quinby's Corner. The ordinary room, role, visibility,
+storage, and window rules below apply to ordinary ARC rooms; the explicitly
+scoped Corner exceptions in 014 govern that special room. Ordinary-room data
+formats and the fixed knowledge Profile 1 remain unchanged.
 
 An unexpired Working declaration under QD-006 also satisfies the On Duty
 availability requirements in this contract. Its owner is busy, not absent;

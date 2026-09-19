@@ -60,7 +60,9 @@ struct ARCFileStore: Sendable {
             }
             var value = document
             let data = try dataForCommit(&value)
-            try atomicWrite(data, to: url, exclusive: true)
+            try QuinbyStore.capture(root: rootURL, data: data, priorSequence: 0) {
+                try atomicWrite(data, to: url, exclusive: true)
+            }
             return try body(value)
         }
     }
@@ -90,10 +92,13 @@ struct ARCFileStore: Sendable {
         try requireExistingRoom(at: url)
         return try withLock(for: url) {
             var document = try readDocument(at: url, expectedID: id)
+            let priorSequence = document.room.nextSequence - 1
             let result = try body(&document)
             if result.commit {
                 let data = try dataForCommit(&document, reservingRecoverySpace: reservingRecoverySpace)
-                try atomicWrite(data, to: url, exclusive: false)
+                try QuinbyStore.capture(root: rootURL, data: data, priorSequence: priorSequence) {
+                    try atomicWrite(data, to: url, exclusive: false)
+                }
             }
             return result.value
         }
@@ -110,7 +115,19 @@ struct ARCFileStore: Sendable {
                     "Retire every AI before deleting this room. A full room can bypass retirement only when no AI is On Duty, Working, or in an active access check and ARC can verify time."
                 )
             }
-            try deleteAdmittedRegularFile(url)
+            if FileManager.default.fileExists(atPath: rootURL.appendingPathComponent("quinby/records.arcquinby").path) {
+                let journal: QuinbyJournal?
+                do { journal = try QuinbyJournal(root: rootURL) }
+                catch let error as ARCError where error.code == .roomIncompatible {
+                    // As in capture(), an unsupported Corner is inactive. Do
+                    // not force its destruction to manage an ordinary room.
+                    // Its bytes remain untouched; corruption/I/O still fail.
+                    journal = nil
+                }
+                if let journal { try QuinbyStore.recoverCapture(journal, root: rootURL) }
+                try deleteAdmittedRegularFile(url)
+                withExtendedLifetime(journal) {}
+            } else { try deleteAdmittedRegularFile(url) }
         }
         try removeLockIfUnused(for: url)
     }

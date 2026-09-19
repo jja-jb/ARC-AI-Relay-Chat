@@ -1,4 +1,11 @@
-# ARC 2.5.1 traceability
+# ARC 3.2.2 traceability
+
+3.2.2 regressions: `testCatchUpRecoversEveryEntryAndPreservesNewConcurrentActivity`
+checks the frozen recovery window; `testRefreshGapRemainsReachableThroughEarlierHistory`
+checks UI paging; `testWaitRenewsImmediatelyNearDutyAndWorkingExpiry` checks
+Corner presence; `testLegacyCornerDoesNotBlockOrdinaryDeletionAndIsPreserved`
+checks older-format isolation and current-corruption refusal. Existing ordinary
+wait, storage, qualification, installation and Terse tests remain applicable.
 
 Terse 2.1 specification 013 sections 20–26 map to ARCTerseTests and the
 Terse/ledger/score helpers in ARCCore. TERSE_MESSAGE uses the existing durable
@@ -61,9 +68,9 @@ Development-root isolation is covered by
 standard root and ignore development overrides. The bounded manual interface
 smoke check is recorded in ARC_2_1_TEST_REVIEW.md.
 
-The source specification set is synchronized to ARC 2.5.1 behavior. Room,
+The source specification set is synchronized to ARC 3.2.2 behavior. Room,
 protocol, qualification, knowledge Profile 1, and report schema identifiers
-retain their own versions; they do not become /2 because the product is 2.5.
+retain their own versions independently of the product version.
 The complete Terse v2.1 source remains in languages/terse/ as governing ARC
 specification 013, mapped through QD-001 / IR-003 and CLI-002. Its separate
 signed file preserves the Profile 1 format. The full verified text is exposed
@@ -347,3 +354,33 @@ The final DVT report supplies tester identity, independence, time, Apple
 silicon machine, system, toolchain, prepared hashes, deviations, and the result
 for every DVT row. Release metadata and `SHA256SUMS` bind that evidence to the
 exact published bytes.
+
+## Quinby's Corner (specification 014)
+
+Specification 014 lives in `docs/QUINBYS_CORNER_SPECIFICATION.md` and is
+installed with ARC. Its QC identifiers map to these verification cases; the
+window cases render both appearances and are also inspected manually.
+
+| Section | Verification |
+| --- | --- |
+| `QC-001` purpose and append-only identity | `QuinbyTests.testAppendOnlyReplaySummaryReplacementAndResetIsolation` |
+| `QC-002` one voice, human conversation | `QuinbyTests.testRandomAssignmentIsPersistedAndWrongAIAndLateGenerationAreRefused`; conversation labels in `QuinbyWindowTests` |
+| `QC-003` starting identity and portrait | `QuinbyWindowTests.testCornerRendersCanonAndKeepsDisabledChatHonestInBothAppearances` |
+| `QC-004` Operator controls and first use | `QuinbyTests.testStartsOffAndOneQualifiedAIControlsListeningAtExactBoundaries`; `QuinbyWindowTests` |
+| `QC-005` participants, availability, backoff and wait | `QuinbyTests.testStartsOffAndOneQualifiedAIControlsListeningAtExactBoundaries`; `QuinbyTests.testQualificationRetriesAreBoundedAndReadDoesNotRenewDuty`; `QuinbyTests.testBackoffLengthensWhileQuietAndDutyFollowsIt`; `QuinbyTests.testWaitReturnsOnANewEntryAndOnTimeout` |
+| `QC-006` listening, inaudible presence mechanics and the composer | `QuinbyTests.testObservationsOnlyDuringListeningAndSurviveSourceDeletion`; `QuinbyWindowTests.testSendWhileOffIsRefusedWithoutErrorAndKeepsTheDraft` |
+| `QC-007` scope of AI activity and rate limits | `QuinbyTests.testRateLimitsContributionsThoughtsWorkingAndSummaryRewrites`; the rest is Corner guide text in `QuinbyStore.guide` |
+| `QC-008` Terse and collective development | Corner guide text; `QuinbyTests.testInvalidActionsAndStaleSummaryDoNotConsumeTokenOrAlterRecord` |
+| `QC-009` random selection | `QuinbyTests.testRandomAssignmentIsPersistedAndWrongAIAndLateGenerationAreRefused` |
+| `QC-010` two durable content files and volatile presence | `QuinbyTests.testAppendOnlyReplaySummaryReplacementAndResetIsolation`; `QuinbyTests.testCorruptCommittedFrameIsNotTruncatedAndLinkedSummaryIsRefused`; `QuinbyTests.testRoutinePollsAreNotRecordedAndPresenceIsVolatile` |
+| `QC-011` summary, its cap and `summary.patch` | `QuinbyTests.testAppendOnlyReplaySummaryReplacementAndResetIsolation`; `QuinbyTests.testSummaryPatchChangesOnePassageAndRecordsTheFullText` |
+| `QC-012` capture, transactions and recovery | `QuinbyTests.testCaptureRecoversCommittedIntentBeforeAnyLaterMutation`; `QuinbyTests.testUncommittedTailRecoveryAndLargeLifetimeHistory` |
+| `QC-013` Kill and Reincarnate | `QuinbyTests.testAppendOnlyReplaySummaryReplacementAndResetIsolation`; `QuinbyWindowTests.testCornerWindowClearsOldIdentityAfterReincarnation` |
+| `QC-014` window, wording, refresh and display | `QuinbyWindowTests.testCornerRendersCanonAndKeepsDisabledChatHonestInBothAppearances`; `QuinbyWindowTests.testRefreshKeepsActionErrorAndPublishesOnlyChanges`; `QuinbyWindowTests.testTimesRenderLocallyAndUnparseableValuesPassThrough` |
+| `QC-015` integration and compatibility | ordinary-room suites unchanged; `QuinbyTests.testObservationsOnlyDuringListeningAndSurviveSourceDeletion` covers app and CLI capture |
+| `QC-016` acceptance evidence | items 1–14 map to the rows above; items 15–17 are the three `QuinbyWindowTests` cases named for `QC-006` and `QC-014`; items 18–24 are `testDeltaPollServesOnlyUnseenEntriesAndAChangedSummary`, `testRoutinePollsAreNotRecordedAndPresenceIsVolatile`, `testBackoffLengthensWhileQuietAndDutyFollowsIt`, `testWaitReturnsOnANewEntryAndOnTimeout`, `testRateLimitsContributionsThoughtsWorkingAndSummaryRewrites`, `testSummaryPatchChangesOnePassageAndRecordsTheFullText` and `testEarlierRecordFormatIsRefusedUntilReincarnated` in `QuinbyTests` |
+| `QC-017` storage and wire contract | `QuinbyTests.testUncommittedTailRecoveryAndLargeLifetimeHistory`; `QuinbyTests.testCorruptCommittedFrameIsNotTruncatedAndLinkedSummaryIsRefused`; `QuinbyTests.testInvalidActionsAndStaleSummaryDoNotConsumeTokenOrAlterRecord`; `QuinbyTests.testDeltaPollServesOnlyUnseenEntriesAndAChangedSummary`; `QuinbyTests.testEarlierRecordFormatIsRefusedUntilReincarnated` |
+| `QC-018` cost control | the seven `QuinbyTests` cases of items 18–24; ordinary-room deltas and `--wait` in `ARCCoreTests.testDeltaPollRepeatsOnlyChangedWorkAndWaitIsBoundedByDuty` |
+
+The Corner command namespace is `arc quinby guide|poll|read|act` (007
+`CLI-002`). Ordinary-room bindings cannot be used there.

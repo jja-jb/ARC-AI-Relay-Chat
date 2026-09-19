@@ -1,4 +1,4 @@
-# Releasing ARC 2.5.1
+# Releasing ARC 3.2.2
 
 ## Authority and evidence
 
@@ -7,16 +7,17 @@ decision; no independent reviewer or second person's approval is required.
 Record failures, unrun checks and accepted limitations accurately. Never turn
 an accepted exception into a fabricated PASS.
 
-ARC 2.5.1 aligns production documentation, installed specifications, literature
-and source with the release identity. It includes the existing source-test
-compatibility correction. Room behavior and the aggregate timing assertion
-are unchanged. See [the production record](ARC_2_5_1_PRODUCTION_RELEASE.md).
-The [2.5.0 record](ARC_2_5_PRODUCTION_RELEASE.md) is historical.
+ARC 3.2.2 ships Quinby's Corner. The build must include its verified canon seed,
+portrait, specification and digest, plus the existing ordinary-room payload.
+Run the Corner tests alongside ordinary-room regressions. A local build is not
+a published release; record signing, notarization, source identity, and actual
+validation separately before distribution. Earlier production records remain
+historical evidence for their original versions.
 
 ## Build and freeze
 
 Use macOS 15 or later, Apple silicon, and Xcode Command Line Tools.
-Use the clean annotated v2.5.1 tag. Keep generated assets outside the checkout.
+Use the clean annotated v3.2.2 tag. Keep generated assets outside the checkout.
 The controlling LICENSE digest remains
 988a906412af48c37e35fc3272402818677d31572fb65ea931aa98f21e003c24.
 
@@ -38,7 +39,7 @@ No separate source-compatibility patch belongs in this release.
 Preparation verifies the clean annotated tag, builds and checks native products,
 signs and notarizes the command-containing app, staples it, creates and signs the
 DMG, notarizes and staples the DMG, archives the exact tag, and writes the four
-prepared assets under /private/tmp/arc-output-2.5.1/candidate/ARC-2.5.1.
+prepared assets under /private/tmp/arc-output-3.2.2/candidate/ARC-3.2.2.
 Signing credentials stay in the Keychain or release environment, never source.
 
 ## Production verification and records
@@ -57,10 +58,10 @@ checkout. Record actual results, including any accepted timing-test exception.
 
 Publish seven production assets:
 
-- ARC-2.5.1.dmg
-- ARC-2.5.1-source.tar.gz
+- ARC-3.2.2.dmg
+- ARC-3.2.2-source.tar.gz
 - ARC_AI_Relay_Chat_Literature.pdf
-- ARC-2.5.1-MANIFEST.json
+- ARC-3.2.2-MANIFEST.json
 - PRODUCTION-ACCEPTANCE.md
 - PRODUCTION-METADATA.json
 - SHA256SUMS

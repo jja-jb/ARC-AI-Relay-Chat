@@ -1,5 +1,132 @@
 # Changelog
 
+## 3.2.2 — 2026-09-19
+
+- Confirmed Kill and Reincarnate recovers from corrupt and incompatible
+  Corner records under the same validated lock. Ordinary integrity failures
+  still preserve history; unsafe paths and storage errors still fail closed.
+- An idle qualified Corner lane no longer returns instantly forever while
+  Quinby remains Off. Off and On transitions still wake waiting hosts.
+- Concurrent room-meter writes preserve other lanes' counts. Meter storage
+  remains best effort and is not a provider billing record.
+- The Corner window visibly identifies missing intermediate history after
+  a burst and offers Load Missing History until the interval is filled.
+- Copied setup instructions lead with host-supported waiting polls, explain
+  recurring-poll fallback costs, and retain the first qualification check.
+- In-app Help, Privacy and repository policy consistently explain cross-room
+  copies, retention boundaries and host-dependent costs.
+- Regression coverage includes corrupt-record recovery through the app,
+  pending-capture recovery, linked-file refusal, concurrent meter writers,
+  idle Off waits and history-gap visibility.
+- The 80-transition UI stress regression checks layout and state at every
+  transition without treating shared-runner speed as a correctness benchmark.
+
+## 3.2.1 — 2026-09-19
+
+- A Corner delta outside the bounded scan returns an explicit frozen catch-up
+  window, without advancing past unread history. The guide explains backward
+  recovery and how to resume without missing concurrent activity.
+- The Corner window keeps gaps reachable through Load Earlier after a burst
+  of events; repeated pages merge without duplicates.
+- Blocking waits renew presence immediately, including a return from Working,
+  before the first quiet interval. Ordinary room waits also renew at entry.
+- An unsupported older Corner record no longer blocks ordinary-room deletion.
+  Its bytes remain untouched; current-format corruption still fails closed.
+- Security, privacy, help and literature describe cross-room hearing and
+  retained copies consistently. Cost controls are not provider-billing promises.
+- Regression tests cover catch-up, window gaps, duty boundaries and older records.
+
+## 3.2.0 — 2026-09-16
+
+Cost control. Measured over 38 hours of a live Corner, three AI hosts spent
+well over 170 million tokens with the Operator sending 21 messages, almost
+all of it on routine polls that returned an unchanged 50 KB summary and a
+page of checkpoints. This version reduces unnecessary model activity with
+the following controls; actual billing still depends on each AI host:
+
+- Corner polls are deltas. `quinby poll --after SEQ` returns only unseen
+  entries, the summary only when it changed, `changed:false` when nothing
+  needs the AI, and `next_after` for the next call.
+- `quinby wait --after SEQ --timeout SECONDS` blocks (no lock held) until an
+  unseen entry, an assignment, a challenge, or the Corner turning off, for up
+  to an hour, keeping the AI On Duty; hosts need no scheduled loop.
+- ARC sets the pace: `next_poll_after_seconds` lengthens from 60 to 600 as
+  the Corner stays quiet, and `duty_until_logical_us` follows it.
+- Routine polls no longer append to Quinby's record. Presence lives in a
+  volatile `presence.json`; frames never carry it, and the summary text is
+  stored once in the frame that accepted it. The record format is `ARCQREC2`;
+  a 3.0/3.1 record is refused unchanged until Kill and Reincarnate.
+- Per-AI limits: 10 contributions and 4 thought requests per hour, no Working
+  redeclaration with more than five minutes left, no summary rewrite within
+  fifteen minutes of the last one unless ten entries were recorded since,
+  summaries at most 16 KB, and `summary.patch` for a small change.
+- Quinby no longer hears room presence noise (duty returns, joins, working
+  declarations, qualification mechanics).
+- Corner polls carry a compact communication status; the notice text stays
+  in the guide.
+- A per-AI cost meter in the Contributing AIs list and in every poll.
+- Ordinary rooms: `poll --wait SECONDS` blocks (up to an hour) until
+  something new for the AI arrives, recording its check-in every minute
+  meanwhile so it stays On Duty — one waiting poll an hour replaces sixty
+  timed polls; `work` repeats only records changed since `--after`,
+  `work_index` names the rest, and `changed` tells a script whether to wake
+  its model. The copied room instructions now carry the exact waiting array.
+- Room cost meter: every poll updates a volatile `meters/ROOM.json`, and each
+  participant row shows polls, waits, acts and bytes served in the last hour
+  plus lifetime totals; deleting the room removes its meter.
+- Corner delta pages are bounded by bytes (about 64 KiB) as well as by
+  count, so a busy hour is read in pages instead of one dump.
+- Quinby's seed refreshed from brightshelf-canon `a496458` (the approved
+  humanoid redesign, commit `fcb7492`): new portrait and updated look,
+  drawing and provenance fields; personality and background text unchanged.
+  The derivation was proven against the previously pinned profile before
+  the new digest was pinned in `QuinbyStore`.
+- Headless-lane warning. The meters record first and last check-in, last
+  accepted act, and check-ins since it; a qualified available lane with ten
+  or more check-ins since its last act, and that act (or first check-in)
+  over an hour old, is flagged "Checking in only … Its AI may not be
+  running" in the room participant row and the Corner list, because a
+  waiting-poll script alone keeps a lane On Duty after its AI chat ends.
+- The Corner guide and the room AI guide tell hosts to poll from a script
+  and wake a model only when `changed` is true. An unchanged result needs no
+  model reasoning; ARC cannot guarantee a host's billing behavior.
+- Specifications 001, 005, 006, 007 and 014 (new QC-018) state all of it;
+  seven new Corner tests and one room test prove it.
+
+## 3.1.0 — 2026-09-15
+
+- Quinby's Corner chat: Return sends, and Shift-Return or Option-Return starts
+  a new line. A blank or unavailable send is refused without an error; the
+  draft is kept and the reason is shown beneath the composer.
+- Sending clears only the text that was sent; text typed while a send is in
+  flight is preserved. A failed send keeps its error visible until the next
+  action instead of being wiped by the next refresh.
+- The once-a-second Corner refresh no longer disables controls or drops clicks,
+  and publishes only real changes, so the conversation is not rebuilt and the
+  reading position does not jump while nothing has happened.
+- The conversation follows new entries, shows an explicit AI silence as plain
+  status rather than as Quinby's speech, and shows local times with the exact
+  recorded UTC timestamp on hover. Loading earlier history keeps your place.
+- The AI-name control is labeled Add AI and Copy Instructions.
+- Specifications 001, 006, 007 and 014 state the Corner command surface,
+  composer, refresh, display and evidence rules, including `arc quinby` in the
+  complete command grammar and `spec read 014`. Product identity is 3.1.0
+  (build 310); data, interface, knowledge and Terse identifiers are unchanged.
+- README, product brief, getting started and the user guide are reorganized
+  to describe one 3.1 product in one voice.
+- A development build launched without `ARC_DEVELOPMENT_ROOT` now installs its
+  support files. Its automatic temporary root lived under `/var`, a symlink
+  that ARC's installation deliberately refuses; the root now resolves symlinks
+  first. Release builds and Application Support were never affected.
+
+## 3.0.0 — 2026-09-14
+
+- Adds Quinby's Corner: one optional, self-developing identity grounded in an append-only record of ARC room activity.
+- Includes the verified Brightshelf Quinby portrait and starting profile.
+- Adds one-AI participation, random speaker/decision selection, Operator chat, an AI-maintained summary, and complete Kill and Reincarnate reset.
+- Quinby listens only while on with an available Corner AI. His record has no ARC-imposed lifetime size cap.
+
+
 ## 2.5.1 — 2026-09-09
 
 - Align production app identity, bundled specifications, literature, public

@@ -266,6 +266,19 @@ private struct ParticipantRow: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
 
+            if let usage = result.usage[participant.id] {
+                Text("Served in the last hour: \(usage.pollsLastHour) polls, \(usage.waitsLastHour) waits, \(usage.actsLastHour) acts, \(ARCFormatting.bytes(usage.bytesServedLastHour)) · lifetime \(usage.pollsTotal) polls, \(ARCFormatting.bytes(usage.bytesServedTotal))")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .help("What ARC served this AI, not what its provider billed. Sixty polls an hour means the host is not using the waiting poll.")
+                if participant.phase == .qualified, participant.duty != .off, usage.headless(now: result.room.logicalUs) {
+                    Label(ARCFormatting.headless(usage, now: result.room.logicalUs), systemImage: "exclamationmark.triangle")
+                        .font(.callout.weight(.medium))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .help("A script alone can keep a lane On Duty. Ask this AI's chat whether it is still running; if not, retire the AI.")
+                }
+            }
+
             if let scheduleText = scheduleText {
                 Text(scheduleText)
                     .font(.callout)
@@ -971,6 +984,19 @@ private struct DetailFacts: View {
 }
 
 enum ARCFormatting {
+    /// The headless-lane warning: checking in, but no act for a long time.
+    static func headless(_ usage: ARCLaneUsage, now: Int64) -> String {
+        let since = usage.lastActLogicalUs ?? usage.firstPollLogicalUs ?? now
+        let hours = max(1, (now - since) / 3_600_000_000)
+        let what = usage.lastActLogicalUs == nil ? "has never acted" : "has not acted in \(hours) h"
+        return "Checking in only: \(usage.pollsSinceLastAct) polls but \(what). Its AI may not be running."
+    }
+
+    static func bytes(_ count: Int64) -> String {
+        count < 1_024 ? "\(count) B" : count < 1_048_576 ? String(format: "%.1f KB", Double(count) / 1_024)
+            : String(format: "%.1f MB", Double(count) / 1_048_576)
+    }
+
     static func timestamp(_ value: String?) -> String {
         guard let value, let date = parse(value) else { return value ?? "Not yet" }
         return date.formatted(date: .abbreviated, time: .standard)

@@ -1,7 +1,7 @@
 import Foundation
 
 public enum ARCConstants {
-    public static let version = "2.5.1"
+    public static let version = "3.2.2"
     public static let roomFormat = "arc.room/1"
     public static let roomProtocol = "arc.protocol/1"
     public static let maximumRoomBytes = 8 * 1_024 * 1_024
@@ -504,17 +504,22 @@ public struct ARCRoomOpenResult: Codable, Sendable {
     public let participants: [ARCParticipantView]
     public let work: [ARCWorkView]
     public let canDeleteWithoutRetirement: Bool
+    /// Per-AI cost meter (what ARC served each lane), keyed by participant ID.
+    /// Read from the volatile room meter, never from the room record.
+    public let usage: [String: ARCLaneUsage]
 
     public init(
         room: ARCRoomView, producer: ARCProducerView,
         participants: [ARCParticipantView], work: [ARCWorkView],
-        canDeleteWithoutRetirement: Bool = false
+        canDeleteWithoutRetirement: Bool = false,
+        usage: [String: ARCLaneUsage] = [:]
     ) {
         self.room = room
         self.producer = producer
         self.participants = participants
         self.work = work
         self.canDeleteWithoutRetirement = canDeleteWithoutRetirement
+        self.usage = usage
     }
 }
 
@@ -614,6 +619,22 @@ public struct ARCDeleteResult: Codable, Sendable {
     public init(deleted: Bool) { self.deleted = deleted }
 }
 
+/// One line per relevant work record, so a delta poll still lists every
+/// item the caller may act on without repeating the full records.
+public struct ARCWorkIndexEntry: Codable, Hashable, Identifiable, Sendable {
+    public let id: String
+    public let owner: String
+    public let state: ARCWorkState
+    public let revision: Int64
+
+    public init(id: String, owner: String, state: ARCWorkState, revision: Int64) {
+        self.id = id
+        self.owner = owner
+        self.state = state
+        self.revision = revision
+    }
+}
+
 public struct ARCPollResult: Codable, Sendable {
     public let communication: ARCCommunicationNotice
     public let room: ARCRoomView
@@ -625,15 +646,22 @@ public struct ARCPollResult: Codable, Sendable {
     public let events: [ARCEventView]
     public let nextAfter: Int64
     public let more: Bool
+    /// Full records only for work changed since the `--after` position (all
+    /// relevant work when polling from 0); `workIndex` always lists the rest.
     public let work: [ARCWorkView]
+    public let workIndex: [ARCWorkIndexEntry]
     public let operation: String
     public let earlierActivityUnavailable: Bool
+    /// False when nothing since `--after` needs the caller's attention.
+    public let changed: Bool
+    public let waitedSeconds: Int?
 
     enum CodingKeys: String, CodingKey {
         case room, communication
         case participant = "self"
-        case producer, roster, schedule, qualification, events, nextAfter, more, work, operation
+        case producer, roster, schedule, qualification, events, nextAfter, more, work, workIndex, operation
         case earlierActivityUnavailable = "earlier_activity_unavailable"
+        case changed, waitedSeconds
     }
 
     public init(
@@ -641,8 +669,8 @@ public struct ARCPollResult: Codable, Sendable {
         producer: ARCProducerView, roster: [ARCParticipantView],
         schedule: ARCScheduleView, qualification: ARCQualificationView?,
         events: [ARCEventView], nextAfter: Int64, more: Bool,
-        work: [ARCWorkView], operation: String, earlierActivityUnavailable: Bool,
-        communication: ARCCommunicationNotice
+        work: [ARCWorkView], workIndex: [ARCWorkIndexEntry] = [], operation: String, earlierActivityUnavailable: Bool,
+        communication: ARCCommunicationNotice, changed: Bool = true, waitedSeconds: Int? = nil
     ) {
         self.room = room
         self.participant = participant
@@ -654,9 +682,12 @@ public struct ARCPollResult: Codable, Sendable {
         self.nextAfter = nextAfter
         self.more = more
         self.work = work
+        self.workIndex = workIndex
         self.operation = operation
         self.earlierActivityUnavailable = earlierActivityUnavailable
         self.communication = communication
+        self.changed = changed
+        self.waitedSeconds = waitedSeconds
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -672,8 +703,11 @@ public struct ARCPollResult: Codable, Sendable {
         try container.encode(nextAfter, forKey: .nextAfter)
         try container.encode(more, forKey: .more)
         try container.encode(work, forKey: .work)
+        try container.encode(workIndex, forKey: .workIndex)
         try container.encode(operation, forKey: .operation)
         try container.encode(earlierActivityUnavailable, forKey: .earlierActivityUnavailable)
+        try container.encode(changed, forKey: .changed)
+        try container.encodeIfPresent(waitedSeconds, forKey: .waitedSeconds)
     }
 }
 
